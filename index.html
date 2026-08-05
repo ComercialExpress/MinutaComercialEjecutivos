@@ -929,6 +929,11 @@ function classifyView(rol){
   if(r.includes('INTEGRAL') || r.includes('EMPRESA')) return 'empresa';
   return 'persona';
 }
+// Zona BZ = sucursales integrales de mall. Ancladas por defecto en Empresa,
+// excluidas de Persona.
+function isBZZona(exec){
+  return (exec && exec.zona || '').toString().trim().toUpperCase() === 'BZ';
+}
 
 const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 // Turns a YM integer/string like 202608 into "Agosto 2026"
@@ -1050,12 +1055,25 @@ function setManualMeta(execId, key, value){
    RENDER
    ========================================================= */
 
-function uniqueClusters(list){
-  return Array.from(new Set(list.map(e => e.cluster))).sort((a,b) => a.localeCompare(b));
+function uniqueClusters(list, bzFirst){
+  const clusters = Array.from(new Set(list.map(e => e.cluster)));
+  if(!bzFirst) return clusters.sort((a,b) => a.localeCompare(b));
+  const clusterHasBZ = c => list.some(e => e.cluster === c && isBZZona(e));
+  return clusters.sort((a,b) => {
+    const diff = (clusterHasBZ(b) ? 1 : 0) - (clusterHasBZ(a) ? 1 : 0);
+    if(diff !== 0) return diff;
+    return a.localeCompare(b);
+  });
 }
 
-function execsInCluster(list, cluster){
-  return list.filter(e => e.cluster === cluster).sort((a,b) => a.nombre.localeCompare(b.nombre));
+function execsInCluster(list, cluster, bzFirst){
+  const filtered = list.filter(e => e.cluster === cluster);
+  if(!bzFirst) return filtered.sort((a,b) => a.nombre.localeCompare(b.nombre));
+  return filtered.sort((a,b) => {
+    const diff = (isBZZona(b) ? 1 : 0) - (isBZZona(a) ? 1 : 0);
+    if(diff !== 0) return diff;
+    return a.nombre.localeCompare(b.nombre);
+  });
 }
 
 function populateSelectors(){
@@ -1063,12 +1081,13 @@ function populateSelectors(){
   const execSel = document.getElementById('execSelect');
   const list = currentList();
   const exec = currentExec();
+  const bzFirst = state.view === 'empresa';
 
-  const clusters = uniqueClusters(list);
+  const clusters = uniqueClusters(list, bzFirst);
   clusterSel.innerHTML = clusters.map(c => `<option value="${c}">${c}</option>`).join('');
   clusterSel.value = exec.cluster;
 
-  const filtered = execsInCluster(list, clusterSel.value);
+  const filtered = execsInCluster(list, clusterSel.value, bzFirst);
   execSel.innerHTML = filtered.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
   execSel.value = exec.id;
 
@@ -1297,7 +1316,7 @@ document.getElementById('viewToggle').addEventListener('click', (e) => {
 
 document.getElementById('clusterSelect').addEventListener('change', (e) => {
   const cluster = e.target.value;
-  const filtered = execsInCluster(currentList(), cluster);
+  const filtered = execsInCluster(currentList(), cluster, state.view === 'empresa');
   if(filtered.length === 0) return;
   state.execId = filtered[0].id;
   const execSel = document.getElementById('execSelect');
@@ -1404,7 +1423,6 @@ function buildExecsFromRows(execRows, kpiRows){
         const s = String(j);
         return /H$/i.test(s) ? s : s + 'H';
       })(),
-      view: classifyView(rol),
       periodos: {}
     };
     return byId[id];
@@ -1446,15 +1464,23 @@ function buildExecsFromRows(execRows, kpiRows){
   });
 
   const result = { persona:[], empresa:[] };
-  Object.values(byId).forEach(exec => {
+  const allExecs = Object.values(byId);
+  allExecs.forEach(exec => {
     Object.values(exec.periodos).forEach(p => {
       p.indicadores.sort((a,b) => INDICATOR_ORDER.indexOf(a.key) - INDICATOR_ORDER.indexOf(b.key));
     });
-    const bucket = exec.view || classifyView(exec.rol);
-    result[bucket].push(exec);
   });
+  // Persona: todos los ejecutivos EXCEPTO zona BZ (sucursales integrales de mall).
+  // Empresa: la zona BZ queda fija/ancla, pero se deja disponible el resto de
+  // ejecutivos (el mismo universo que ve Persona) por si es necesario evaluarlos ahí también.
+  result.persona = allExecs.filter(e => !isBZZona(e));
+  result.empresa = allExecs.slice();
   result.persona.sort((a,b) => a.nombre.localeCompare(b.nombre));
-  result.empresa.sort((a,b) => a.nombre.localeCompare(b.nombre));
+  result.empresa.sort((a,b) => {
+    const bzDiff = (isBZZona(b) ? 1 : 0) - (isBZZona(a) ? 1 : 0);
+    if(bzDiff !== 0) return bzDiff;
+    return a.nombre.localeCompare(b.nombre);
+  });
   return result;
 }
 
