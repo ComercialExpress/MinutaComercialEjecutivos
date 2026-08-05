@@ -468,27 +468,40 @@
 
   table.kpi{
     width:100%;
-    border-collapse:collapse;
+    border-collapse:separate;
+    border-spacing:0;
     font-size:13px;
   }
   table.kpi thead th{
     text-align:left;
-    font-size:10px;
-    letter-spacing:.07em;
+    font-size:9.5px;
+    letter-spacing:.09em;
     text-transform:uppercase;
     color:var(--ink-400);
-    font-weight:700;
-    padding:0 10px 10px;
-    border-bottom:2px solid var(--navy-900);
+    font-weight:800;
+    padding:0 10px 11px;
+    border-bottom:2px solid var(--orange-500);
+    background:rgba(22,26,46,.025);
   }
+  table.kpi thead th:first-child{padding-left:14px;}
   table.kpi thead th.num{text-align:right;}
-  table.kpi tbody tr{border-bottom:1px solid var(--border-soft);}
-  table.kpi tbody tr:hover{background:#FAFAFD;}
+  table.kpi tbody tr{
+    border-bottom:1px solid var(--border-soft);
+    transition:background .12s ease;
+  }
+  table.kpi tbody tr:last-child{border-bottom:none;}
+  table.kpi tbody tr:hover{background:#F7F8FC;}
   table.kpi td{
-    padding:11px 10px;
+    padding:12px 10px;
     vertical-align:middle;
   }
+  table.kpi td:first-child{padding-left:14px;}
   table.kpi td.num{text-align:right;font-variant-numeric:tabular-nums;}
+  .ind-cell{display:flex;align-items:center;gap:10px;}
+  .ind-type-bar{flex:0 0 auto;width:4px;height:26px;border-radius:3px;}
+  .ind-type-bar.type-clp{background:var(--green-600);}
+  .ind-type-bar.type-pct{background:#8B5CF6;}
+  .ind-type-bar.type-int{background:var(--ink-400);opacity:.55;}
   .ind-name{
     font-weight:700;
     color:var(--ink-900);
@@ -500,6 +513,7 @@
     color:var(--ink-400);
     font-weight:500;
     margin-top:1px;
+    letter-spacing:.01em;
   }
   .meta-cell{font-weight:600;color:var(--ink-700);}
   .meta-input{
@@ -517,7 +531,7 @@
   }
   .meta-input:focus{outline:none;border-color:var(--orange-500);background:#fff;}
   .mtd-cell{font-weight:800;color:var(--ink-900);}
-  .fcst-cell{color:var(--ink-500);}
+  .fcst-cell{color:var(--ink-500);font-weight:600;}
   .cump-cell{min-width:112px;text-align:center;}
   .cump-badge{
     display:inline-flex;flex-direction:column;align-items:center;gap:5px;
@@ -542,10 +556,16 @@
   .fill-good{background:var(--green-600);}
   .fill-mid{background:var(--amber-600);}
   .fill-bad{background:var(--red-600);}
-  .falt-cell{font-weight:700;}
-  .falt-pos{color:var(--green-600);}
-  .falt-neg{color:var(--red-600);}
-  .falt-zero{color:var(--ink-400);}
+  .falt-badge{
+    display:inline-flex;align-items:center;gap:4px;
+    padding:4px 10px;border-radius:20px;
+    font-weight:700;font-size:12px;
+    font-variant-numeric:tabular-nums;
+  }
+  .falt-badge.falt-pos{background:rgba(21,138,74,.10);color:var(--green-600);}
+  .falt-badge.falt-neg{background:rgba(214,57,74,.10);color:var(--red-600);}
+  .falt-badge.falt-zero{background:rgba(22,26,46,.05);color:var(--ink-400);}
+  .falt-arrow{font-size:9px;line-height:1;}
 
   /* Objetivos / Compromisos */
   .notes-grid{
@@ -704,10 +724,12 @@
       width:62px;font-size:9.5px;padding:3px 5px;
     }
     .mtd-cell, .meta-cell{font-size:9.5px;}
+    .ind-type-bar{width:3px;height:18px;}
     .cump-badge{padding:3px 8px 4px;gap:2px;}
     .cump-track{height:4px;width:34px;margin-bottom:2px;}
     .cump-pct{font-size:9.5px;}
     .falt-cell{font-size:9.5px;}
+    .falt-badge{padding:2px 7px;font-size:9.5px;}
 
     .right-col{gap:10px;}
     textarea.note-area{
@@ -1282,11 +1304,11 @@ function renderKpiTable(exec){
     const faltante = fcstBase - meta;
     let faltHtml;
     if(Math.abs(faltante) < (info.tipo === 'pct' ? 0.05 : 0.5)){
-      faltHtml = `<span class="falt-zero">＝ 0</span>`;
+      faltHtml = `<span class="falt-badge falt-zero">＝ 0</span>`;
     } else if(faltante > 0){
-      faltHtml = `<span class="falt-pos">+${formatByType(ind.key, faltante)}</span>`;
+      faltHtml = `<span class="falt-badge falt-pos"><span class="falt-arrow">▲</span>${formatByType(ind.key, faltante)}</span>`;
     } else {
-      faltHtml = `<span class="falt-neg">−${formatByType(ind.key, Math.abs(faltante))}</span>`;
+      faltHtml = `<span class="falt-badge falt-neg"><span class="falt-arrow">▼</span>${formatByType(ind.key, Math.abs(faltante))}</span>`;
     }
 
     const metaCellHtml = state.metasMode === 'manual'
@@ -1296,8 +1318,13 @@ function renderKpiTable(exec){
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>
-        <span class="ind-name">${info.nombre}</span>
-        <span class="ind-sub">${info.sub}</span>
+        <div class="ind-cell">
+          <span class="ind-type-bar type-${info.tipo}"></span>
+          <span>
+            <span class="ind-name">${info.nombre}</span>
+            <span class="ind-sub">${info.sub}</span>
+          </span>
+        </div>
       </td>
       <td class="num">${metaCellHtml}</td>
       <td class="num mtd-cell">${formatByType(ind.key, mtd)}</td>
@@ -1531,7 +1558,11 @@ document.addEventListener('click', (e) => {
   const trigger = document.getElementById('execComboTrigger');
   if(!panel.contains(e.target) && !trigger.contains(e.target)) closeExecCombo();
 });
-window.addEventListener('scroll', () => closeExecCombo(), true);
+window.addEventListener('scroll', (e) => {
+  const panel = document.getElementById('execComboPanel');
+  if(panel.contains(e.target)) return; // scroll dentro del propio panel: no cerrar
+  closeExecCombo();
+}, true);
 window.addEventListener('resize', () => closeExecCombo());
 document.getElementById('periodSelect').addEventListener('change', (e) => {
   state.ym = e.target.value;
