@@ -1033,26 +1033,30 @@ const SAMPLE_EXECS = {
 };
 
 // Live dataset — replaced wholesale when the user imports a Power BI export
-let EXECS = JSON.parse(JSON.stringify(SAMPLE_EXECS));
-let dataSource = { origin:'sample', loadedAt:null, execCount: SAMPLE_EXECS.persona.length + SAMPLE_EXECS.empresa.length };
+// Arranca vacía a propósito — antes se mostraban los datos de ejemplo por
+// defecto y, si la auto-carga tardaba o fallaba, quedaban confundiendo al
+// espectador como si fueran reales. Ahora la ficha parte en blanco y solo
+// muestra números una vez que llegan datos reales (auto-carga o carga manual).
+let EXECS = { persona: [], empresa: [] };
+let dataSource = { origin:'empty', loadedAt:null, execCount: 0 };
 
 /* =========================================================
    STATE
    ========================================================= */
 let state = {
   view: 'persona',           // 'persona' | 'empresa'
-  execId: EXECS.persona[0].id,
-  ym: SAMPLE_YM,              // selected period (YM)
+  execId: null,
+  ym: null,                  // selected period (YM)
   metasMode: 'default',      // 'default' | 'manual'
   manualMetas: {}            // { execId: { indicatorKey: value } } — applies across periods
 };
 
 function currentList(){ return EXECS[state.view].length ? EXECS[state.view] : EXECS[state.view === 'persona' ? 'empresa' : 'persona']; }
-function currentExec(){ return currentList().find(e => e.id === state.execId) || currentList()[0]; }
+function currentExec(){ return currentList().find(e => e.id === state.execId) || currentList()[0] || null; }
 
 // Sorted (desc) list of YM keys available for a given exec
 function periodsFor(exec){
-  return Object.keys(exec.periodos || {}).sort((a,b) => b.localeCompare(a));
+  return Object.keys((exec && exec.periodos) || {}).sort((a,b) => b.localeCompare(a));
 }
 // Resolves which period's data to actually show for the current exec:
 // the selected one if that exec has it, otherwise its most recent available period.
@@ -1132,6 +1136,13 @@ function populateSelectors(){
   const list = currentList();
   const exec = currentExec();
   const bzFirst = state.view === 'empresa';
+
+  if(!exec){
+    clusterSel.innerHTML = '';
+    execSel.innerHTML = '';
+    populatePeriodSelector();
+    return;
+  }
 
   const clusters = uniqueClusters(list, bzFirst);
   clusterSel.innerHTML = clusters.map(c => `<option value="${c}">${c}</option>`).join('');
@@ -1337,12 +1348,48 @@ function renderPrintHero(exec, summary){
 
 function renderAll(){
   const exec = currentExec();
+  if(!exec){
+    renderEmptyState();
+    return;
+  }
   renderHeaderInfo(exec);
   renderDetalles(exec);
   const summary = renderKpiTable(exec);
   renderGauge(summary);
   renderManualNote();
   renderPrintHero(exec, summary);
+}
+
+// Se muestra mientras no hay datos reales cargados (antes de que termine la
+// auto-carga desde Power BI, o si esta falla). Deja todo en blanco/neutro en
+// vez de mostrar cifras de ejemplo que podrían confundirse con datos reales.
+function renderEmptyState(){
+  document.getElementById('chipZona').textContent = '—';
+  document.getElementById('chipRol').textContent = '—';
+  document.getElementById('chipJornada').textContent = '—';
+  document.getElementById('roleExecName').textContent = 'Sin datos';
+  document.getElementById('roleCluster').textContent = '—';
+  document.getElementById('signExec').textContent = '—';
+  document.getElementById('viewLabel').textContent =
+    state.view === 'persona' ? 'Ventas (Persona)' : 'Integral (Empresa)';
+
+  document.getElementById('detalleGrid').innerHTML =
+    `<div style="grid-column:1/-1;color:var(--ink-400);font-size:11px;padding:6px 2px;">Esperando datos de Power BI…</div>`;
+  document.getElementById('kpiBody').innerHTML =
+    `<tr><td colspan="6" style="text-align:center;color:var(--ink-400);font-size:12px;padding:24px 8px;">Esperando datos de Power BI…</td></tr>`;
+
+  renderGauge({avg:0, good:0, mid:0, bad:0});
+  document.getElementById('manualNote').classList.add('hidden');
+
+  document.getElementById('printAvatar').textContent = '—';
+  document.getElementById('printExecName').textContent = 'Sin datos';
+  document.getElementById('printExecMeta').textContent = '—';
+  document.getElementById('printScoreNum').textContent = '—';
+  document.getElementById('printScoreNum').style.color = 'var(--ink-400)';
+  const badge = document.getElementById('printStatusBadge');
+  badge.textContent = 'Sin datos';
+  badge.style.background = 'var(--ink-400)';
+  badge.style.color = '#fff';
 }
 
 /* =========================================================
@@ -1396,16 +1443,17 @@ document.getElementById('metasMode').addEventListener('click', (e) => {
 
 document.getElementById('resetMetasBtn').addEventListener('click', () => {
   const exec = currentExec();
+  if(!exec) return;
   delete state.manualMetas[exec.id];
   renderAll();
 });
 
 document.getElementById('resetAllBtn').addEventListener('click', () => {
-  // Keeps whatever dataset is currently loaded (sample or imported from Power BI);
-  // only clears manual edits, toggles and notes.
+  // Keeps whatever dataset is currently loaded (o queda vacío si aún no se ha
+  // cargado nada); solo limpia ediciones manuales, toggles y notas.
   const firstView = EXECS.persona.length ? 'persona' : 'empresa';
-  const firstExec = EXECS[firstView][0];
-  state = { view:firstView, execId: firstExec.id, ym: periodsFor(firstExec)[0] || null, metasMode:'default', manualMetas:{} };
+  const firstExec = EXECS[firstView][0] || null;
+  state = { view:firstView, execId: firstExec ? firstExec.id : null, ym: firstExec ? (periodsFor(firstExec)[0] || null) : null, metasMode:'default', manualMetas:{} };
   document.querySelectorAll('#viewToggle button').forEach(b => b.classList.toggle('active', b.dataset.view === firstView));
   document.querySelectorAll('#metasMode button').forEach(b => b.classList.toggle('active', b.dataset.mode === 'default'));
   document.getElementById('objetivosText').value = '';
@@ -1547,6 +1595,10 @@ function fmtDateTimeCL(d){
 function updateDataSourceChip(){
   const chip = document.getElementById('dataSourceChip');
   if(!chip) return;
+  if(dataSource.origin === 'empty'){
+    chip.innerHTML = `<span class="dot-live" style="background:#9296AE;box-shadow:0 0 0 3px rgba(146,150,174,.18);"></span> Esperando datos de Power BI…`;
+    return;
+  }
   if(dataSource.origin === 'sample'){
     chip.innerHTML = `<span class="dot-live" style="background:#9296AE;box-shadow:0 0 0 3px rgba(146,150,174,.18);"></span> Datos de ejemplo`;
     return;
