@@ -54,7 +54,7 @@ jobs:
           TOKEN: ${{ steps.auth.outputs.token }}
           SHARE_ID: ${{ steps.encode.outputs.exec_share }}
         run: |
-          HTTP_STATUS=$(curl -s -H "Authorization: Bearer ${TOKEN}" \
+          HTTP_STATUS=$(curl -s -L -H "Authorization: Bearer ${TOKEN}" \
             -w "%{http_code}" \
             "https://graph.microsoft.com/v1.0/shares/${SHARE_ID}/driveItem/content" \
             -o ejecutivos.json)
@@ -66,13 +66,17 @@ jobs:
             echo "Fallo la descarga (status >= 400)"
             exit 1
           fi
+          if ! jq empty ejecutivos.json 2>/dev/null; then
+            echo "El archivo descargado no es JSON válido (o está vacío). Se detiene sin hacer commit."
+            exit 1
+          fi
 
       - name: Descargar kpi.json vía Graph API
         env:
           TOKEN: ${{ steps.auth.outputs.token }}
           SHARE_ID: ${{ steps.encode.outputs.kpi_share }}
         run: |
-          HTTP_STATUS=$(curl -s -H "Authorization: Bearer ${TOKEN}" \
+          HTTP_STATUS=$(curl -s -L -H "Authorization: Bearer ${TOKEN}" \
             -w "%{http_code}" \
             "https://graph.microsoft.com/v1.0/shares/${SHARE_ID}/driveItem/content" \
             -o kpi.json)
@@ -82,6 +86,10 @@ jobs:
           echo ""
           if [ "$HTTP_STATUS" -ge 400 ]; then
             echo "Fallo la descarga (status >= 400)"
+            exit 1
+          fi
+          if ! jq empty kpi.json 2>/dev/null; then
+            echo "El archivo descargado no es JSON válido (o está vacío). Se detiene sin hacer commit."
             exit 1
           fi
 
