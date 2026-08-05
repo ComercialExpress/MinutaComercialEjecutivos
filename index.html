@@ -224,10 +224,10 @@
   }
   .exec-combo-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .exec-combo-panel{
-    position:absolute;top:calc(100% + 8px);left:0;right:0;min-width:260px;
+    position:fixed;min-width:260px;
     background:#1B2036;border:1px solid rgba(255,255,255,.14);
     border-radius:12px;padding:6px;max-height:300px;overflow-y:auto;
-    box-shadow:0 16px 40px rgba(0,0,0,.4);z-index:40;
+    box-shadow:0 16px 40px rgba(0,0,0,.4);z-index:2000;
   }
   .exec-combo-panel.hidden{display:none;}
   .exec-combo-divider{
@@ -518,18 +518,24 @@
   .meta-input:focus{outline:none;border-color:var(--orange-500);background:#fff;}
   .mtd-cell{font-weight:800;color:var(--ink-900);}
   .fcst-cell{color:var(--ink-500);}
-  .cump-cell{min-width:112px;}
+  .cump-cell{min-width:112px;text-align:center;}
+  .cump-badge{
+    display:inline-flex;flex-direction:column;align-items:center;gap:5px;
+    padding:6px 16px 8px;border-radius:10px;min-width:60px;
+  }
+  .cump-badge.bucket-good{background:rgba(21,138,74,.10);}
+  .cump-badge.bucket-mid{background:rgba(201,122,17,.10);}
+  .cump-badge.bucket-bad{background:rgba(214,57,74,.10);}
   .cump-track{
     position:relative;
-    width:100%;
-    height:6px;
-    background:var(--border-soft);
+    width:46px;
+    height:5px;
+    background:rgba(0,0,0,.08);
     border-radius:6px;
-    margin-bottom:5px;
     overflow:hidden;
   }
   .cump-fill{height:100%;border-radius:6px;}
-  .cump-pct{font-weight:800;font-size:12px;}
+  .cump-pct{font-weight:800;font-size:13px;line-height:1;}
   .pct-good{color:var(--green-600);}
   .pct-mid{color:var(--amber-600);}
   .pct-bad{color:var(--red-600);}
@@ -698,7 +704,8 @@
       width:62px;font-size:9.5px;padding:3px 5px;
     }
     .mtd-cell, .meta-cell{font-size:9.5px;}
-    .cump-track{height:4px;margin-bottom:2px;}
+    .cump-badge{padding:3px 8px 4px;gap:2px;}
+    .cump-track{height:4px;width:34px;margin-bottom:2px;}
     .cump-pct{font-size:9.5px;}
     .falt-cell{font-size:9.5px;}
 
@@ -876,11 +883,11 @@
           <thead>
             <tr>
               <th style="width:26%;">Indicador</th>
-              <th class="num" style="width:14%;">Meta</th>
-              <th class="num" style="width:12%;">MTD</th>
-              <th class="num" style="width:12%;">FCST</th>
-              <th style="width:22%;">% Cumpl.</th>
-              <th class="num" style="width:14%;">Faltantes</th>
+              <th class="num" style="width:14.8%;">Meta</th>
+              <th class="num" style="width:14.8%;">MTD</th>
+              <th class="num" style="width:14.8%;">FCST</th>
+              <th style="width:14.8%;text-align:center;">% Cumpl.</th>
+              <th class="num" style="width:14.8%;">Faltantes</th>
             </tr>
           </thead>
           <tbody id="kpiBody"></tbody>
@@ -1031,63 +1038,6 @@ function ymLabel(ym){
   const month = parseInt(s.slice(4,6), 10);
   return `${MESES_ES[month-1] || month} ${year}`;
 }
-
-// Sample dataset shown before any Power BI import — same figures as your two capturas,
-// filed under a single sample period.
-const SAMPLE_YM = '202607';
-const SAMPLE_EXECS = {
-  persona: [
-    {
-      id:'p1', cluster:'Chillán', nombre:'Antonieta Rivero',
-      zona:'Ventas', rol:'EAC Ventas', jornada:'40H',
-      periodos:{
-        [SAMPLE_YM]:{
-          detalles:{
-            'Rut único':314, 'Atenciones':378, '% Mix Porta':41.0, '% Valid':60.8,
-            'Equipos Q':89, 'LHG Q':47, 'Seguros Q':32, 'Encuesta':11
-          },
-          indicadores:[
-            {key:'TOTAL_MOVIL',            meta:138, mtd:88,  fcst:88},
-            {key:'TOTAL_VOZ_PORTADO',      meta:53,  mtd:34,  fcst:34},
-            {key:'TOTAL_VOZ_SEG_LINEA',    meta:47,  mtd:23,  fcst:23},
-            {key:'FIBRA_SOLICITUD',        meta:12,  mtd:9,   fcst:9},
-            {key:'FIBRA_INSTALADA',        meta:9,   mtd:5,   fcst:5},
-            {key:'FIJO_EMPRESA',           meta:0,   mtd:0,   fcst:0},
-            {key:'MONTO_TOTAL_EQUIPOS',    meta:36754330, mtd:34688328, fcst:34688328},
-            {key:'MONTO_TOTAL_ACCESORIOS', meta:6337843,  mtd:7483908,  fcst:7483908},
-            {key:'PCT_TOTAL_ATT_SEGUROS',  meta:28.0, mtd:36.0, fcst:null},
-            {key:'PCT_TOTAL_ATT_LHG',      meta:35.0, mtd:52.8, fcst:null},
-            {key:'PCT_EPA_GLOBAL_EMPRESA', meta:78.0, mtd:0,    fcst:null},
-            {key:'PCT_EPA_GLOBAL',         meta:83.3, mtd:81.7, fcst:null},
-          ]
-        }
-      }
-    }
-  ],
-  empresa: [
-    {
-      id:'e1', cluster:'Curicó', nombre:'Cristian Riveros',
-      zona:'Integral', rol:'EAC Integral', jornada:'40H',
-      periodos:{
-        [SAMPLE_YM]:{
-          detalles:{
-            'Rut único':133, 'Atenciones':93, '% Mix Porta':44.9, '% Valid':76.7,
-            'Equipos Q':63, 'LHG Q':14, 'Seguros Q':38, 'Encuesta Emp':0
-          },
-          indicadores:[
-            {key:'TOTAL_MOVIL',            meta:65, mtd:56, fcst:56},
-            {key:'FIJO_EMPRESA',           meta:0,  mtd:0,  fcst:0},
-            {key:'MONTO_TOTAL_EQUIPOS',    meta:25000000, mtd:21133084, fcst:21133084},
-            {key:'MONTO_TOTAL_ACCESORIOS', meta:4500000,  mtd:3291193,  fcst:3291193},
-            {key:'PCT_TOTAL_ATT_SEGUROS',  meta:28.0, mtd:60.3, fcst:null},
-            {key:'PCT_TOTAL_ATT_LHG',      meta:35.0, mtd:22.2, fcst:null},
-            {key:'PCT_EPA_GLOBAL_EMPRESA', meta:78.0, mtd:0, fcst:null},
-          ]
-        }
-      }
-    }
-  ]
-};
 
 // Live dataset — replaced wholesale when the user imports a Power BI export
 // Arranca vacía a propósito — antes se mostraban los datos de ejemplo por
@@ -1353,8 +1303,10 @@ function renderKpiTable(exec){
       <td class="num mtd-cell">${formatByType(ind.key, mtd)}</td>
       <td class="num fcst-cell">${fcst === null || fcst === undefined ? '—' : formatByType(ind.key, fcst)}</td>
       <td class="cump-cell">
-        <div class="cump-track"><div class="cump-fill fill-${bucket}" style="width:${Math.min(pct,100)}%;"></div></div>
-        <span class="cump-pct pct-${bucket}">${pct.toFixed(1).replace('.', ',')}%</span>
+        <div class="cump-badge bucket-${bucket}">
+          <span class="cump-pct pct-${bucket}">${pct.toFixed(1).replace('.', ',')}%</span>
+          <div class="cump-track"><div class="cump-fill fill-${bucket}" style="width:${Math.min(pct,100)}%;"></div></div>
+        </div>
       </td>
       <td class="num falt-cell">${faltHtml}</td>
     `;
@@ -1536,11 +1488,28 @@ document.getElementById('clusterSelect').addEventListener('change', (e) => {
 });
 
 // Combobox de ejecutivo: abrir/cerrar el panel, elegir una opción, y cerrar
-// al hacer clic afuera.
+// al hacer clic afuera. El panel se "saca" del header (que tiene
+// overflow:hidden por los bordes redondeados) y se cuelga directo del
+// <body> en position:fixed, calculando su posición contra el botón —
+// así queda siempre por ENCIMA del resto de tarjetas, nunca recortado.
+function ensureExecComboPanelInBody(){
+  const panel = document.getElementById('execComboPanel');
+  if(panel.parentElement !== document.body) document.body.appendChild(panel);
+  return panel;
+}
+function positionExecComboPanel(){
+  const trigger = document.getElementById('execComboTrigger');
+  const panel = document.getElementById('execComboPanel');
+  const rect = trigger.getBoundingClientRect();
+  panel.style.top = (rect.bottom + 8) + 'px';
+  panel.style.left = rect.left + 'px';
+  panel.style.width = Math.max(rect.width, 260) + 'px';
+}
 document.getElementById('execComboTrigger').addEventListener('click', (e) => {
   e.stopPropagation();
-  const panel = document.getElementById('execComboPanel');
+  const panel = ensureExecComboPanelInBody();
   const willOpen = panel.classList.contains('hidden');
+  if(willOpen) positionExecComboPanel();
   panel.classList.toggle('hidden', !willOpen);
   document.getElementById('execComboTrigger').setAttribute('aria-expanded', String(willOpen));
 });
@@ -1558,8 +1527,12 @@ document.getElementById('execComboPanel').addEventListener('click', (e) => {
   renderAll();
 });
 document.addEventListener('click', (e) => {
-  if(!e.target.closest('#execCombo')) closeExecCombo();
+  const panel = document.getElementById('execComboPanel');
+  const trigger = document.getElementById('execComboTrigger');
+  if(!panel.contains(e.target) && !trigger.contains(e.target)) closeExecCombo();
 });
+window.addEventListener('scroll', () => closeExecCombo(), true);
+window.addEventListener('resize', () => closeExecCombo());
 document.getElementById('periodSelect').addEventListener('change', (e) => {
   state.ym = e.target.value;
   renderAll();
