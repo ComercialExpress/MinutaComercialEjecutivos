@@ -74,25 +74,6 @@
     box-shadow:0 0 0 3px var(--green-100);
   }
   .toolbar-actions{display:flex;gap:10px;}
-  /* Admin-only controls: hidden unless the page is opened with ?admin=1 */
-  .admin-only{display:none !important;}
-  body.is-admin .admin-only{display:inline-flex !important;}
-  .admin-badge{
-    display:none;
-    align-items:center;gap:6px;
-    font-size:11px;font-weight:700;
-    color:var(--orange-600);
-    background:var(--orange-100);
-    border:1px solid #F5CBA0;
-    padding:4px 10px;border-radius:20px;
-    letter-spacing:.02em;
-  }
-  body.is-admin .admin-badge{display:inline-flex;}
-  .update-note{
-    font-size:11.5px;color:var(--ink-500);font-weight:500;
-    margin-left:2px;
-  }
-  .update-note.stale{color:var(--red-600);font-weight:700;}
   .btn{
     display:inline-flex;align-items:center;gap:8px;
     font-family:'Inter',sans-serif;
@@ -208,6 +189,7 @@
     background-position:right 2px center;
   }
   .field select option{color:#161A2E;}
+  .field select option:disabled{color:#B7BAD1;}
 
   /* View toggle (Persona/Empresa) */
   .view-toggle{
@@ -248,18 +230,32 @@
     flex-wrap:wrap;
   }
   .chip{
-    background:rgba(255,255,255,.06);
-    border:1px solid rgba(255,255,255,.12);
+    position:relative;
+    background:linear-gradient(160deg, rgba(255,255,255,.14), rgba(255,255,255,.04));
+    border:1px solid rgba(255,255,255,.16);
     border-radius:999px;
-    padding:6px 14px;
+    padding:7px 16px 7px 13px;
     font-size:11.5px;
-    color:rgba(255,255,255,.85);
+    color:rgba(255,255,255,.92);
     font-weight:600;
-    display:flex;
+    display:inline-flex;
     align-items:center;
-    gap:7px;
+    gap:8px;
+    min-width:150px;
+    justify-content:flex-start;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.14),
+      0 6px 14px -8px rgba(8,10,26,.55);
   }
-  .chip .k{color:rgba(255,255,255,.5);font-weight:600;}
+  .chip::before{
+    content:"";
+    width:6px;height:6px;flex-shrink:0;
+    border-radius:50%;
+    background:var(--orange-500);
+    box-shadow:0 0 0 3px rgba(245,130,31,.25);
+  }
+  .chip .k{color:rgba(255,255,255,.55);font-weight:600;}
+  @media (max-width:520px){ .chip{min-width:0;} }
 
   /* ===== BODY GRID ===== */
   .body-grid{
@@ -680,17 +676,14 @@
 
   <!-- TOOLBAR -->
   <div class="toolbar">
-    <div class="toolbar-left">
-      <span class="admin-badge">🔒 Modo administrador</span>
-      <span id="dataSourceChip">
-        <span class="dot-live" style="background:#9296AE;box-shadow:0 0 0 3px rgba(146,150,174,.18);"></span>
-        Datos de ejemplo
-      </span>
+    <div class="toolbar-left" id="dataSourceChip">
+      <span class="dot-live" style="background:#9296AE;box-shadow:0 0 0 3px rgba(146,150,174,.18);"></span>
+      Datos de ejemplo
     </div>
     <div class="toolbar-actions">
-      <button class="btn admin-only" id="importBtn">⇪ Cargar datos Power BI</button>
+      <button class="btn" id="importBtn">⇪ Cargar datos Power BI</button>
       <input type="file" id="importInput" accept=".json" multiple style="display:none;">
-      <button class="btn admin-only" id="resetAllBtn">↺ Restablecer todo</button>
+      <button class="btn" id="resetAllBtn">↺ Restablecer todo</button>
       <button class="btn btn-print" id="printBtn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
         Imprimir / Exportar PDF
@@ -857,26 +850,6 @@
 
 <script>
 /* =========================================================
-   PUBLICACIÓN — modo admin/vista y auto-carga de datos
-   =========================================================
-   - Pega aquí las URLs "raw" (descarga directa, mismo origen o con
-     CORS habilitado) de ejecutivos.json y kpi.json. Si están vacías,
-     la ficha simplemente arranca con datos de ejemplo y espera carga
-     manual (modo admin).
-   - El link para el ADMINISTRADOR (tú) lleva "?admin=1" al final:
-     esa es la única forma de ver los botones "Cargar datos Power BI"
-     y "Restablecer todo". El link para el resto de usuarios NO lleva
-     ese parámetro y solo muestra el botón de Imprimir/Exportar PDF.
-   ========================================================= */
-const CONFIG = {
-  execJsonUrl: 'https://raw.githubusercontent.com/ComercialExpress/MinutaComercialEjecutivos/main/ejecutivos.json',
-  kpiJsonUrl: 'https://raw.githubusercontent.com/ComercialExpress/MinutaComercialEjecutivos/main/kpi.json',
-  autoRefreshMinutes: 0   // 0 = solo al cargar la página; >0 = re-consulta cada N minutos
-};
-const isAdminMode = new URLSearchParams(location.search).get('admin') === '1';
-if(isAdminMode) document.body.classList.add('is-admin');
-
-/* =========================================================
    DATA MODEL
    ========================================================= */
 
@@ -928,41 +901,6 @@ function classifyView(rol){
   const r = (rol || '').toUpperCase();
   if(r.includes('INTEGRAL') || r.includes('EMPRESA')) return 'empresa';
   return 'persona';
-}
-// Zona BZ = sucursales integrales de mall. Ancladas por defecto en Empresa,
-// excluidas de Persona.
-function isBZZona(exec){
-  return (exec && exec.zona || '').toString().trim().toUpperCase() === 'BZ';
-}
-
-// Quita tildes/acentos y normaliza a mayúsculas, para comparar cluster/zona
-// sin depender de cómo vengan exactamente escritos desde Power BI.
-function normalizeStr(s){
-  return (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();
-}
-
-// Orden fijo de clusters solicitado. Cualquier cluster que no esté en esta
-// lista (ej. clusters de otras regiones) queda al final, en orden alfabético.
-const CLUSTER_ORDER = ['CURICO','TALCA','LINARES','CHILLAN','LOS ANGELES'];
-function clusterRank(cluster){
-  const idx = CLUSTER_ORDER.indexOf(normalizeStr(cluster));
-  return idx === -1 ? CLUSTER_ORDER.length : idx;
-}
-
-// Orden de zonas dentro de un mismo cluster, y su etiqueta de color (emoji,
-// para que funcione dentro de <option> nativo, que no admite CSS).
-const ZONE_ORDER = ['VENTAS','INTEGRAL','SAC','P&E'];
-const ZONE_TAGS = { BZ:'🟠', VENTAS:'🔵', INTEGRAL:'🟢', SAC:'🟣', 'P&E':'🟡' };
-function zoneTag(zona){
-  return ZONE_TAGS[normalizeStr(zona)] || '⚪';
-}
-// bzFirst=true (vista Empresa): BZ siempre primero, luego el orden habitual.
-// bzFirst=false (vista Persona): solo el orden habitual (BZ ni aparece aquí).
-function zoneRank(zona, bzFirst){
-  const key = normalizeStr(zona);
-  if(bzFirst && key === 'BZ') return -1;
-  const idx = ZONE_ORDER.indexOf(key);
-  return idx === -1 ? ZONE_ORDER.length : idx;
 }
 
 const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -1033,30 +971,26 @@ const SAMPLE_EXECS = {
 };
 
 // Live dataset — replaced wholesale when the user imports a Power BI export
-// Arranca vacía a propósito — antes se mostraban los datos de ejemplo por
-// defecto y, si la auto-carga tardaba o fallaba, quedaban confundiendo al
-// espectador como si fueran reales. Ahora la ficha parte en blanco y solo
-// muestra números una vez que llegan datos reales (auto-carga o carga manual).
-let EXECS = { persona: [], empresa: [] };
-let dataSource = { origin:'empty', loadedAt:null, execCount: 0 };
+let EXECS = JSON.parse(JSON.stringify(SAMPLE_EXECS));
+let dataSource = { origin:'sample', loadedAt:null, execCount: SAMPLE_EXECS.persona.length + SAMPLE_EXECS.empresa.length };
 
 /* =========================================================
    STATE
    ========================================================= */
 let state = {
   view: 'persona',           // 'persona' | 'empresa'
-  execId: null,
-  ym: null,                  // selected period (YM)
+  execId: EXECS.persona[0].id,
+  ym: SAMPLE_YM,              // selected period (YM)
   metasMode: 'default',      // 'default' | 'manual'
   manualMetas: {}            // { execId: { indicatorKey: value } } — applies across periods
 };
 
 function currentList(){ return EXECS[state.view].length ? EXECS[state.view] : EXECS[state.view === 'persona' ? 'empresa' : 'persona']; }
-function currentExec(){ return currentList().find(e => e.id === state.execId) || currentList()[0] || null; }
+function currentExec(){ return currentList().find(e => e.id === state.execId) || currentList()[0]; }
 
 // Sorted (desc) list of YM keys available for a given exec
 function periodsFor(exec){
-  return Object.keys((exec && exec.periodos) || {}).sort((a,b) => b.localeCompare(a));
+  return Object.keys(exec.periodos || {}).sort((a,b) => b.localeCompare(a));
 }
 // Resolves which period's data to actually show for the current exec:
 // the selected one if that exec has it, otherwise its most recent available period.
@@ -1089,45 +1023,12 @@ function setManualMeta(execId, key, value){
    RENDER
    ========================================================= */
 
-function uniqueClusters(list, bzFirst){
-  const clusters = Array.from(new Set(list.map(e => e.cluster)));
-  const clusterHasBZ = c => list.some(e => e.cluster === c && isBZZona(e));
-  return clusters.sort((a,b) => {
-    if(bzFirst){
-      const bzDiff = (clusterHasBZ(b) ? 1 : 0) - (clusterHasBZ(a) ? 1 : 0);
-      if(bzDiff !== 0) return bzDiff;
-    }
-    const rankDiff = clusterRank(a) - clusterRank(b);
-    if(rankDiff !== 0) return rankDiff;
-    return a.localeCompare(b);
-  });
+function uniqueClusters(list){
+  return Array.from(new Set(list.map(e => e.cluster))).sort((a,b) => a.localeCompare(b));
 }
 
-function execsInCluster(list, cluster, bzFirst){
-  const filtered = list.filter(e => e.cluster === cluster);
-  return filtered.sort((a,b) => {
-    const rankDiff = zoneRank(a.zona, bzFirst) - zoneRank(b.zona, bzFirst);
-    if(rankDiff !== 0) return rankDiff;
-    return a.nombre.localeCompare(b.nombre);
-  });
-}
-
-// Arma las <option> del selector de ejecutivo con una etiqueta de color por
-// zona, y — solo en Empresa, cuando el cluster mezcla BZ con otras áreas —
-// un separador visual entre el grupo BZ (ancla) y el resto de áreas.
-function buildExecOptionsHTML(filtered, bzFirst){
-  const hasBZ = filtered.some(isBZZona);
-  const hasOther = filtered.some(e => !isBZZona(e));
-  let html = '';
-  let dividerDone = false;
-  filtered.forEach(e => {
-    if(bzFirst && hasBZ && hasOther && !dividerDone && !isBZZona(e)){
-      html += `<option disabled>── otras áreas (opcional) ──</option>`;
-      dividerDone = true;
-    }
-    html += `<option value="${e.id}" title="Zona: ${e.zona || '—'}">${zoneTag(e.zona)} ${e.nombre}</option>`;
-  });
-  return html;
+function execsInCluster(list, cluster){
+  return list.filter(e => e.cluster === cluster).sort((a,b) => a.nombre.localeCompare(b.nombre));
 }
 
 function populateSelectors(){
@@ -1135,21 +1036,13 @@ function populateSelectors(){
   const execSel = document.getElementById('execSelect');
   const list = currentList();
   const exec = currentExec();
-  const bzFirst = state.view === 'empresa';
 
-  if(!exec){
-    clusterSel.innerHTML = '';
-    execSel.innerHTML = '';
-    populatePeriodSelector();
-    return;
-  }
-
-  const clusters = uniqueClusters(list, bzFirst);
+  const clusters = uniqueClusters(list);
   clusterSel.innerHTML = clusters.map(c => `<option value="${c}">${c}</option>`).join('');
   clusterSel.value = exec.cluster;
 
-  const filtered = execsInCluster(list, clusterSel.value, bzFirst);
-  execSel.innerHTML = buildExecOptionsHTML(filtered, bzFirst);
+  const filtered = execsInCluster(list, clusterSel.value);
+  execSel.innerHTML = filtered.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
   execSel.value = exec.id;
 
   populatePeriodSelector();
@@ -1165,16 +1058,39 @@ function allAvailablePeriods(){
   return Array.from(set).sort((a,b) => b.localeCompare(a));
 }
 
+// Current YM ('YYYYMM') based on the real device date — drives the auto-select
+// and the future-month lock in the period dropdown.
+function nowYm(){
+  const d = new Date();
+  return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
 function populatePeriodSelector(){
   const sel = document.getElementById('periodSelect');
-  const periods = allAvailablePeriods();
-  sel.innerHTML = periods.map(ym => `<option value="${ym}">${ymLabel(ym)}</option>`).join('');
+  const nym = nowYm();
+
+  // Show every month of any year present in the data (plus the current year),
+  // so months Power BI hasn't produced rows for yet still appear — locked — in the list.
+  const dataPeriods = allAvailablePeriods();
+  const years = new Set(dataPeriods.map(p => p.slice(0,4)));
+  years.add(nym.slice(0,4));
+  const periodSet = new Set(dataPeriods);
+  years.forEach(y => { for(let m=1; m<=12; m++) periodSet.add(`${y}${String(m).padStart(2,'0')}`); });
+  const periods = Array.from(periodSet).sort((a,b) => b.localeCompare(a));
+
+  sel.innerHTML = periods.map(ym => {
+    const locked = ym > nym;
+    return `<option value="${ym}"${locked ? ' disabled' : ''}>${locked ? '🔒 ' : ''}${ymLabel(ym)}</option>`;
+  }).join('');
+
+  // Default to the current/in-progress month; if this exec has no data for it yet,
+  // fall back to that exec's most recent real period; if it has none at all, keep
+  // the current month selected (the panel will just show an empty state).
   const exec = currentExec();
-  const resolved = currentYmFor(exec) || periods[0];
-  if(resolved){
-    state.ym = resolved;
-    sel.value = resolved;
-  }
+  const realPeriods = periodsFor(exec);
+  const resolved = (exec.periodos && exec.periodos[nym]) ? nym : (realPeriods[0] || nym);
+  state.ym = resolved;
+  sel.value = resolved;
 }
 
 function pctBucket(pct){
@@ -1207,17 +1123,11 @@ function renderKpiTable(exec){
     const fcst = ind.fcst;
     const info = INDICATOR_META[ind.key] || {nombre:ind.key, sub:'', tipo:'int'};
 
-    // % Cumpl. es cumplimiento PROYECTADO (FCST / Meta), no el avance a la
-    // fecha — por eso se usa FCST y no MTD. Si el indicador no trae FCST
-    // (columna vacía en Power BI), se cae de vuelta a MTD para no dejar el
-    // indicador en 0% solo por falta de dato.
-    const fcstBase = (fcst === null || fcst === undefined) ? mtd : fcst;
-
     let pct;
     if(info.tipo === 'pct'){
-      pct = meta > 0 ? (fcstBase / meta) * 100 : (fcstBase > 0 ? 100 : 0);
+      pct = meta > 0 ? (mtd / meta) * 100 : (mtd > 0 ? 100 : 0);
     } else {
-      pct = meta > 0 ? (fcstBase / meta) * 100 : (fcstBase > 0 ? 100 : 100);
+      pct = meta > 0 ? (mtd / meta) * 100 : (mtd > 0 ? 100 : 100);
     }
     if(!isFinite(pct)) pct = 0;
 
@@ -1225,8 +1135,7 @@ function renderKpiTable(exec){
     if(bucket === 'good') good++; else if(bucket === 'mid') mid++; else bad++;
     sumPct += pct; nPct++;
 
-    // Faltante va de la mano con % Cumpl.: la brecha entre lo proyectado y la meta.
-    const faltante = fcstBase - meta;
+    const faltante = mtd - meta;
     let faltHtml;
     if(Math.abs(faltante) < (info.tipo === 'pct' ? 0.05 : 0.5)){
       faltHtml = `<span class="falt-zero">＝ 0</span>`;
@@ -1355,48 +1264,12 @@ function renderPrintHero(exec, summary){
 
 function renderAll(){
   const exec = currentExec();
-  if(!exec){
-    renderEmptyState();
-    return;
-  }
   renderHeaderInfo(exec);
   renderDetalles(exec);
   const summary = renderKpiTable(exec);
   renderGauge(summary);
   renderManualNote();
   renderPrintHero(exec, summary);
-}
-
-// Se muestra mientras no hay datos reales cargados (antes de que termine la
-// auto-carga desde Power BI, o si esta falla). Deja todo en blanco/neutro en
-// vez de mostrar cifras de ejemplo que podrían confundirse con datos reales.
-function renderEmptyState(){
-  document.getElementById('chipZona').textContent = '—';
-  document.getElementById('chipRol').textContent = '—';
-  document.getElementById('chipJornada').textContent = '—';
-  document.getElementById('roleExecName').textContent = 'Sin datos';
-  document.getElementById('roleCluster').textContent = '—';
-  document.getElementById('signExec').textContent = '—';
-  document.getElementById('viewLabel').textContent =
-    state.view === 'persona' ? 'Ventas (Persona)' : 'Integral (Empresa)';
-
-  document.getElementById('detalleGrid').innerHTML =
-    `<div style="grid-column:1/-1;color:var(--ink-400);font-size:11px;padding:6px 2px;">Esperando datos de Power BI…</div>`;
-  document.getElementById('kpiBody').innerHTML =
-    `<tr><td colspan="6" style="text-align:center;color:var(--ink-400);font-size:12px;padding:24px 8px;">Esperando datos de Power BI…</td></tr>`;
-
-  renderGauge({avg:0, good:0, mid:0, bad:0});
-  document.getElementById('manualNote').classList.add('hidden');
-
-  document.getElementById('printAvatar').textContent = '—';
-  document.getElementById('printExecName').textContent = 'Sin datos';
-  document.getElementById('printExecMeta').textContent = '—';
-  document.getElementById('printScoreNum').textContent = '—';
-  document.getElementById('printScoreNum').style.color = 'var(--ink-400)';
-  const badge = document.getElementById('printStatusBadge');
-  badge.textContent = 'Sin datos';
-  badge.style.background = 'var(--ink-400)';
-  badge.style.color = '#fff';
 }
 
 /* =========================================================
@@ -1420,12 +1293,11 @@ document.getElementById('viewToggle').addEventListener('click', (e) => {
 
 document.getElementById('clusterSelect').addEventListener('change', (e) => {
   const cluster = e.target.value;
-  const bzFirst = state.view === 'empresa';
-  const filtered = execsInCluster(currentList(), cluster, bzFirst);
+  const filtered = execsInCluster(currentList(), cluster);
   if(filtered.length === 0) return;
   state.execId = filtered[0].id;
   const execSel = document.getElementById('execSelect');
-  execSel.innerHTML = buildExecOptionsHTML(filtered, bzFirst);
+  execSel.innerHTML = filtered.map(x => `<option value="${x.id}">${x.nombre}</option>`).join('');
   execSel.value = state.execId;
   populatePeriodSelector();
   renderAll();
@@ -1450,17 +1322,16 @@ document.getElementById('metasMode').addEventListener('click', (e) => {
 
 document.getElementById('resetMetasBtn').addEventListener('click', () => {
   const exec = currentExec();
-  if(!exec) return;
   delete state.manualMetas[exec.id];
   renderAll();
 });
 
 document.getElementById('resetAllBtn').addEventListener('click', () => {
-  // Keeps whatever dataset is currently loaded (o queda vacío si aún no se ha
-  // cargado nada); solo limpia ediciones manuales, toggles y notas.
+  // Keeps whatever dataset is currently loaded (sample or imported from Power BI);
+  // only clears manual edits, toggles and notes.
   const firstView = EXECS.persona.length ? 'persona' : 'empresa';
-  const firstExec = EXECS[firstView][0] || null;
-  state = { view:firstView, execId: firstExec ? firstExec.id : null, ym: firstExec ? (periodsFor(firstExec)[0] || null) : null, metasMode:'default', manualMetas:{} };
+  const firstExec = EXECS[firstView][0];
+  state = { view:firstView, execId: firstExec.id, ym: periodsFor(firstExec)[0] || null, metasMode:'default', manualMetas:{} };
   document.querySelectorAll('#viewToggle button').forEach(b => b.classList.toggle('active', b.dataset.view === firstView));
   document.querySelectorAll('#metasMode button').forEach(b => b.classList.toggle('active', b.dataset.mode === 'default'));
   document.getElementById('objetivosText').value = '';
@@ -1529,6 +1400,7 @@ function buildExecsFromRows(execRows, kpiRows){
         const s = String(j);
         return /H$/i.test(s) ? s : s + 'H';
       })(),
+      view: classifyView(rol),
       periodos: {}
     };
     return byId[id];
@@ -1570,68 +1442,37 @@ function buildExecsFromRows(execRows, kpiRows){
   });
 
   const result = { persona:[], empresa:[] };
-  const allExecs = Object.values(byId);
-  allExecs.forEach(exec => {
+  Object.values(byId).forEach(exec => {
     Object.values(exec.periodos).forEach(p => {
       p.indicadores.sort((a,b) => INDICATOR_ORDER.indexOf(a.key) - INDICATOR_ORDER.indexOf(b.key));
     });
+    const bucket = exec.view || classifyView(exec.rol);
+    result[bucket].push(exec);
   });
-  // Persona: todos los ejecutivos EXCEPTO zona BZ (sucursales integrales de mall).
-  // Empresa: la zona BZ queda fija/ancla, pero se deja disponible el resto de
-  // ejecutivos (el mismo universo que ve Persona) por si es necesario evaluarlos ahí también.
-  result.persona = allExecs.filter(e => !isBZZona(e));
-  result.empresa = allExecs.slice();
   result.persona.sort((a,b) => a.nombre.localeCompare(b.nombre));
-  result.empresa.sort((a,b) => {
-    const bzDiff = (isBZZona(b) ? 1 : 0) - (isBZZona(a) ? 1 : 0);
-    if(bzDiff !== 0) return bzDiff;
-    return a.nombre.localeCompare(b.nombre);
-  });
+  result.empresa.sort((a,b) => a.nombre.localeCompare(b.nombre));
   return result;
-}
-
-// Data is considered "stale" (worth flagging visually) after this many hours
-// without a refresh — helps viewers notice if the automated feed stopped updating.
-const STALE_AFTER_HOURS = 30;
-
-function fmtDateTimeCL(d){
-  return d.toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric'})
-    + ' ' + d.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
 }
 
 function updateDataSourceChip(){
   const chip = document.getElementById('dataSourceChip');
   if(!chip) return;
-  if(dataSource.origin === 'empty'){
-    chip.innerHTML = `<span class="dot-live" style="background:#9296AE;box-shadow:0 0 0 3px rgba(146,150,174,.18);"></span> Esperando datos de Power BI…`;
-    return;
-  }
   if(dataSource.origin === 'sample'){
     chip.innerHTML = `<span class="dot-live" style="background:#9296AE;box-shadow:0 0 0 3px rgba(146,150,174,.18);"></span> Datos de ejemplo`;
-    return;
+  } else {
+    const t = dataSource.loadedAt ? dataSource.loadedAt.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'}) : '';
+    chip.innerHTML = `<span class="dot-live"></span> Power BI · ${dataSource.execCount} ejecutivos · cargado ${t}`;
   }
-  const label = dataSource.origin === 'powerbi-auto' ? 'Power BI (auto)' : 'Power BI';
-  let noteHtml = '';
-  if(dataSource.loadedAt){
-    const hoursOld = (Date.now() - dataSource.loadedAt.getTime()) / 36e5;
-    const isStale = hoursOld > STALE_AFTER_HOURS;
-    noteHtml = `<span class="update-note${isStale ? ' stale' : ''}">${isStale ? '⚠ ' : ''}Última actualización: ${fmtDateTimeCL(dataSource.loadedAt)}</span>`;
-  }
-  chip.innerHTML = `<span class="dot-live"></span> ${label} · ${dataSource.execCount} ejecutivos &nbsp;${noteHtml}`;
 }
 
-function applyImportedData(newExecs, opts = {}){
+function applyImportedData(newExecs){
   const total = newExecs.persona.length + newExecs.empresa.length;
   if(total === 0){
-    if(!opts.silent) alert('El archivo se leyó pero no se encontraron filas de ejecutivos reconocibles. Revisa los nombres de columna del export.');
-    return false;
+    alert('El archivo se leyó pero no se encontraron filas de ejecutivos reconocibles. Revisa los nombres de columna del export.');
+    return;
   }
   EXECS = newExecs;
-  dataSource = {
-    origin: opts.origin || 'powerbi',
-    loadedAt: opts.loadedAt instanceof Date ? opts.loadedAt : new Date(),
-    execCount: total
-  };
+  dataSource = { origin:'powerbi', loadedAt:new Date(), execCount: total };
   const firstView = EXECS.persona.length ? 'persona' : 'empresa';
   const firstExec = EXECS[firstView][0];
   state = {
@@ -1646,53 +1487,6 @@ function applyImportedData(newExecs, opts = {}){
   populateSelectors();
   renderAll();
   updateDataSourceChip();
-  return true;
-}
-
-// Pulls a "generated at" style field out of a raw parsed JSON payload,
-// before it's unwrapped into rows. Power Automate can add a field like
-// {"generated_at":"2026-08-05T14:32:00Z","rows":[...]} — if it's not
-// there, we fall back to the moment the browser finished fetching.
-function extractTimestamp(rawJson){
-  if(!rawJson || typeof rawJson !== 'object' || Array.isArray(rawJson)) return null;
-  const keys = ['generated_at','GENERATED_AT','ultima_actualizacion','UltimaActualizacion','ULTIMA_ACTUALIZACION','timestamp'];
-  for(const k of keys){
-    if(rawJson[k]){
-      const d = new Date(rawJson[k]);
-      if(!isNaN(d.getTime())) return d;
-    }
-  }
-  return null;
-}
-
-/* =========================================================
-   AUTO-CARGA — trae ejecutivos.json / kpi.json desde las URLs
-   configuradas en CONFIG (arriba). Se ejecuta al abrir la página,
-   y opcionalmente cada CONFIG.autoRefreshMinutes minutos.
-   ========================================================= */
-async function autoLoadFromConfig(){
-  if(!CONFIG.execJsonUrl && !CONFIG.kpiJsonUrl) return; // no configurado todavía
-  try{
-    const bust = `${CONFIG.execJsonUrl.includes('?') ? '&' : '?'}_=${Date.now()}`;
-    const [execRes, kpiRes] = await Promise.all([
-      CONFIG.execJsonUrl ? fetch(CONFIG.execJsonUrl + bust) : Promise.resolve(null),
-      CONFIG.kpiJsonUrl ? fetch(CONFIG.kpiJsonUrl + bust) : Promise.resolve(null)
-    ]);
-    const execRaw = execRes && execRes.ok ? await execRes.json() : null;
-    const kpiRaw = kpiRes && kpiRes.ok ? await kpiRes.json() : null;
-    const asRows = j => Array.isArray(j) ? j : (j && (j.rows || j.value || j.Results || j.results) || []);
-    const execRows = execRaw ? asRows(execRaw) : [];
-    const kpiRows = kpiRaw ? asRows(kpiRaw) : [];
-    if(execRows.length === 0 && kpiRows.length === 0) return; // nada usable, se queda con lo que había
-
-    const loadedAt = extractTimestamp(execRaw) || extractTimestamp(kpiRaw) || new Date();
-    const built = buildExecsFromRows(execRows, kpiRows);
-    applyImportedData(built, { origin:'powerbi-auto', loadedAt, silent:true });
-  } catch(err){
-    // Falla silenciosa para el usuario final (queda con datos de ejemplo o los últimos cargados);
-    // el administrador puede revisar la consola para depurar CORS/URL.
-    console.warn('Auto-carga de Power BI falló (revisa CORS / URLs en CONFIG):', err);
-  }
 }
 
 // Normalizes a row's keys (strips "Table[" / "[" / "]" wrapping, uppercases) for detection.
@@ -1784,11 +1578,6 @@ document.getElementById('printBtn').addEventListener('click', () => window.print
   populateSelectors();
   renderAll();
   updateDataSourceChip();
-
-  autoLoadFromConfig();
-  if(CONFIG.autoRefreshMinutes > 0){
-    setInterval(autoLoadFromConfig, CONFIG.autoRefreshMinutes * 60 * 1000);
-  }
 })();
 </script>
 </body>
