@@ -667,26 +667,26 @@
     .as-of b{font-size:10.5px;margin-top:0;}
     .selectors-row, .meta-chips{display:none !important;}
 
-    .body-grid{margin-top:8px;gap:10px;grid-template-columns:170px 1fr;}
-    .card{box-shadow:none;border:1px solid #E4E6F1;break-inside:avoid;page-break-inside:avoid;padding:10px 12px;border-radius:9px;}
-    .card-title{font-size:9px;margin-bottom:7px;letter-spacing:.06em;}
-    .card-title::before{height:10px;}
+    .body-grid{margin-top:8px;gap:8px;grid-template-columns:145px 1fr;}
+    .card{box-shadow:none;border:1px solid #E4E6F1;break-inside:avoid;page-break-inside:avoid;padding:9px 10px;border-radius:9px;}
+    .card-title{font-size:8.5px;margin-bottom:6px;letter-spacing:.05em;}
+    .card-title::before{height:9px;}
 
-    .left-col{gap:8px;}
-    .gauge-svg{width:80px;height:80px;}
-    .gauge-value{font-size:19px;}
-    .gauge-caption{font-size:8px;margin-top:0;}
-    .gauge-sub{margin-top:7px;gap:8px;font-size:7.5px;}
-    .gauge-sub span b{font-size:10px;}
+    .left-col{gap:7px;}
+    .gauge-svg{width:70px;height:70px;}
+    .gauge-value{font-size:16px;}
+    .gauge-caption{font-size:7.5px;margin-top:0;}
+    .gauge-sub{margin-top:6px;gap:6px;font-size:7px;}
+    .gauge-sub span b{font-size:9.5px;}
 
-    .detalle-grid{gap:5px;}
-    .detalle-item{padding:5px 7px;}
-    .detalle-item .lbl{font-size:6.8px;margin-bottom:1px;}
-    .detalle-item .val{font-size:11px;}
+    .detalle-grid{gap:4px;}
+    .detalle-item{padding:4px 6px;}
+    .detalle-item .lbl{font-size:6.3px;margin-bottom:1px;}
+    .detalle-item .val{font-size:10px;}
 
-    .role-box{padding:8px 10px;gap:6px;border-radius:8px;}
-    .role-box .lbl{font-size:6.8px;}
-    .role-box .val{font-size:10px;}
+    .role-box{padding:7px 9px;gap:5px;border-radius:8px;}
+    .role-box .lbl{font-size:6.3px;}
+    .role-box .val{font-size:9.5px;}
 
     /* ---- selectors become static printed text, not form chrome ---- */
     .field{background:rgba(255,255,255,.07) !important;}
@@ -706,11 +706,11 @@
     .manual-note .reset-btn{display:none !important;}
     .manual-note{background:var(--amber-100) !important;border:1px solid #F0D28F;font-size:9px;padding:4px 9px;}
 
-    table.kpi{font-size:9.5px;}
-    table.kpi thead th{font-size:7px;padding:0 4px 5px;border-bottom-width:1.5px;}
-    table.kpi td{padding:5px 4px;}
-    .ind-name{font-size:9.5px;}
-    .ind-sub{font-size:7.5px;margin-top:0;}
+    table.kpi{font-size:9px;}
+    table.kpi thead th{font-size:6.8px;padding:0 4px 4px;border-bottom-width:1.5px;}
+    table.kpi td{padding:4px 4px;}
+    .ind-name{font-size:9px;}
+    .ind-sub{font-size:7px;margin-top:0;}
     .meta-input{
       background:var(--orange-100) !important;
       border:1px solid #F0D28F !important;
@@ -773,20 +773,8 @@
     </div>
   </div>
 
-  <!-- PRINT-ONLY HERO: formal emphasis on the executive being evaluated -->
-  <div class="print-hero" id="printHero">
-    <div class="avatar" id="printAvatar">—</div>
-    <div class="info">
-      <div class="label">Ejecutivo evaluado</div>
-      <h2 id="printExecName">—</h2>
-      <div class="meta-line" id="printExecMeta">—</div>
-    </div>
-    <div class="score">
-      <div class="num" id="printScoreNum">0%</div>
-      <div class="lbl">Cumplimiento global</div>
-      <div class="status" id="printStatusBadge">—</div>
-    </div>
-  </div>
+  <!-- PRINT-ONLY HERO: formal emphasis on the executive being evaluated —
+       ahora va DESPUÉS del encabezado de la Minuta (banner de marca), no antes. -->
 
   <!-- HEADER -->
   <div class="header-card">
@@ -834,6 +822,22 @@
       <span class="chip"><span class="k">Zona</span> <span class="chip-dot" id="chipZonaDot"></span><span id="chipZona">Ventas</span></span>
       <span class="chip"><span class="k">Rol</span> <span id="chipRol">EAC Ventas</span></span>
       <span class="chip"><span class="k">Jornada</span> <span id="chipJornada">40H</span></span>
+    </div>
+  </div>
+
+  <!-- PRINT-ONLY HERO: énfasis formal en el ejecutivo evaluado, ahora
+       después del encabezado de marca de la Minuta. -->
+  <div class="print-hero" id="printHero">
+    <div class="avatar" id="printAvatar">—</div>
+    <div class="info">
+      <div class="label">Ejecutivo evaluado</div>
+      <h2 id="printExecName">—</h2>
+      <div class="meta-line" id="printExecMeta">—</div>
+    </div>
+    <div class="score">
+      <div class="num" id="printScoreNum">0%</div>
+      <div class="lbl">Cumplimiento global</div>
+      <div class="status" id="printStatusBadge">—</div>
     </div>
   </div>
 
