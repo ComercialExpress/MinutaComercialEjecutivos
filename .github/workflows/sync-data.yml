@@ -1,7 +1,9 @@
-name: Sync Power BI data from OneDrive (debug)
+name: Sync Power BI data from OneDrive
 
 on:
-  workflow_dispatch:
+  schedule:
+    - cron: '*/30 * * * *'   # cada ~30 min
+  workflow_dispatch:          # botón para correrlo manualmente
 
 jobs:
   sync:
@@ -10,16 +12,70 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Probar descarga ejecutivos.json (verbose)
+      - name: Obtener token de acceso (Microsoft Graph)
+        id: auth
         env:
-          URL: ${{ secrets.ONEDRIVE_EXEC_URL }}
+          TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         run: |
-          curl -L -v -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" \
-            -o ejecutivos_test.json \
-            -w "\nHTTP_STATUS:%{http_code}\nCONTENT_TYPE:%{content_type}\n" \
-            "${URL}&download=1" 2> curl_verbose.log || true
-          echo "----- Primeras líneas del archivo descargado -----"
-          head -c 500 ejecutivos_test.json || true
-          echo ""
-          echo "----- Log verbose de curl (headers de la respuesta) -----"
-          grep -E "^< HTTP|^< Location|^< WWW-Authenticate" curl_verbose.log || cat curl_verbose.log
+          TOKEN=$(curl -s -X POST "https://login.microsoftonline.com/${TENANT_ID}/oauth2/v2.0/token" \
+            --data-urlencode "client_id=${CLIENT_ID}" \
+            --data-urlencode "scope=https://graph.microsoft.com/.default" \
+            --data-urlencode "client_secret=${CLIENT_SECRET}" \
+            --data-urlencode "grant_type=client_credentials" \
+            | jq -r .access_token)
+          if [ "$TOKEN" = "null" ] || [ -z "$TOKEN" ]; then
+            echo "No se pudo obtener el token. Revisa los secrets de Azure."
+            exit 1
+          fi
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      # Convierte un link para compartir de SharePoint/OneDrive al "shareId"
+      # que espera el endpoint /shares de Microsoft Graph.
+      - name: Codificar URLs para Graph API
+        id: encode
+        env:
+          EXEC_URL: ${{ secrets.ONEDRIVE_EXEC_URL }}
+          KPI_URL: ${{ secrets.ONEDRIVE_KPI_URL }}
+        run: |
+          encode() {
+            printf '%s' "$1" | base64 | tr '+/' '-_' | tr -d '=' | sed 's/^/u!/'
+          }
+          echo "exec_share=$(encode "$EXEC_URL")" >> "$GITHUB_OUTPUT"
+          echo "kpi_share=$(encode "$KPI_URL")" >> "$GITHUB_OUTPUT"
+
+      - name: Descargar ejecutivos.json vía Graph API
+        env:
+          TOKEN: ${{ steps.auth.outputs.token }}
+          SHARE_ID: ${{ steps.encode.outputs.exec_share }}
+        run: |
+          curl -f -s -H "Authorization: Bearer ${TOKEN}" \
+            "https://graph.microsoft.com/v1.0/shares/${SHARE_ID}/driveItem/content" \
+            -o ejecutivos.json
+          echo "Primeras líneas descargadas:"
+          head -c 200 ejecutivos.json
+
+      - name: Descargar kpi.json vía Graph API
+        env:
+          TOKEN: ${{ steps.auth.outputs.token }}
+          SHARE_ID: ${{ steps.encode.outputs.kpi_share }}
+        run: |
+          curl -f -s -H "Authorization: Bearer ${TOKEN}" \
+            "https://graph.microsoft.com/v1.0/shares/${SHARE_ID}/driveItem/content" \
+            -o kpi.json
+          echo "Primeras líneas descargadas:"
+          head -c 200 kpi.json
+
+      - name: Commit y push si hay cambios
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ejecutivos.json kpi.json
+          if git diff --cached --quiet; then
+            echo "Sin cambios, no se hace commit."
+          else
+            git commit -m "Actualización automática de datos Power BI - $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
+          fi
