@@ -210,6 +210,47 @@
   .field select option{color:#161A2E;}
   .field select option:disabled{color:#B7BACB;font-style:italic;}
 
+  /* Combobox de ejecutivo — reemplaza el <select> nativo solo aquí porque
+     necesitamos pintar una etiqueta de zona con color/forma de píldora,
+     algo que un <option> nativo no permite renderizar en ningún navegador. */
+  .exec-combo{position:relative;}
+  .exec-combo-trigger{
+    width:100%;display:flex;align-items:center;gap:8px;
+    background:transparent;border:none;color:#fff;text-align:left;
+    font-family:'Sora',sans-serif;font-size:14.5px;font-weight:600;
+    cursor:pointer;padding:2px 20px 2px 0;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='white' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat:no-repeat;background-position:right 2px center;
+  }
+  .exec-combo-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .exec-combo-panel{
+    position:absolute;top:calc(100% + 8px);left:0;right:0;min-width:260px;
+    background:#1B2036;border:1px solid rgba(255,255,255,.14);
+    border-radius:12px;padding:6px;max-height:300px;overflow-y:auto;
+    box-shadow:0 16px 40px rgba(0,0,0,.4);z-index:40;
+  }
+  .exec-combo-panel.hidden{display:none;}
+  .exec-combo-divider{
+    font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+    color:rgba(255,255,255,.4);padding:9px 8px 5px;
+    border-top:1px solid rgba(255,255,255,.1);margin-top:5px;
+  }
+  .exec-combo-option{
+    display:flex;align-items:center;gap:9px;
+    padding:7px 8px;border-radius:9px;cursor:pointer;
+    font-size:13.5px;font-weight:600;color:#fff;
+  }
+  .exec-combo-option:hover{background:rgba(255,255,255,.09);}
+  .exec-combo-option.selected{background:rgba(255,255,255,.16);}
+  .exec-combo-oname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  /* La píldora de zona: mismo ancho/alto para todas, solo cambia color y texto. */
+  .zone-pill{
+    flex:0 0 auto;width:60px;display:inline-flex;align-items:center;justify-content:center;
+    padding:3px 4px;border-radius:20px;
+    font-size:9px;font-weight:800;letter-spacing:.02em;
+    color:#fff;text-transform:uppercase;
+  }
+
   /* View toggle (Persona/Empresa) */
   .view-toggle{
     display:flex;
@@ -746,7 +787,13 @@
       </div>
       <div class="field">
         <label>Ejecutivo Express</label>
-        <select id="execSelect"></select>
+        <div class="exec-combo" id="execCombo">
+          <button type="button" class="exec-combo-trigger" id="execComboTrigger" aria-haspopup="listbox" aria-expanded="false">
+            <span class="zone-pill" id="execComboPillTrigger">—</span>
+            <span class="exec-combo-name" id="execComboNameTrigger">Sin datos</span>
+          </button>
+          <div class="exec-combo-panel hidden" id="execComboPanel" role="listbox"></div>
+        </div>
       </div>
       <div class="field">
         <label>Período</label>
@@ -958,18 +1005,13 @@ function clusterRank(cluster){
   return idx === -1 ? CLUSTER_ORDER.length : idx;
 }
 
-// Orden de zonas dentro de un mismo cluster, y su etiqueta de color (emoji,
-// para que funcione dentro de <option> nativo, que no admite CSS).
+// Orden de zonas dentro de un mismo cluster, y su color de identificación,
+// usado tanto en el punto de la Zona (encabezado) como en la píldora del
+// combobox de ejecutivo.
 const ZONE_ORDER = ['VENTAS','INTEGRAL','SAC','P&E'];
-const ZONE_TAGS = { BZ:'🟠', VENTAS:'🔵', INTEGRAL:'🟢', SAC:'🟣', 'P&E':'🟡' };
-// Mismos colores que ZONE_TAGS, pero en hex, para usarlos en el punto de
-// color real (CSS) del chip de Zona en el encabezado.
 const ZONE_COLORS = { BZ:'#F2994A', VENTAS:'#56A6FF', INTEGRAL:'#4CD787', SAC:'#BB86FC', 'P&E':'#F5D76E' };
 function zoneColor(zona){
   return ZONE_COLORS[normalizeStr(zona)] || 'rgba(255,255,255,.55)';
-}
-function zoneTag(zona){
-  return ZONE_TAGS[normalizeStr(zona)] || '⚪';
 }
 // bzFirst=true (vista Empresa): BZ siempre primero, luego el orden habitual.
 // bzFirst=false (vista Persona): solo el orden habitual (BZ ni aparece aquí).
@@ -1143,34 +1185,60 @@ function execsInCluster(list, cluster, bzFirst){
   });
 }
 
-// Arma las <option> del selector de ejecutivo con una etiqueta de color por
-// zona, y — solo en Empresa, cuando el cluster mezcla BZ con otras áreas —
-// un separador visual entre el grupo BZ (ancla) y el resto de áreas.
-function buildExecOptionsHTML(filtered, bzFirst){
+// Píldora de zona: mismo tamaño/forma para todas, solo cambia color y texto.
+function zonePillHTML(zona){
+  const label = (zona || '—').toString().trim().toUpperCase();
+  return `<span class="zone-pill" style="background:${zoneColor(zona)};">${label}</span>`;
+}
+
+// Arma el panel del combobox de ejecutivo con una píldora de color por zona,
+// y — solo en Empresa, cuando el cluster mezcla BZ con otras áreas — un
+// separador visual entre el grupo BZ (ancla) y el resto de áreas.
+function buildExecComboPanelHTML(filtered, bzFirst, selectedId){
   const hasBZ = filtered.some(isBZZona);
   const hasOther = filtered.some(e => !isBZZona(e));
   let html = '';
   let dividerDone = false;
   filtered.forEach(e => {
     if(bzFirst && hasBZ && hasOther && !dividerDone && !isBZZona(e)){
-      html += `<option disabled>── otras áreas (opcional) ──</option>`;
+      html += `<div class="exec-combo-divider">Otras áreas (opcional)</div>`;
       dividerDone = true;
     }
-    html += `<option value="${e.id}" title="Zona: ${e.zona || '—'}">${zoneTag(e.zona)} ${e.nombre}</option>`;
+    html += `<div class="exec-combo-option${e.id === selectedId ? ' selected' : ''}" data-id="${e.id}" role="option" title="Zona: ${e.zona || '—'}">
+      ${zonePillHTML(e.zona)}<span class="exec-combo-oname">${e.nombre}</span>
+    </div>`;
   });
   return html;
 }
 
+function updateExecComboTrigger(exec){
+  const pill = document.getElementById('execComboPillTrigger');
+  if(exec){
+    pill.style.background = zoneColor(exec.zona);
+    pill.textContent = (exec.zona || '—').toString().trim().toUpperCase();
+  } else {
+    pill.style.background = 'rgba(255,255,255,.2)';
+    pill.textContent = '—';
+  }
+  document.getElementById('execComboNameTrigger').textContent = exec ? exec.nombre : 'Sin datos';
+}
+
+function closeExecCombo(){
+  document.getElementById('execComboPanel').classList.add('hidden');
+  document.getElementById('execComboTrigger').setAttribute('aria-expanded', 'false');
+}
+
 function populateSelectors(){
   const clusterSel = document.getElementById('clusterSelect');
-  const execSel = document.getElementById('execSelect');
   const list = currentList();
   const exec = currentExec();
   const bzFirst = state.view === 'empresa';
 
   if(!exec){
     clusterSel.innerHTML = '';
-    execSel.innerHTML = '';
+    document.getElementById('execComboPanel').innerHTML = '';
+    updateExecComboTrigger(null);
+    closeExecCombo();
     populatePeriodSelector();
     return;
   }
@@ -1180,8 +1248,8 @@ function populateSelectors(){
   clusterSel.value = exec.cluster;
 
   const filtered = execsInCluster(list, clusterSel.value, bzFirst);
-  execSel.innerHTML = buildExecOptionsHTML(filtered, bzFirst);
-  execSel.value = exec.id;
+  document.getElementById('execComboPanel').innerHTML = buildExecComboPanelHTML(filtered, bzFirst, exec.id);
+  updateExecComboTrigger(exec);
 
   populatePeriodSelector();
 }
@@ -1461,16 +1529,36 @@ document.getElementById('clusterSelect').addEventListener('change', (e) => {
   const filtered = execsInCluster(currentList(), cluster, bzFirst);
   if(filtered.length === 0) return;
   state.execId = filtered[0].id;
-  const execSel = document.getElementById('execSelect');
-  execSel.innerHTML = buildExecOptionsHTML(filtered, bzFirst);
-  execSel.value = state.execId;
+  document.getElementById('execComboPanel').innerHTML = buildExecComboPanelHTML(filtered, bzFirst, state.execId);
+  updateExecComboTrigger(filtered[0]);
   populatePeriodSelector();
   renderAll();
 });
-document.getElementById('execSelect').addEventListener('change', (e) => {
-  state.execId = e.target.value;
+
+// Combobox de ejecutivo: abrir/cerrar el panel, elegir una opción, y cerrar
+// al hacer clic afuera.
+document.getElementById('execComboTrigger').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const panel = document.getElementById('execComboPanel');
+  const willOpen = panel.classList.contains('hidden');
+  panel.classList.toggle('hidden', !willOpen);
+  document.getElementById('execComboTrigger').setAttribute('aria-expanded', String(willOpen));
+});
+document.getElementById('execComboPanel').addEventListener('click', (e) => {
+  const opt = e.target.closest('.exec-combo-option');
+  if(!opt) return;
+  state.execId = opt.dataset.id;
+  const exec = currentList().find(x => x.id === state.execId);
+  document.getElementById('execComboPanel').querySelectorAll('.exec-combo-option').forEach(o => {
+    o.classList.toggle('selected', o.dataset.id === state.execId);
+  });
+  updateExecComboTrigger(exec);
+  closeExecCombo();
   populatePeriodSelector();
   renderAll();
+});
+document.addEventListener('click', (e) => {
+  if(!e.target.closest('#execCombo')) closeExecCombo();
 });
 document.getElementById('periodSelect').addEventListener('change', (e) => {
   state.ym = e.target.value;
