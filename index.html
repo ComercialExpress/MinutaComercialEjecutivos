@@ -707,8 +707,8 @@
     .manual-note{background:var(--amber-100) !important;border:1px solid #F0D28F;font-size:9px;padding:4px 9px;}
 
     table.kpi{font-size:9.5px;}
-    table.kpi thead th{font-size:7px;padding:0 6px 5px;border-bottom-width:1.5px;}
-    table.kpi td{padding:5px 6px;}
+    table.kpi thead th{font-size:7px;padding:0 4px 5px;border-bottom-width:1.5px;}
+    table.kpi td{padding:5px 4px;}
     .ind-name{font-size:9.5px;}
     .ind-sub{font-size:7.5px;margin-top:0;}
     .meta-input{
@@ -719,8 +719,12 @@
     }
     .mtd-cell, .meta-cell{font-size:9.5px;}
     .ind-type-bar{width:3px;height:18px;}
-    .kpi-badge{padding:2px 8px;font-size:9.5px;gap:4px;}
-    .cump-mini-track{width:18px;height:3px;}
+    /* La hoja impresa es mucho más angosta que la pantalla — el ancho fijo
+       de 100px de la etiqueta ya no cabe en su columna aquí, así que se
+       reduce proporcionalmente para que no se desborde. */
+    .kpi-badge{width:60px;padding:2px 5px;font-size:8.5px;gap:3px;}
+    .cump-mini-track{width:13px;height:3px;}
+    .falt-arrow{font-size:7.5px;}
     .falt-cell{font-size:9.5px;}
 
     .right-col{gap:10px;}
