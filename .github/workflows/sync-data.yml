@@ -51,22 +51,36 @@ jobs:
           TOKEN: ${{ steps.auth.outputs.token }}
           SHARE_ID: ${{ steps.encode.outputs.exec_share }}
         run: |
-          curl -f -s -H "Authorization: Bearer ${TOKEN}" \
+          HTTP_STATUS=$(curl -s -H "Authorization: Bearer ${TOKEN}" \
+            -w "%{http_code}" \
             "https://graph.microsoft.com/v1.0/shares/${SHARE_ID}/driveItem/content" \
-            -o ejecutivos.json
-          echo "Primeras líneas descargadas:"
-          head -c 200 ejecutivos.json
+            -o ejecutivos.json)
+          echo "HTTP_STATUS=${HTTP_STATUS}"
+          echo "Primeras líneas de la respuesta:"
+          head -c 1000 ejecutivos.json
+          echo ""
+          if [ "$HTTP_STATUS" -ge 400 ]; then
+            echo "Fallo la descarga (status >= 400)"
+            exit 1
+          fi
 
       - name: Descargar kpi.json vía Graph API
         env:
           TOKEN: ${{ steps.auth.outputs.token }}
           SHARE_ID: ${{ steps.encode.outputs.kpi_share }}
         run: |
-          curl -f -s -H "Authorization: Bearer ${TOKEN}" \
+          HTTP_STATUS=$(curl -s -H "Authorization: Bearer ${TOKEN}" \
+            -w "%{http_code}" \
             "https://graph.microsoft.com/v1.0/shares/${SHARE_ID}/driveItem/content" \
-            -o kpi.json
-          echo "Primeras líneas descargadas:"
-          head -c 200 kpi.json
+            -o kpi.json)
+          echo "HTTP_STATUS=${HTTP_STATUS}"
+          echo "Primeras líneas de la respuesta:"
+          head -c 1000 kpi.json
+          echo ""
+          if [ "$HTTP_STATUS" -ge 400 ]; then
+            echo "Fallo la descarga (status >= 400)"
+            exit 1
+          fi
 
       - name: Commit y push si hay cambios
         run: |
