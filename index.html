@@ -1207,11 +1207,17 @@ function renderKpiTable(exec){
     const fcst = ind.fcst;
     const info = INDICATOR_META[ind.key] || {nombre:ind.key, sub:'', tipo:'int'};
 
+    // % Cumpl. es cumplimiento PROYECTADO (FCST / Meta), no el avance a la
+    // fecha — por eso se usa FCST y no MTD. Si el indicador no trae FCST
+    // (columna vacía en Power BI), se cae de vuelta a MTD para no dejar el
+    // indicador en 0% solo por falta de dato.
+    const fcstBase = (fcst === null || fcst === undefined) ? mtd : fcst;
+
     let pct;
     if(info.tipo === 'pct'){
-      pct = meta > 0 ? (mtd / meta) * 100 : (mtd > 0 ? 100 : 0);
+      pct = meta > 0 ? (fcstBase / meta) * 100 : (fcstBase > 0 ? 100 : 0);
     } else {
-      pct = meta > 0 ? (mtd / meta) * 100 : (mtd > 0 ? 100 : 100);
+      pct = meta > 0 ? (fcstBase / meta) * 100 : (fcstBase > 0 ? 100 : 100);
     }
     if(!isFinite(pct)) pct = 0;
 
@@ -1219,7 +1225,8 @@ function renderKpiTable(exec){
     if(bucket === 'good') good++; else if(bucket === 'mid') mid++; else bad++;
     sumPct += pct; nPct++;
 
-    const faltante = mtd - meta;
+    // Faltante va de la mano con % Cumpl.: la brecha entre lo proyectado y la meta.
+    const faltante = fcstBase - meta;
     let faltHtml;
     if(Math.abs(faltante) < (info.tipo === 'pct' ? 0.05 : 0.5)){
       faltHtml = `<span class="falt-zero">＝ 0</span>`;
