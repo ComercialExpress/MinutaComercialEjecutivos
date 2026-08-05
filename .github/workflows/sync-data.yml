@@ -5,6 +5,9 @@ on:
     - cron: '*/30 * * * *'   # cada ~30 min
   workflow_dispatch:          # botón para correrlo manualmente
 
+permissions:
+  contents: write
+
 jobs:
   sync:
     runs-on: ubuntu-latest
