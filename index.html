@@ -935,6 +935,36 @@ function isBZZona(exec){
   return (exec && exec.zona || '').toString().trim().toUpperCase() === 'BZ';
 }
 
+// Quita tildes/acentos y normaliza a mayúsculas, para comparar cluster/zona
+// sin depender de cómo vengan exactamente escritos desde Power BI.
+function normalizeStr(s){
+  return (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();
+}
+
+// Orden fijo de clusters solicitado. Cualquier cluster que no esté en esta
+// lista (ej. clusters de otras regiones) queda al final, en orden alfabético.
+const CLUSTER_ORDER = ['CURICO','TALCA','LINARES','CHILLAN','LOS ANGELES'];
+function clusterRank(cluster){
+  const idx = CLUSTER_ORDER.indexOf(normalizeStr(cluster));
+  return idx === -1 ? CLUSTER_ORDER.length : idx;
+}
+
+// Orden de zonas dentro de un mismo cluster, y su etiqueta de color (emoji,
+// para que funcione dentro de <option> nativo, que no admite CSS).
+const ZONE_ORDER = ['VENTAS','INTEGRAL','SAC','P&E'];
+const ZONE_TAGS = { BZ:'🟠', VENTAS:'🔵', INTEGRAL:'🟢', SAC:'🟣', 'P&E':'🟡' };
+function zoneTag(zona){
+  return ZONE_TAGS[normalizeStr(zona)] || '⚪';
+}
+// bzFirst=true (vista Empresa): BZ siempre primero, luego el orden habitual.
+// bzFirst=false (vista Persona): solo el orden habitual (BZ ni aparece aquí).
+function zoneRank(zona, bzFirst){
+  const key = normalizeStr(zona);
+  if(bzFirst && key === 'BZ') return -1;
+  const idx = ZONE_ORDER.indexOf(key);
+  return idx === -1 ? ZONE_ORDER.length : idx;
+}
+
 const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 // Turns a YM integer/string like 202608 into "Agosto 2026"
 function ymLabel(ym){
@@ -1057,23 +1087,43 @@ function setManualMeta(execId, key, value){
 
 function uniqueClusters(list, bzFirst){
   const clusters = Array.from(new Set(list.map(e => e.cluster)));
-  if(!bzFirst) return clusters.sort((a,b) => a.localeCompare(b));
   const clusterHasBZ = c => list.some(e => e.cluster === c && isBZZona(e));
   return clusters.sort((a,b) => {
-    const diff = (clusterHasBZ(b) ? 1 : 0) - (clusterHasBZ(a) ? 1 : 0);
-    if(diff !== 0) return diff;
+    if(bzFirst){
+      const bzDiff = (clusterHasBZ(b) ? 1 : 0) - (clusterHasBZ(a) ? 1 : 0);
+      if(bzDiff !== 0) return bzDiff;
+    }
+    const rankDiff = clusterRank(a) - clusterRank(b);
+    if(rankDiff !== 0) return rankDiff;
     return a.localeCompare(b);
   });
 }
 
 function execsInCluster(list, cluster, bzFirst){
   const filtered = list.filter(e => e.cluster === cluster);
-  if(!bzFirst) return filtered.sort((a,b) => a.nombre.localeCompare(b.nombre));
   return filtered.sort((a,b) => {
-    const diff = (isBZZona(b) ? 1 : 0) - (isBZZona(a) ? 1 : 0);
-    if(diff !== 0) return diff;
+    const rankDiff = zoneRank(a.zona, bzFirst) - zoneRank(b.zona, bzFirst);
+    if(rankDiff !== 0) return rankDiff;
     return a.nombre.localeCompare(b.nombre);
   });
+}
+
+// Arma las <option> del selector de ejecutivo con una etiqueta de color por
+// zona, y — solo en Empresa, cuando el cluster mezcla BZ con otras áreas —
+// un separador visual entre el grupo BZ (ancla) y el resto de áreas.
+function buildExecOptionsHTML(filtered, bzFirst){
+  const hasBZ = filtered.some(isBZZona);
+  const hasOther = filtered.some(e => !isBZZona(e));
+  let html = '';
+  let dividerDone = false;
+  filtered.forEach(e => {
+    if(bzFirst && hasBZ && hasOther && !dividerDone && !isBZZona(e)){
+      html += `<option disabled>── otras áreas (opcional) ──</option>`;
+      dividerDone = true;
+    }
+    html += `<option value="${e.id}" title="Zona: ${e.zona || '—'}">${zoneTag(e.zona)} ${e.nombre}</option>`;
+  });
+  return html;
 }
 
 function populateSelectors(){
@@ -1088,7 +1138,7 @@ function populateSelectors(){
   clusterSel.value = exec.cluster;
 
   const filtered = execsInCluster(list, clusterSel.value, bzFirst);
-  execSel.innerHTML = filtered.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
+  execSel.innerHTML = buildExecOptionsHTML(filtered, bzFirst);
   execSel.value = exec.id;
 
   populatePeriodSelector();
@@ -1316,11 +1366,12 @@ document.getElementById('viewToggle').addEventListener('click', (e) => {
 
 document.getElementById('clusterSelect').addEventListener('change', (e) => {
   const cluster = e.target.value;
-  const filtered = execsInCluster(currentList(), cluster, state.view === 'empresa');
+  const bzFirst = state.view === 'empresa';
+  const filtered = execsInCluster(currentList(), cluster, bzFirst);
   if(filtered.length === 0) return;
   state.execId = filtered[0].id;
   const execSel = document.getElementById('execSelect');
-  execSel.innerHTML = filtered.map(x => `<option value="${x.id}">${x.nombre}</option>`).join('');
+  execSel.innerHTML = buildExecOptionsHTML(filtered, bzFirst);
   execSel.value = state.execId;
   populatePeriodSelector();
   renderAll();
