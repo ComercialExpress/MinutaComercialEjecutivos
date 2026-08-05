@@ -869,8 +869,8 @@
      ese parámetro y solo muestra el botón de Imprimir/Exportar PDF.
    ========================================================= */
 const CONFIG = {
-  execJsonUrl: '',   // ej: https://raw.githubusercontent.com/usuario/repo/main/ejecutivos.json
-  kpiJsonUrl: '',    // ej: https://raw.githubusercontent.com/usuario/repo/main/kpi.json
+  execJsonUrl: 'https://raw.githubusercontent.com/ComercialExpress/MinutaComercialEjecutivos/main/ejecutivos.json',
+  kpiJsonUrl: 'https://raw.githubusercontent.com/ComercialExpress/MinutaComercialEjecutivos/main/kpi.json',
   autoRefreshMinutes: 0   // 0 = solo al cargar la página; >0 = re-consulta cada N minutos
 };
 const isAdminMode = new URLSearchParams(location.search).get('admin') === '1';
