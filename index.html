@@ -75,8 +75,8 @@
   }
   .toolbar-actions{display:flex;gap:10px;}
   /* Admin-only controls: hidden unless the page is opened with ?admin=1 */
-  .admin-only{display:none;}
-  body.is-admin .admin-only{display:inline-flex;}
+  .admin-only{display:none !important;}
+  body.is-admin .admin-only{display:inline-flex !important;}
   .admin-badge{
     display:none;
     align-items:center;gap:6px;
