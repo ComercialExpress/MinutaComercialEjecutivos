@@ -41,7 +41,7 @@ jobs:
           KPI_URL: ${{ secrets.ONEDRIVE_KPI_URL }}
         run: |
           encode() {
-            printf '%s' "$1" | base64 | tr '+/' '-_' | tr -d '=' | sed 's/^/u!/'
+            printf '%s' "$1" | base64 -w 0 | tr '+/' '-_' | tr -d '=' | sed 's/^/u!/'
           }
           echo "exec_share=$(encode "$EXEC_URL")" >> "$GITHUB_OUTPUT"
           echo "kpi_share=$(encode "$KPI_URL")" >> "$GITHUB_OUTPUT"
