@@ -686,11 +686,6 @@
 
     .role-box{display:none !important;}
     .left-col{display:flex;flex-direction:column;}
-    /* La tarjeta de "Detalles del período" crece para ocupar el espacio que
-       deja la tarjeta Ejecutivo/Cluster oculta arriba, en vez de dejar un
-       hueco en blanco al fondo de la columna izquierda. */
-    .card-detalles{flex:1;display:flex;flex-direction:column;}
-    .card-detalles .detalle-grid{flex:1;align-content:space-between;}
 
     /* ---- selectors become static printed text, not form chrome ---- */
     .field{background:rgba(255,255,255,.07) !important;}
@@ -1008,7 +1003,8 @@ const VIEW_INDICATOR_KEYS = {
 // Friendly labels for the "Detalles" scalar fields
 const DETALLE_LABELS = {
   RUT_UNICO:'Rut único', ATENCIONES:'Atenciones', PCT_MIX_PORTA:'% Mix Porta', PCT_VALID:'% Valid',
-  EQUIPOS_Q:'Equipos Q', LHG_Q:'LHG Q', SEGUROS_Q:'Seguros Q', ENCUESTA_Q:'Encuesta'
+  EQUIPOS_Q:'Equipos Q', LHG_Q:'LHG Q', SEGUROS_Q:'Seguros Q',
+  ENCUESTA_GLOBAL:'Encuesta Persona', ENCUESTA_GLOBAL_EMPRESA:'Encuesta Empresa'
 };
 const DETALLE_IS_PCT = {PCT_MIX_PORTA:true, PCT_VALID:true};
 
@@ -1393,14 +1389,15 @@ function renderGauge(summary){
 function renderDetalles(exec){
   const grid = document.getElementById('detalleGrid');
   const periodData = currentPeriodData(exec);
-  const entries = Object.entries(periodData.detalles || {});
-  if(entries.length === 0){
-    grid.innerHTML = `<div style="grid-column:1/-1;color:var(--ink-400);font-size:11px;padding:6px 2px;">Sin datos para este período.</div>`;
-    return;
-  }
-  grid.innerHTML = entries.map(([label, val]) => {
-    const isPct = label.startsWith('%');
-    const display = isPct ? fmtPct1(val) : fmtInt(val);
+  const detalles = periodData.detalles || {};
+  // Recorre SIEMPRE el catálogo completo de campos (DETALLE_LABELS), no solo
+  // los que tengan valor — así la tarjeta se ve igual de completa para todos
+  // los ejecutivos, con "—" en los campos que no aplican o no llegaron.
+  grid.innerHTML = Object.keys(DETALLE_LABELS).map(key => {
+    const label = DETALLE_LABELS[key];
+    const val = detalles[key];
+    const hasVal = val !== null && val !== undefined;
+    const display = !hasVal ? '—' : (DETALLE_IS_PCT[key] ? fmtPct1(val) : fmtInt(val));
     return `<div class="detalle-item"><div class="lbl">${label}</div><div class="val">${display}</div></div>`;
   }).join('');
 }
@@ -1689,9 +1686,13 @@ function buildExecsFromRows(execRows, kpiRows){
     if(exec.rol === '—') exec.rol = pick(row,'ROL_CEX','ROL') || exec.rol;
 
     const period = ensurePeriod(exec, ymFor(row));
+    // Se guarda SIEMPRE una entrada por campo (aunque venga vacía → null),
+    // usando la clave cruda como llave — así el render puede mostrar las
+    // tarjetas de Detalles del período completas, con "—" donde falte dato,
+    // en vez de que la tarjeta simplemente desaparezca.
     Object.keys(DETALLE_LABELS).forEach(k => {
       const v = pick(row, k);
-      if(v !== undefined) period.detalles[DETALLE_LABELS[k]] = DETALLE_IS_PCT[k] ? normalizePct(toNum(v)) : toNum(v);
+      period.detalles[k] = (v === undefined) ? null : (DETALLE_IS_PCT[k] ? normalizePct(toNum(v)) : toNum(v));
     });
   });
 
