@@ -788,7 +788,7 @@
       </div>
       <div class="as-of">
         Ventas al
-        <b id="asOfDate">04-08-2026</b>
+        <b id="asOfDate">—</b>
       </div>
     </div>
 
@@ -1740,8 +1740,23 @@ function fmtDateTimeCL(d){
     + ' ' + d.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
 }
 
+// "Ventas al" (encabezado de marca) debe coincidir siempre con la fecha de
+// última actualización de datos (dataSource.loadedAt) — es decir, la misma
+// fecha que ya se muestra en el chip "Última actualización", pero solo con
+// el día (sin hora), en el formato DD-MM-AAAA que ya traía el encabezado.
+function updateAsOfDate(){
+  const el = document.getElementById('asOfDate');
+  if(!el) return;
+  if(dataSource.loadedAt instanceof Date){
+    el.textContent = dataSource.loadedAt.toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric'});
+  } else {
+    el.textContent = '—';
+  }
+}
+
 function updateDataSourceChip(){
   const chip = document.getElementById('dataSourceChip');
+  updateAsOfDate();
   if(!chip) return;
   if(dataSource.origin === 'empty'){
     chip.innerHTML = `<span class="dot-live" style="background:#9296AE;box-shadow:0 0 0 3px rgba(146,150,174,.18);"></span> Esperando datos de Power BI…`;
