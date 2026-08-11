@@ -1004,7 +1004,9 @@ function normalizePct(v){
    DATA MODEL
    ========================================================= */
 let EXECS_ALL = [];               // todos los ejecutivos, un objeto por persona
-let TIENDAS_ALL = [];              // todas las tiendas, un objeto por sucursal
+let TIENDAS_ALL = [];              // solo sucursales reales (sin filas TOTAL)
+let TIENDA_TOTAL_GLOBAL = null;    // fila "TOTAL" que ya trae calculada el Snap
+let TIENDA_TOTAL_POR_CLUSTER = {}; // normalizeStr(cluster) -> fila "TOTAL_<CLUSTER>" del Snap
 let dataSource = { origin:'empty', loadedAt:null, execCount: 0 };
 let tiendaDataSource = { origin:'empty', loadedAt:null, tiendaCount: 0 };
 
@@ -1141,7 +1143,10 @@ function buildTiendaDemoRows(){
 
 function buildTiendasFromRows(tiendaRows, tiendaKpiRows){
   const byId = {};
-  const idFor = row => (pick(row,'SUCURSAL','NOMBRE_SUCURSAL','TIENDA') || '').toString().trim().toUpperCase();
+  // SUCURSAL_EXPRESS es el nombre real de columna que entrega Consulta_Tienda
+  // en Power BI (ver _Detalle / _TotalGlobal / _TotalPorCluster del DAX);
+  // SUCURSAL/NOMBRE_SUCURSAL/TIENDA quedan como alias de compatibilidad.
+  const idFor = row => (pick(row,'SUCURSAL_EXPRESS','SUCURSAL','NOMBRE_SUCURSAL','TIENDA') || '').toString().trim().toUpperCase();
   const ymFor = row => {
     const v = pick(row,'YM');
     if(v === undefined || v === null || v === '') return null;
@@ -1151,7 +1156,7 @@ function buildTiendasFromRows(tiendaRows, tiendaKpiRows){
     if(byId[id]) return byId[id];
     byId[id] = {
       id,
-      nombre: pick(row,'SUCURSAL','NOMBRE_SUCURSAL','TIENDA') || id,
+      nombre: pick(row,'SUCURSAL_EXPRESS','SUCURSAL','NOMBRE_SUCURSAL','TIENDA') || id,
       cluster: pick(row,'CLUSTER') || '—',
       periodos: {}
     };
@@ -1185,6 +1190,15 @@ function buildTiendasFromRows(tiendaRows, tiendaKpiRows){
   const all = Object.values(byId);
   all.sort((a,b) => a.nombre.localeCompare(b.nombre));
   return all;
+}
+
+// La Consulta_Tienda en Power BI entrega, además de cada sucursal real, una
+// fila "TOTAL" (global, CLUSTER="TOTAL") y una fila "TOTAL_<CLUSTER>" por
+// cada cluster (ver _TotalGlobal / _TotalPorCluster del DAX). Estas filas ya
+// vienen calculadas correctamente desde el modelo (incluidos los % de
+// cumplimiento) y NO deben tratarse como sucursales reales.
+function isTiendaTotalId(id){
+  return id === 'TOTAL' || id.startsWith('TOTAL_');
 }
 
 function periodsForTienda(tienda){
@@ -1265,10 +1279,18 @@ function statGroupsHtml(entity, ym, onDark){
   }).join('');
   return `<div class="stat-grid">${boxes}</div>`;
 }
-// Junta los valores de todas las tiendas de state.tiendaYm en un único
-// pseudo-objeto "periodos" para pintar el hero de red completa: suma para
-// unidades/montos, promedio simple para porcentajes.
+// Tarjeta "Total Express": usa la fila "TOTAL" que ya viene calculada desde
+// el Snap (Consulta_Tienda / _TotalGlobal en el DAX) — no se recalcula acá.
+// Esto es clave para los indicadores %: un promedio simple entre sucursales
+// (lo que hacía esta función antes) NO coincide con el % de cumplimiento
+// real que entrega Power BI (p.ej. PCT_EPA_GLOBAL_EMPRESA, PCT_EPA_GLOBAL),
+// que pondera según la base de cada sucursal. Solo si el Snap todavía no
+// trae la fila TOTAL (p.ej. datos demo) se recurre al cálculo manual como
+// respaldo, para no dejar la tarjeta vacía.
 function computeNetworkEntity(ym){
+  if(TIENDA_TOTAL_GLOBAL && TIENDA_TOTAL_GLOBAL.periodos[ym]){
+    return { id:'__NETWORK__', nombre:'Total CEX', periodos: { [ym]: TIENDA_TOTAL_GLOBAL.periodos[ym] } };
+  }
   const tiendas = TIENDAS_ALL.filter(t => t.periodos[ym]);
   const period = {};
   TIENDA_INDICATOR_KEYS.forEach(key => {
@@ -2045,7 +2067,20 @@ function applyLoadedData(execRows, kpiRows, origin){
 }
 
 function applyTiendaLoadedData(tiendaRows, tiendaKpiRows, origin){
-  TIENDAS_ALL = buildTiendasFromRows(tiendaRows, tiendaKpiRows);
+  const built = buildTiendasFromRows(tiendaRows, tiendaKpiRows);
+
+  // Separar las filas "TOTAL" / "TOTAL_<CLUSTER>" que ya vienen calculadas
+  // desde el Snap: se guardan aparte (para usarlas tal cual en la tarjeta de
+  // Total Express y en futuros totales por cluster) y NO entran a
+  // TIENDAS_ALL, para que no aparezcan como una sucursal más ni contaminen
+  // los promedios de comparación entre pares (groupForTienda).
+  TIENDA_TOTAL_GLOBAL = built.find(t => t.id === 'TOTAL') || null;
+  TIENDA_TOTAL_POR_CLUSTER = {};
+  built.filter(t => t.id !== 'TOTAL' && t.id.startsWith('TOTAL_')).forEach(t => {
+    TIENDA_TOTAL_POR_CLUSTER[normalizeStr(t.cluster)] = t;
+  });
+  TIENDAS_ALL = built.filter(t => !isTiendaTotalId(t.id));
+
   tiendaDataSource = { origin, loadedAt: new Date(), tiendaCount: TIENDAS_ALL.length };
   state.tiendaYm = resolveDefaultTiendaYm();
   populateTiendaClusterSelector();
