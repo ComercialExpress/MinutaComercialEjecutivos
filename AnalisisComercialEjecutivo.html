@@ -470,6 +470,10 @@
     text-transform:uppercase;color:var(--navy-700);font-weight:700;margin:0 0 14px;
   }
   .card-title::before{content:"";width:3px;height:14px;background:var(--orange-500);border-radius:2px;display:inline-block;}
+  .card-title-row{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
+  .card-title-row .card-title{margin:0;}
+  .radar-legend.compact{margin-top:16px;}
+  .radar-legend .legend-swatch.dashed{background:transparent;border:2px dashed var(--navy-700);border-radius:2px;}
   .radar-legend{display:flex;flex-direction:row;justify-content:center;align-items:center;gap:24px;width:fit-content;margin:18px auto 0;font-size:12.5px;font-weight:600;color:var(--ink-700);}
   .radar-legend span{display:inline-flex;align-items:center;gap:7px;}
   .legend-swatch{width:11px;height:11px;border-radius:3px;flex:none;}
@@ -962,6 +966,12 @@ function prevYM(ym){
   if(m === 0){ m = 12; y -= 1; }
   return `${y}${String(m).padStart(2,'0')}`;
 }
+// Mismo mes, un año antes (para la comparativa YoY del Comparativo Mensual).
+function yearAgoYM(ym){
+  const s = String(ym);
+  const y = parseInt(s.slice(0,4),10);
+  return `${y-1}${s.slice(4,6)}`;
+}
 
 /* =========================================================
    pick() — tolerante con el formato de columna que llegue desde DAX.
@@ -1009,7 +1019,8 @@ let state = {
   tiendaCluster: '__ALL__', // filtro de cluster dentro del panel de Tiendas
   tiendaYm: null,
   tiendaFichaId: null,      // id de la tienda abierta en la Ficha de tienda
-  tiendaFichaTab: 'evolutivo' // 'evolutivo' | 'matriz'
+  tiendaFichaTab: 'evolutivo', // 'evolutivo' | 'matriz'
+  tiendaStatsCompareMode: 'prevMonth' // 'prevMonth' | 'prevYear' — comparativo mensual bajo la Matriz
 };
 
 function buildExecsFromRows(execRows, kpiRows){
@@ -2241,12 +2252,218 @@ function tiendaMatrizHtml(tienda, group){
   </div>`;
 }
 
+// --- COMPARATIVO MENSUAL (Stat Wheel de tienda) — tarjeta que va debajo de
+// la Matriz Comparativa. En vez de comparar la tienda contra pares del
+// cluster/red (como el Stat Wheel de Ejecutivos), compara el mes seleccionado
+// contra el mes anterior o, alternando el selector, contra el mismo mes del
+// año anterior — así, a medida que se acumulen más años de datos, esta misma
+// tarjeta sirve para leer la comparativa interanual sin agregar otro gráfico.
+function tiendaStatsCardHtml(tienda){
+  const mode = state.tiendaStatsCompareMode;
+  return `<div class="card card-full" style="margin-top:16px;">
+    <div class="card-title-row">
+      <div class="card-title">Comparativo Mensual</div>
+      <div class="compare-field">
+        <label>Comparar contra</label>
+        <select id="tiendaStatsCompareSelect">
+          <option value="prevMonth"${mode === 'prevMonth' ? ' selected' : ''}>Mes anterior</option>
+          <option value="prevYear"${mode === 'prevYear' ? ' selected' : ''}>Mismo mes, año anterior</option>
+        </select>
+      </div>
+    </div>
+    <div class="radar-card-inner" id="tiendaStatsRadarCardInner">
+      <div id="tiendaStatsRadarWrap"></div>
+      <div class="radar-tooltip" id="tiendaStatsRadarTooltip"></div>
+      <div class="radar-legend compact" id="tiendaStatsRadarLegend"></div>
+    </div>
+  </div>`;
+}
+
+// Máximo histórico de la tienda para ese indicador (todos sus períodos
+// cargados) — se usa como referencia de escala del radio, para que la forma
+// del polígono refleje el rango habitual de la tienda y no solo la relación
+// entre los dos puntos que se están comparando.
+function tiendaIndicatorHistMax(tienda, key){
+  const vals = periodsForTiendaSorted(tienda)
+    .map(ym => execValue(tienda, ym, key))
+    .filter(v => v !== null && v !== undefined && !isNaN(v));
+  return vals.length ? Math.max(...vals) : 0;
+}
+
+function renderTiendaStatsRadar(tienda){
+  const wrap = document.getElementById('tiendaStatsRadarWrap');
+  const tooltip = document.getElementById('tiendaStatsRadarTooltip');
+  const legend = document.getElementById('tiendaStatsRadarLegend');
+  if(!wrap) return;
+  if(tooltip) tooltip.classList.remove('visible');
+
+  const keys = TIENDA_INDICATOR_KEYS;
+  const curYm = state.tiendaYm;
+  const cmpYm = state.tiendaStatsCompareMode === 'prevYear' ? yearAgoYM(curYm) : prevYM(curYm);
+  const cmpLabel = state.tiendaStatsCompareMode === 'prevYear' ? 'Mismo mes, año anterior' : 'Mes anterior';
+
+  if(!tienda || !curYm || keys.length < 3){
+    wrap.innerHTML = '<div style="padding:30px 10px;text-align:center;color:var(--ink-400);font-size:12.5px;">Sin datos suficientes para el gráfico</div>';
+    if(legend) legend.innerHTML = '';
+    return;
+  }
+
+  const hasCmpData = !!tienda.periodos[cmpYm];
+  const size = 760, cx = size/2, cy = size/2, R = 235;
+  const n = keys.length;
+  const angleFor = i => -Math.PI/2 + i * (2*Math.PI/n);
+
+  const curPts = [], cmpPts = [], curRaw = [], cmpRaw = [];
+  keys.forEach((key, i) => {
+    const curVal = execValue(tienda, curYm, key) || 0;
+    const cmpValRaw = hasCmpData ? execValue(tienda, cmpYm, key) : null;
+    const cmpVal = cmpValRaw || 0;
+    const maxScale = Math.max(tiendaIndicatorHistMax(tienda, key), curVal, cmpVal, 0.0001) * 1.12;
+    const rCur = Math.min(1, curVal / maxScale) * R;
+    const rCmp = Math.min(1, cmpVal / maxScale) * R;
+    const a = angleFor(i);
+    curPts.push([cx + rCur*Math.cos(a), cy + rCur*Math.sin(a)]);
+    cmpPts.push([cx + rCmp*Math.cos(a), cy + rCmp*Math.sin(a)]);
+    curRaw.push(curVal);
+    cmpRaw.push(cmpValRaw);
+  });
+
+  const gridLevels = [0.25, 0.5, 0.75, 1];
+  let gridHtml = '';
+  gridLevels.forEach(lvl => {
+    const pts = keys.map((_, i) => {
+      const a = angleFor(i);
+      return `${cx + R*lvl*Math.cos(a)},${cy + R*lvl*Math.sin(a)}`;
+    }).join(' ');
+    gridHtml += `<polygon points="${pts}" fill="none" stroke="#E4E6F1" stroke-width="1"/>`;
+  });
+
+  let spokesHtml = '';
+  let labelsHtml = '';
+  const LW = 148, LH = 30, GAP = 26;
+  keys.forEach((key, i) => {
+    const a = angleFor(i);
+    spokesHtml += `<line x1="${cx}" y1="${cy}" x2="${cx + R*Math.cos(a)}" y2="${cy + R*Math.sin(a)}" stroke="#E4E6F1" stroke-width="1"/>`;
+    const lx = cx + (R+GAP)*Math.cos(a);
+    const ly = cy + (R+GAP)*Math.sin(a);
+    const cosA = Math.cos(a);
+    let boxX, align;
+    if(cosA > 0.3){ boxX = lx; align = 'left'; }
+    else if(cosA < -0.3){ boxX = lx - LW; align = 'right'; }
+    else { boxX = lx - LW/2; align = 'center'; }
+    const boxY = ly - LH/2;
+    const info = INDICATOR_META[key] || {nombre:key, sub:''};
+    labelsHtml += `<foreignObject x="${boxX}" y="${boxY}" width="${LW}" height="${LH+12}">
+      <div xmlns="http://www.w3.org/1999/xhtml" class="radar-label-box" style="text-align:${align};" title="${info.nombre}">
+        ${info.nombre}
+        <span class="radar-label-sub">${info.sub || ''}</span>
+      </div>
+    </foreignObject>`;
+  });
+
+  const curPoly = curPts.map(p => p.join(',')).join(' ');
+  const cmpPoly = cmpPts.map(p => p.join(',')).join(' ');
+
+  let ptsHtml = '';
+  curPts.forEach((p, i) => {
+    ptsHtml += `<circle class="radar-pt-hit" data-series="cur" data-idx="${i}" cx="${p[0]}" cy="${p[1]}" r="16" fill="transparent"/>
+      <circle class="radar-pt-visible" cx="${p[0]}" cy="${p[1]}" r="4.2" fill="var(--orange-500)" stroke="#fff" stroke-width="1.5"/>`;
+  });
+  if(hasCmpData){
+    cmpPts.forEach((p, i) => {
+      ptsHtml += `<circle class="radar-pt-hit" data-series="cmp" data-idx="${i}" cx="${p[0]}" cy="${p[1]}" r="16" fill="transparent"/>
+        <circle class="radar-pt-visible" cx="${p[0]}" cy="${p[1]}" r="3.2" fill="var(--navy-700)" stroke="#fff" stroke-width="1.3"/>`;
+    });
+  }
+
+  wrap.innerHTML = `<svg viewBox="0 0 ${size} ${size}" style="width:100%;height:auto;display:block;overflow:visible;">
+    ${gridHtml}${spokesHtml}
+    ${hasCmpData ? `<polygon points="${cmpPoly}" fill="rgba(39,46,92,.12)" stroke="var(--navy-700)" stroke-width="2" stroke-dasharray="5,4"/>` : ''}
+    <polygon points="${curPoly}" fill="rgba(245,130,31,.20)" stroke="var(--orange-500)" stroke-width="2.6"/>
+    ${labelsHtml}
+    ${ptsHtml}
+  </svg>`;
+
+  if(legend){
+    legend.innerHTML = `
+      <span><span class="legend-swatch" style="background:var(--orange-500);"></span>${ymLabel(curYm)}</span>
+      <span><span class="legend-swatch dashed"></span>${hasCmpData ? ymLabel(cmpYm) : `${cmpLabel} · sin datos`}</span>
+    `;
+  }
+
+  attachTiendaStatsTooltip(keys, curRaw, cmpRaw, ymLabel(curYm), hasCmpData ? ymLabel(cmpYm) : null);
+}
+
+function attachTiendaStatsTooltip(keys, curRaw, cmpRaw, curLabel, cmpLabel){
+  const wrap = document.getElementById('tiendaStatsRadarWrap');
+  const tooltip = document.getElementById('tiendaStatsRadarTooltip');
+  const container = document.getElementById('tiendaStatsRadarCardInner');
+  if(!wrap || !tooltip || !container) return;
+
+  const showTooltip = (hitEl, clientX, clientY) => {
+    const idx = +hitEl.dataset.idx;
+    const key = keys[idx];
+    const info = INDICATOR_META[key] || {nombre:key};
+    const cVal = curRaw[idx];
+    const pVal = cmpRaw[idx];
+    let deltaHtml = '';
+    if(pVal !== null && pVal !== undefined && pVal !== 0 && cVal !== null && cVal !== undefined){
+      const diffPct = ((cVal - pVal) / Math.abs(pVal)) * 100;
+      const cls = diffPct >= 0 ? 'pos' : 'neg';
+      const arrow = diffPct >= 0 ? '▲' : '▼';
+      deltaHtml = `<div class="rt-delta ${cls}">${arrow} ${Math.abs(diffPct).toFixed(1).replace('.', ',')}% vs. ${cmpLabel || 'período anterior'}</div>`;
+    }
+    tooltip.innerHTML = `
+      <div class="rt-title">${info.nombre}</div>
+      ${info.sub ? `<div class="rt-sub">${info.sub}</div>` : ''}
+      <div class="rt-row"><span class="rt-dot" style="background:var(--orange-500);"></span>${curLabel}<b>${formatByType(key, cVal)}</b></div>
+      <div class="rt-row"><span class="rt-dot" style="background:var(--navy-700);"></span>${cmpLabel || 'Sin datos'}<b>${pVal === null || pVal === undefined ? '—' : formatByType(key, pVal)}</b></div>
+      ${deltaHtml}
+    `;
+    const rect = container.getBoundingClientRect();
+    tooltip.style.left = (clientX - rect.left) + 'px';
+    tooltip.style.top = (clientY - rect.top) + 'px';
+    tooltip.classList.add('visible');
+    wrap.querySelectorAll('.radar-pt-hit.rpt-active').forEach(el => el.classList.remove('rpt-active'));
+    hitEl.classList.add('rpt-active');
+  };
+  const hideTooltip = () => {
+    tooltip.classList.remove('visible');
+    wrap.querySelectorAll('.radar-pt-hit.rpt-active').forEach(el => el.classList.remove('rpt-active'));
+  };
+
+  wrap.querySelectorAll('.radar-pt-hit').forEach(hitEl => {
+    hitEl.addEventListener('mouseenter', (e) => showTooltip(hitEl, e.clientX, e.clientY));
+    hitEl.addEventListener('mousemove', (e) => showTooltip(hitEl, e.clientX, e.clientY));
+    hitEl.addEventListener('mouseleave', hideTooltip);
+    hitEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if(hitEl.classList.contains('rpt-active')){ hideTooltip(); }
+      else { showTooltip(hitEl, e.clientX, e.clientY); }
+    });
+  });
+  document.addEventListener('click', hideTooltip);
+}
+
+function attachTiendaStatsEvents(tienda){
+  const sel = document.getElementById('tiendaStatsCompareSelect');
+  if(!sel) return;
+  sel.addEventListener('change', (e) => {
+    state.tiendaStatsCompareMode = e.target.value;
+    renderTiendaStatsRadar(tienda);
+  });
+}
+
 function renderTiendaFichaTabContent(tienda, group){
   const wrap = document.getElementById('tiendaFichaTabContent');
   if(!wrap) return;
-  wrap.innerHTML = state.tiendaFichaTab === 'evolutivo'
-    ? tiendaEvolutivoHtml(tienda, TIENDA_INDICATOR_KEYS)
-    : tiendaMatrizHtml(tienda, group);
+  if(state.tiendaFichaTab === 'evolutivo'){
+    wrap.innerHTML = tiendaEvolutivoHtml(tienda, TIENDA_INDICATOR_KEYS);
+    return;
+  }
+  wrap.innerHTML = tiendaMatrizHtml(tienda, group) + tiendaStatsCardHtml(tienda);
+  renderTiendaStatsRadar(tienda);
+  attachTiendaStatsEvents(tienda);
 }
 
 function renderTiendaFicha(){
