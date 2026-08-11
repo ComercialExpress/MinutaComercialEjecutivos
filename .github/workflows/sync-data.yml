@@ -42,12 +42,16 @@ jobs:
         env:
           EXEC_URL: ${{ secrets.ONEDRIVE_EXEC_URL }}
           KPI_URL: ${{ secrets.ONEDRIVE_KPI_URL }}
+          TIENDA_URL: ${{ secrets.ONEDRIVE_TIENDA_URL }}
+          TIENDA_KPI_URL: ${{ secrets.ONEDRIVE_TIENDA_KPI_URL }}
         run: |
           encode() {
             printf '%s' "$1" | base64 -w 0 | tr '+/' '-_' | tr -d '=' | sed 's/^/u!/'
           }
           echo "exec_share=$(encode "$EXEC_URL")" >> "$GITHUB_OUTPUT"
           echo "kpi_share=$(encode "$KPI_URL")" >> "$GITHUB_OUTPUT"
+          echo "tienda_share=$(encode "$TIENDA_URL")" >> "$GITHUB_OUTPUT"
+          echo "tienda_kpi_share=$(encode "$TIENDA_KPI_URL")" >> "$GITHUB_OUTPUT"
 
       - name: Descargar ejecutivos.json vía Graph API
         env:
@@ -59,17 +63,10 @@ jobs:
             "https://graph.microsoft.com/v1.0/shares/${SHARE_ID}/driveItem/content" \
             -o ejecutivos.json)
           echo "HTTP_STATUS=${HTTP_STATUS}"
-          echo "Primeras líneas de la respuesta:"
           head -c 1000 ejecutivos.json
           echo ""
-          if [ "$HTTP_STATUS" -ge 400 ]; then
-            echo "Fallo la descarga (status >= 400)"
-            exit 1
-          fi
-          if ! jq empty ejecutivos.json 2>/dev/null; then
-            echo "El archivo descargado no es JSON válido (o está vacío). Se detiene sin hacer commit."
-            exit 1
-          fi
+          if [ "$HTTP_STATUS" -ge 400 ]; then exit 1; fi
+          if ! jq empty ejecutivos.json 2>/dev/null; then exit 1; fi
 
       - name: Descargar kpi.json vía Graph API
         env:
@@ -81,23 +78,46 @@ jobs:
             "https://graph.microsoft.com/v1.0/shares/${SHARE_ID}/driveItem/content" \
             -o kpi.json)
           echo "HTTP_STATUS=${HTTP_STATUS}"
-          echo "Primeras líneas de la respuesta:"
           head -c 1000 kpi.json
           echo ""
-          if [ "$HTTP_STATUS" -ge 400 ]; then
-            echo "Fallo la descarga (status >= 400)"
-            exit 1
-          fi
-          if ! jq empty kpi.json 2>/dev/null; then
-            echo "El archivo descargado no es JSON válido (o está vacío). Se detiene sin hacer commit."
-            exit 1
-          fi
+          if [ "$HTTP_STATUS" -ge 400 ]; then exit 1; fi
+          if ! jq empty kpi.json 2>/dev/null; then exit 1; fi
+
+      - name: Descargar tienda.json vía Graph API
+        env:
+          TOKEN: ${{ steps.auth.outputs.token }}
+          SHARE_ID: ${{ steps.encode.outputs.tienda_share }}
+        run: |
+          HTTP_STATUS=$(curl -s -L -H "Authorization: Bearer ${TOKEN}" \
+            -w "%{http_code}" \
+            "https://graph.microsoft.com/v1.0/shares/${SHARE_ID}/driveItem/content" \
+            -o tienda.json)
+          echo "HTTP_STATUS=${HTTP_STATUS}"
+          head -c 1000 tienda.json
+          echo ""
+          if [ "$HTTP_STATUS" -ge 400 ]; then exit 1; fi
+          if ! jq empty tienda.json 2>/dev/null; then exit 1; fi
+
+      - name: Descargar tienda_kpi.json vía Graph API
+        env:
+          TOKEN: ${{ steps.auth.outputs.token }}
+          SHARE_ID: ${{ steps.encode.outputs.tienda_kpi_share }}
+        run: |
+          HTTP_STATUS=$(curl -s -L -H "Authorization: Bearer ${TOKEN}" \
+            -w "%{http_code}" \
+            "https://graph.microsoft.com/v1.0/shares/${SHARE_ID}/driveItem/content" \
+            -o tienda_kpi.json)
+          echo "HTTP_STATUS=${HTTP_STATUS}"
+          head -c 1000 tienda_kpi.json
+          echo ""
+          if [ "$HTTP_STATUS" -ge 400 ]; then exit 1; fi
+          if ! jq empty tienda_kpi.json 2>/dev/null; then exit 1; fi
 
       - name: Commit y push si hay cambios
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add ejecutivos.json kpi.json
+          git add ejecutivos.json kpi.json tienda.json tienda_kpi.json
           if git diff --cached --quiet; then
             echo "Sin cambios, no se hace commit."
           else
