@@ -2256,7 +2256,16 @@ function tiendaEvolutivoHtml(tienda, keys){
 // participación es la proporción real sobre la suma del grupo. Para
 // indicadores en %, sumar no tiene sentido, así que se expresa como índice
 // respecto al promedio del grupo (100% = en el promedio).
-function computeGroupTotal(group, ym, key, tipo){
+// Si existe la fila precalculada del Snap (TOTAL / TOTAL_<CLUSTER>, ver
+// _TotalGlobal / _TotalPorCluster del DAX) se usa tal cual — ya viene
+// ponderada correctamente por Power BI. Solo si esa fila no existe para el
+// período (ej. datos demo, o mientras el pipeline aún no la trae) se cae al
+// cálculo manual como respaldo, igual que ya hace computeNetworkEntity().
+function computeGroupTotal(group, ym, key, tipo, precomputedEntity){
+  if(precomputedEntity && precomputedEntity.periodos[ym]){
+    const v = precomputedEntity.periodos[ym][key];
+    if(v !== null && v !== undefined && !isNaN(v)) return v;
+  }
   const values = group.map(t => execValue(t, ym, key)).filter(v => v !== null && v !== undefined && !isNaN(v));
   if(!values.length) return null;
   return tipo === 'pct'
@@ -2264,11 +2273,13 @@ function computeGroupTotal(group, ym, key, tipo){
     : values.reduce((s,v) => s+v, 0);
 }
 function tiendaMatrizHtml(tienda, group){
+  const clusterTotalEntity = TIENDA_TOTAL_POR_CLUSTER[normalizeStr(tienda.cluster)] || null;
+  const redTotalEntity = TIENDA_TOTAL_GLOBAL || null;
   const rows = TIENDA_INDICATOR_KEYS.map(key => {
     const info = INDICATOR_META[key] || {nombre:key, tipo:'int'};
     const val = execValue(tienda, state.tiendaYm, key);
-    const clusterTotal = computeGroupTotal(group, state.tiendaYm, key, info.tipo);
-    const redTotal = computeGroupTotal(TIENDAS_ALL, state.tiendaYm, key, info.tipo);
+    const clusterTotal = computeGroupTotal(group, state.tiendaYm, key, info.tipo, clusterTotalEntity);
+    const redTotal = computeGroupTotal(TIENDAS_ALL, state.tiendaYm, key, info.tipo, redTotalEntity);
     const pctCluster = (val !== null && clusterTotal) ? (val / clusterTotal * 100) : null;
     const pctRed = (val !== null && redTotal) ? (val / redTotal * 100) : null;
     return `<tr>
