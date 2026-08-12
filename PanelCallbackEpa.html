@@ -339,10 +339,12 @@ tr.total-row td.first{color:var(--orange-600);}
    Reemplazar por las URLs raw.githubusercontent.com correspondientes.
    ============================================================ */
 const CONFIG = {
-  // Reemplazar {ORG}/{REPO}/{BRANCH} por los reales del repo donde corre sync-callback.yml.
-  // Formato: https://raw.githubusercontent.com/{ORG}/{REPO}/{BRANCH}/data/archivo.json
-  origenProblemaUrl: null,   // ej: "https://raw.githubusercontent.com/{ORG}/{REPO}/main/data/origen_problema.json"
-  callbackSucursalUrl: null  // ej: "https://raw.githubusercontent.com/{ORG}/{REPO}/main/data/callback_sucursal.json"
+  // Repo: MinutaComercialEjecutivos, rama main, JSON en la raíz (mismo patrón que ejecutivos.json / kpi.json).
+  // OJO: verificá que el {OWNER} de abajo coincida EXACTO (mayúsculas incluidas) con lo que
+  // aparece en la barra de direcciones al entrar a github.com/tu-org/MinutaComercialEjecutivos
+  // — raw.githubusercontent.com es sensible a mayúsculas/minúsculas en esa parte de la URL.
+  origenProblemaUrl: "https://raw.githubusercontent.com/ComercialExpress/MinutaComercialEjecutivos/main/origen_problema.json",
+  callbackSucursalUrl: "https://raw.githubusercontent.com/ComercialExpress/MinutaComercialEjecutivos/main/callback_sucursal.json"
 };
 
 /* ------------------------------------------------------------
