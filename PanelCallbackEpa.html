@@ -66,7 +66,7 @@ body{
 .field label{display:block; font-size:9.5px; letter-spacing:.07em; text-transform:uppercase; color:rgba(255,255,255,.55); margin-bottom:2px;}
 .field select{
   appearance:none; background:transparent; border:none; color:#fff; font-family:'Inter'; font-size:13px; font-weight:600;
-  width:100%; padding-right:16px;
+  width:100%; padding-right:16px; cursor:pointer;
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M1 1l4 4 4-4' stroke='white' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg>");
   background-repeat:no-repeat; background-position:right center;
 }
@@ -158,6 +158,8 @@ tr.total-row td.first{color:var(--orange-600);}
 
 .footer-note{margin-top:18px; font-size:11px; color:var(--ink-400); text-align:center;}
 
+.empty-state{padding:30px 10px; text-align:center; color:var(--ink-400); font-size:12.5px;}
+
 @media (max-width:860px){
   .kpi-row{grid-template-columns:repeat(2,1fr);}
   .grid-2{grid-template-columns:1fr;}
@@ -184,29 +186,25 @@ tr.total-row td.first{color:var(--orange-600);}
     </div>
     <div class="h1">Panel Callback JT</div>
     <div class="header-meta">
-      <span class="asof">Datos al corte de julio 2026</span>
-      <span class="demo-badge"><span class="dot"></span>Base local · pendiente de sync con Lista</span>
+      <span class="asof" id="asOfLabel">Cargando datos…</span>
+      <span class="demo-badge" id="dataSourceBadge"><span class="dot"></span>Base local · pendiente de sync con Lista</span>
     </div>
 
     <div class="selectors-row">
       <div class="field">
         <label>Mes</label>
-        <select id="selMes">
-          <option value="7" selected>Julio</option>
-        </select>
+        <select id="selMes"></select>
       </div>
       <div class="field">
         <label>Sucursal (PVD)</label>
-        <select id="selSucursal">
-          <option value="all" selected>Todas</option>
-        </select>
+        <select id="selSucursal"></select>
       </div>
     </div>
 
     <div class="chips-row">
-      <div class="chip"><span class="chip-dot" style="background:var(--green-100)"></span>Buena</div>
-      <div class="chip"><span class="chip-dot" style="background:var(--red-100)"></span>Mala</div>
-      <div class="chip"><span class="chip-dot" style="background:var(--blue-100)"></span>Neutra</div>
+      <div class="chip"><span class="chip-dot" style="background:var(--green-100)"></span>Buena (nota 4–5)</div>
+      <div class="chip"><span class="chip-dot" style="background:var(--red-100)"></span>Mala (nota 1–2)</div>
+      <div class="chip"><span class="chip-dot" style="background:var(--blue-100)"></span>Neutra (nota 3)</div>
     </div>
   </div>
 
@@ -223,7 +221,7 @@ tr.total-row td.first{color:var(--orange-600);}
       <div class="kpi-card">
         <div class="kpi-label">Callbacks calificados</div>
         <div class="kpi-value" id="kpiTotal">—</div>
-        <div class="kpi-sub"><span class="pill"><span class="pill-dot"></span>Julio 2026</span></div>
+        <div class="kpi-sub"><span class="pill" id="kpiPeriodo"><span class="pill-dot"></span>—</span></div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">% Buena</div>
@@ -237,8 +235,8 @@ tr.total-row td.first{color:var(--orange-600);}
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Principal causa</div>
-        <div class="kpi-value" style="font-size:16px;">Error de evaluación</div>
-        <div class="kpi-sub"><span class="pill pill-brand">28,3% del total</span></div>
+        <div class="kpi-value" style="font-size:16px;" id="kpiCausa">—</div>
+        <div class="kpi-sub"><span class="pill pill-brand" id="kpiCausaPct">—</span></div>
       </div>
     </div>
 
@@ -267,7 +265,7 @@ tr.total-row td.first{color:var(--orange-600);}
       <div class="card-title-row">
         <div>
           <div class="card-title">Ranking de sucursales por volumen de callback</div>
-          <div class="card-sub">Total de llamadas calificadas en el mes</div>
+          <div class="card-sub">Total de llamadas calificadas en el período seleccionado</div>
         </div>
       </div>
       <div id="rangeList"></div>
@@ -279,8 +277,8 @@ tr.total-row td.first{color:var(--orange-600);}
     <div class="card">
       <div class="card-title-row">
         <div>
-          <div class="card-title">Base Call Back — Julio</div>
-          <div class="card-sub">Calificación por sucursal (SUCURSAL_EXPRESS)</div>
+          <div class="card-title">Base Call Back</div>
+          <div class="card-sub" id="tblSucursalesSub">Calificación por sucursal (SucursalPDV)</div>
         </div>
       </div>
       <div class="table-wrap">
@@ -336,171 +334,1197 @@ tr.total-row td.first{color:var(--orange-600);}
 <script>
 /* ============================================================
    CONFIG — único lugar a tocar cuando el sync con la Lista esté activo.
-   Reemplazar por las URLs raw.githubusercontent.com correspondientes.
+   Reemplazar por la URL raw.githubusercontent.com correspondiente.
    ============================================================ */
 const CONFIG = {
   // Repo: MinutaComercialEjecutivos, rama main, JSON en la raíz (mismo patrón que ejecutivos.json / kpi.json).
   // OJO: verificá que el {OWNER} de abajo coincida EXACTO (mayúsculas incluidas) con lo que
   // aparece en la barra de direcciones al entrar a github.com/tu-org/MinutaComercialEjecutivos
   // — raw.githubusercontent.com es sensible a mayúsculas/minúsculas en esa parte de la URL.
-  origenProblemaUrl: "https://raw.githubusercontent.com/ComercialExpress/MinutaComercialEjecutivos/main/origen_problema.json",
-  callbackSucursalUrl: "https://raw.githubusercontent.com/ComercialExpress/MinutaComercialEjecutivos/main/callback_sucursal.json"
+  //
+  // Shape esperado: array de registros individuales (no pre-agregados), uno por callback calificado:
+  //   { fecha:"2026-03-16", mes:"2026-03", sucursal:"TALCA CENTRO", categoria:"mala"|"neutra"|"buena", origen:"SISTEMA"|null }
+  // La categoría ya viene resuelta desde sync_callback.py aplicando la regla de negocio
+  // (Calif_Global 1–2 = mala, 3 = neutra, 4–5 = buena) para que el HTML nunca reimplemente esa regla por su cuenta.
+  registrosUrl: "https://raw.githubusercontent.com/ComercialExpress/MinutaComercialEjecutivos/main/callback_registros.json"
 };
 
 /* ------------------------------------------------------------
-   Fallback local — datos reales de julio 2026 (extraídos de la
-   tabla dinámica de Excel), usados mientras el sync no esté activo.
+   Fallback local — datos reales (marzo–mayo 2026) extraídos de
+   RegistrosCallback.csv (Lista de SharePoint), usados mientras
+   el sync automático no esté activo. Estructura a nivel de
+   registro individual, igual a lo que entregará el JSON real.
    ------------------------------------------------------------ */
-const FALLBACK_ORIGEN = [
-  { origen:"ERROR DE EVALUACIÓN", q:15, pct:28.30 },
-  { origen:"BUENA ATENCIÓN", q:13, pct:24.53 },
-  { origen:"COBERTURA", q:9, pct:16.98 },
-  { origen:"ATENCIÓN DEL EJECUTIVO", q:8, pct:15.09 },
-  { origen:"SISTEMA", q:6, pct:11.32 },
-  { origen:"TIEMPO DE ESPERA", q:1, pct:1.89 },
-  { origen:"ATENCIÓN DEL ANFITRIÓN", q:1, pct:1.89 }
-];
-
-const FALLBACK_SUCURSALES = [
-  { sucursal:"CURICÓ CAMILO HENRÍQUEZ", buena:0, mala:7, neutra:4, total:11 },
-  { sucursal:"MALL CENTER CURICÓ", buena:0, mala:1, neutra:0, total:1 },
-  { sucursal:"TALCA CENTRO", buena:0, mala:2, neutra:2, total:4 },
-  { sucursal:"TALCA MALL", buena:0, mala:2, neutra:0, total:2 },
-  { sucursal:"LINARES INDEPENDENCIA", buena:1, mala:8, neutra:2, total:11 },
-  { sucursal:"CHILLÁN EL ROBLE", buena:0, mala:6, neutra:0, total:6 },
-  { sucursal:"MALL ARAUCO CHILLÁN", buena:0, mala:1, neutra:0, total:1 },
-  { sucursal:"LOS ÁNGELES LATAURO", buena:0, mala:8, neutra:0, total:8 },
-  { sucursal:"MALL PLAZA LOS ÁNGELES", buena:5, mala:0, neutra:0, total:5 }
+const FALLBACK_REGISTROS = [
+  {
+    "fecha": "2026-03-16",
+    "mes": "2026-03",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": null
+  },
+  {
+    "fecha": "2026-03-17",
+    "mes": "2026-03",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "CALL CENTER"
+  },
+  {
+    "fecha": "2026-03-17",
+    "mes": "2026-03",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-03-17",
+    "mes": "2026-03",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "neutra",
+    "origen": "COBERTURA"
+  },
+  {
+    "fecha": "2026-03-17",
+    "mes": "2026-03",
+    "sucursal": "CHILLÁN EL ROBLE",
+    "categoria": "neutra",
+    "origen": "TIEMPO DE ESPERA"
+  },
+  {
+    "fecha": "2026-03-17",
+    "mes": "2026-03",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "mala",
+    "origen": "ATENCIÓN DEL ANFITRIÓN"
+  },
+  {
+    "fecha": "2026-03-17",
+    "mes": "2026-03",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "neutra",
+    "origen": "COBERTURA"
+  },
+  {
+    "fecha": "2026-03-17",
+    "mes": "2026-03",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "mala",
+    "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-03-17",
+    "mes": "2026-03",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "mala",
+    "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-03-17",
+    "mes": "2026-03",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "neutra",
+    "origen": "Error al tipiar"
+  },
+  {
+    "fecha": "2026-03-17",
+    "mes": "2026-03",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "neutra",
+    "origen": "ATENCIÓN DEL ANFITRIÓN"
+  },
+  {
+    "fecha": "2026-03-17",
+    "mes": "2026-03",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "Mala informacion de call"
+  },
+  {
+    "fecha": "2026-03-17",
+    "mes": "2026-03",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-03-17",
+    "mes": "2026-03",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-03-17",
+    "mes": "2026-03",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "neutra",
+    "origen": "ATENCIÓN DEL ANFITRIÓN"
+  },
+  {
+    "fecha": "2026-03-18",
+    "mes": "2026-03",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "mala",
+    "origen": "COBERTURA"
+  },
+  {
+    "fecha": "2026-03-18",
+    "mes": "2026-03",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "buena",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-03-18",
+    "mes": "2026-03",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "buena",
+    "origen": "TIEMPO DE ESPERA"
+  },
+  {
+    "fecha": "2026-03-18",
+    "mes": "2026-03",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "neutra",
+    "origen": "Responsabilidad cliente"
+  },
+  {
+    "fecha": "2026-03-18",
+    "mes": "2026-03",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "mala",
+    "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-03-18",
+    "mes": "2026-03",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "buena atencion"
+  },
+  {
+    "fecha": "2026-03-18",
+    "mes": "2026-03",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-03-19",
+    "mes": "2026-03",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "NO CONTESTA"
+  },
+  {
+    "fecha": "2026-03-19",
+    "mes": "2026-03",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "buena atencion"
+  },
+  {
+    "fecha": "2026-03-19",
+    "mes": "2026-03",
+    "sucursal": "TALCA MALL",
+    "categoria": "mala",
+    "origen": "COBERTURA"
+  },
+  {
+    "fecha": "2026-03-20",
+    "mes": "2026-03",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "mala",
+    "origen": "Cupo financiamiento"
+  },
+  {
+    "fecha": "2026-03-20",
+    "mes": "2026-03",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "mala",
+    "origen": "No existe problema"
+  },
+  {
+    "fecha": "2026-03-23",
+    "mes": "2026-03",
+    "sucursal": "MALL CENTER CURICÓ",
+    "categoria": "neutra",
+    "origen": "Ningún problema"
+  },
+  {
+    "fecha": "2026-03-23",
+    "mes": "2026-03",
+    "sucursal": "MALL CENTER CURICÓ",
+    "categoria": "buena",
+    "origen": "Ninguna"
+  },
+  {
+    "fecha": "2026-03-23",
+    "mes": "2026-03",
+    "sucursal": "TALCA MALL",
+    "categoria": "mala",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-03-24",
+    "mes": "2026-03",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "TIEMPO DE ESPERA"
+  },
+  {
+    "fecha": "2026-03-24",
+    "mes": "2026-03",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "mala",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-03-24",
+    "mes": "2026-03",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "ATENCIÓN DEL ANFITRIÓN"
+  },
+  {
+    "fecha": "2026-03-24",
+    "mes": "2026-03",
+    "sucursal": "MALL ARAUCO CHILLÁN",
+    "categoria": "neutra",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-03-25",
+    "mes": "2026-03",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "cliente indica error al evaluar"
+  },
+  {
+    "fecha": "2026-03-25",
+    "mes": "2026-03",
+    "sucursal": "MALL CENTER CURICÓ",
+    "categoria": "buena",
+    "origen": "TIEMPO DE ESPERA"
+  },
+  {
+    "fecha": "2026-03-26",
+    "mes": "2026-03",
+    "sucursal": "MALL CENTER CURICÓ",
+    "categoria": "buena",
+    "origen": "ningun problema"
+  },
+  {
+    "fecha": "2026-03-26",
+    "mes": "2026-03",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "neutra",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-03-27",
+    "mes": "2026-03",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "buena",
+    "origen": "TIEMPO DE ESPERA"
+  },
+  {
+    "fecha": "2026-03-27",
+    "mes": "2026-03",
+    "sucursal": "TALCA MALL",
+    "categoria": "buena",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-03-27",
+    "mes": "2026-03",
+    "sucursal": "CHILLÁN EL ROBLE",
+    "categoria": "mala",
+    "origen": "TIEMPO DE ESPERA"
+  },
+  {
+    "fecha": "2026-03-27",
+    "mes": "2026-03",
+    "sucursal": "CHILLÁN EL ROBLE",
+    "categoria": "neutra",
+    "origen": "ERROR DE EVALUCACIÓN"
+  },
+  {
+    "fecha": "2026-03-27",
+    "mes": "2026-03",
+    "sucursal": "CHILLÁN EL ROBLE",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUCACIÓN"
+  },
+  {
+    "fecha": "2026-03-27",
+    "mes": "2026-03",
+    "sucursal": "MALL ARAUCO CHILLÁN",
+    "categoria": "mala",
+    "origen": "COBERTURA"
+  },
+  {
+    "fecha": "2026-03-27",
+    "mes": "2026-03",
+    "sucursal": "MALL ARAUCO CHILLÁN",
+    "categoria": "buena",
+    "origen": "Buena atención"
+  },
+  {
+    "fecha": "2026-03-27",
+    "mes": "2026-03",
+    "sucursal": "MALL ARAUCO CHILLÁN",
+    "categoria": "buena",
+    "origen": "Buena atención"
+  },
+  {
+    "fecha": "2026-03-27",
+    "mes": "2026-03",
+    "sucursal": "MALL ARAUCO CHILLÁN",
+    "categoria": "buena",
+    "origen": "Buena atención"
+  },
+  {
+    "fecha": "2026-03-26",
+    "mes": "2026-03",
+    "sucursal": "MALL PLAZA LOS ÁNGELES",
+    "categoria": "mala",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-03-27",
+    "mes": "2026-03",
+    "sucursal": "MALL PLAZA LOS ÁNGELES",
+    "categoria": "buena",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-03-27",
+    "mes": "2026-03",
+    "sucursal": "MALL PLAZA LOS ÁNGELES",
+    "categoria": "buena",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-03-27",
+    "mes": "2026-03",
+    "sucursal": "MALL PLAZA LOS ÁNGELES",
+    "categoria": "buena",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-03-27",
+    "mes": "2026-03",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "buena",
+    "origen": "TIEMPO DE ESPERA"
+  },
+  {
+    "fecha": "2026-03-30",
+    "mes": "2026-03",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "mala",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-03-30",
+    "mes": "2026-03",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUCACIÓN"
+  },
+  {
+    "fecha": "2026-03-31",
+    "mes": "2026-03",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "mala",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-03-31",
+    "mes": "2026-03",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "mala",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-03-31",
+    "mes": "2026-03",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-03-31",
+    "mes": "2026-03",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUCACIÓN"
+  },
+  {
+    "fecha": "2026-04-08",
+    "mes": "2026-04",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-04-08",
+    "mes": "2026-04",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "mala",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-04-08",
+    "mes": "2026-04",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "mala",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-04-09",
+    "mes": "2026-04",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-04-10",
+    "mes": "2026-04",
+    "sucursal": "TALCA MALL",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-04-13",
+    "mes": "2026-04",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-04-13",
+    "mes": "2026-04",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-04-13",
+    "mes": "2026-04",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-04-13",
+    "mes": "2026-04",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "buena",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-04-13",
+    "mes": "2026-04",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "neutra",
+    "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-04-13",
+    "mes": "2026-04",
+    "sucursal": "CHILLÁN EL ROBLE",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-04-14",
+    "mes": "2026-04",
+    "sucursal": "MALL ARAUCO CHILLÁN",
+    "categoria": "buena",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-04-15",
+    "mes": "2026-04",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-04-15",
+    "mes": "2026-04",
+    "sucursal": "MALL ARAUCO CHILLÁN",
+    "categoria": "mala",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-04-15",
+    "mes": "2026-04",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "buena",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-04-15",
+    "mes": "2026-04",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "mala",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-04-15",
+    "mes": "2026-04",
+    "sucursal": "CHILLÁN EL ROBLE",
+    "categoria": "mala",
+    "origen": "ATENCIÓN SUPERVISOR"
+  },
+  {
+    "fecha": "2026-04-15",
+    "mes": "2026-04",
+    "sucursal": "MALL ARAUCO CHILLÁN",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-04-16",
+    "mes": "2026-04",
+    "sucursal": "MALL CENTER CURICÓ",
+    "categoria": "mala",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-04-16",
+    "mes": "2026-04",
+    "sucursal": "MALL CENTER CURICÓ",
+    "categoria": "buena",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-04-16",
+    "mes": "2026-04",
+    "sucursal": "MALL CENTER CURICÓ",
+    "categoria": "buena",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-04-16",
+    "mes": "2026-04",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "mala",
+    "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-04-16",
+    "mes": "2026-04",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-04-16",
+    "mes": "2026-04",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-04-16",
+    "mes": "2026-04",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "buena",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-04-17",
+    "mes": "2026-04",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "neutra",
+    "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-04-17",
+    "mes": "2026-04",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "neutra",
+    "origen": "COBERTURA"
+  },
+  {
+    "fecha": "2026-04-17",
+    "mes": "2026-04",
+    "sucursal": "TALCA MALL",
+    "categoria": "buena",
+    "origen": "TIEMPO DE ESPERA"
+  },
+  {
+    "fecha": "2026-04-17",
+    "mes": "2026-04",
+    "sucursal": "TALCA MALL",
+    "categoria": "mala",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-04-17",
+    "mes": "2026-04",
+    "sucursal": "TALCA MALL",
+    "categoria": "buena",
+    "origen": "TIEMPO DE ESPERA"
+  },
+  {
+    "fecha": "2026-04-20",
+    "mes": "2026-04",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-04-20",
+    "mes": "2026-04",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-04-21",
+    "mes": "2026-04",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-04-21",
+    "mes": "2026-04",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-04-21",
+    "mes": "2026-04",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-04-21",
+    "mes": "2026-04",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-04-23",
+    "mes": "2026-04",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-04-23",
+    "mes": "2026-04",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "neutra",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-04-23",
+    "mes": "2026-04",
+    "sucursal": "CHILLÁN EL ROBLE",
+    "categoria": "neutra",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-04-23",
+    "mes": "2026-04",
+    "sucursal": "CHILLÁN EL ROBLE",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-04-23",
+    "mes": "2026-04",
+    "sucursal": "CHILLÁN EL ROBLE",
+    "categoria": "neutra",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-04-24",
+    "mes": "2026-04",
+    "sucursal": "MALL ARAUCO CHILLÁN",
+    "categoria": "mala",
+    "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-04-26",
+    "mes": "2026-04",
+    "sucursal": "MALL PLAZA LOS ÁNGELES",
+    "categoria": "buena",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-04-26",
+    "mes": "2026-04",
+    "sucursal": "MALL PLAZA LOS ÁNGELES",
+    "categoria": "buena",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-04-26",
+    "mes": "2026-04",
+    "sucursal": "MALL PLAZA LOS ÁNGELES",
+    "categoria": "buena",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-04-27",
+    "mes": "2026-04",
+    "sucursal": "CHILLÁN EL ROBLE",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-04-27",
+    "mes": "2026-04",
+    "sucursal": "CHILLÁN EL ROBLE",
+    "categoria": "mala",
+    "origen": "COBERTURA"
+  },
+  {
+    "fecha": "2026-04-27",
+    "mes": "2026-04",
+    "sucursal": "CHILLÁN EL ROBLE",
+    "categoria": "neutra",
+    "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-04-27",
+    "mes": "2026-04",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "neutra",
+    "origen": "TIEMPO DE ESPERA"
+  },
+  {
+    "fecha": "2026-04-28",
+    "mes": "2026-04",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-04-28",
+    "mes": "2026-04",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "neutra",
+    "origen": "TIEMPO DE ESPERA"
+  },
+  {
+    "fecha": "2026-04-28",
+    "mes": "2026-04",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "mala",
+    "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-04-28",
+    "mes": "2026-04",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "mala",
+    "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-04-29",
+    "mes": "2026-04",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "neutra",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-04-29",
+    "mes": "2026-04",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "mala",
+    "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-04-29",
+    "mes": "2026-04",
+    "sucursal": "TALCA MALL",
+    "categoria": "neutra",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-04-29",
+    "mes": "2026-04",
+    "sucursal": "MALL CENTER CURICÓ",
+    "categoria": "buena",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-05-07",
+    "mes": "2026-05",
+    "sucursal": "MALL CENTER CURICÓ",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-05-08",
+    "mes": "2026-05",
+    "sucursal": "MALL ARAUCO CHILLÁN",
+    "categoria": "mala",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-05-09",
+    "mes": "2026-05",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "mala",
+    "origen": "COBERTURA"
+  },
+  {
+    "fecha": "2026-05-14",
+    "mes": "2026-05",
+    "sucursal": "TALCA MALL",
+    "categoria": "neutra",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-05-15",
+    "mes": "2026-05",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-05-15",
+    "mes": "2026-05",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "mala",
+    "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-05-15",
+    "mes": "2026-05",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-05-15",
+    "mes": "2026-05",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "COBERTURA"
+  },
+  {
+    "fecha": "2026-05-15",
+    "mes": "2026-05",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-05-16",
+    "mes": "2026-05",
+    "sucursal": "CHILLÁN EL ROBLE",
+    "categoria": "neutra",
+    "origen": "TIEMPO DE ESPERA"
+  },
+  {
+    "fecha": "2026-05-16",
+    "mes": "2026-05",
+    "sucursal": "CHILLÁN EL ROBLE",
+    "categoria": "mala",
+    "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-05-16",
+    "mes": "2026-05",
+    "sucursal": "CHILLÁN EL ROBLE",
+    "categoria": "mala",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-05-18",
+    "mes": "2026-05",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-05-18",
+    "mes": "2026-05",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-05-18",
+    "mes": "2026-05",
+    "sucursal": "TALCA MALL",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-05-18",
+    "mes": "2026-05",
+    "sucursal": "MALL PLAZA LOS ÁNGELES",
+    "categoria": "mala",
+    "origen": "COBERTURA"
+  },
+  {
+    "fecha": "2026-05-18",
+    "mes": "2026-05",
+    "sucursal": "MALL PLAZA LOS ÁNGELES",
+    "categoria": "buena",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-05-18",
+    "mes": "2026-05",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "neutra",
+    "origen": "ERROR DE EVALUACIÓN"
+  }
 ];
 
 const COLOR_GOOD = "#158A4A", COLOR_BAD = "#D6394A", COLOR_NEUTRAL = "#2A6FC9";
-const ORIGIN_PALETTE = ["#F5821F","#158A4A","#2A6FC9","#7C4DBF","#C97A11","#D6394A","#454F92"];
+const ORIGIN_PALETTE = ["#F5821F","#158A4A","#2A6FC9","#7C4DBF","#C97A11","#D6394A","#454F92","#9296AE","#F5821F"];
+const MESES_ES = ["","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+
+let chartSucursales = null;
+let chartOrigen = null;
+let ALL_RECORDS = [];
 
 async function loadJson(url, fallback){
   if(!url) return fallback;
   try{
     const res = await fetch(url);
     if(!res.ok) throw new Error("bad status");
-    return await res.json();
+    const data = await res.json();
+    document.getElementById('dataSourceBadge').innerHTML = '<span class="dot"></span>Datos sincronizados desde la Lista';
+    return data;
   }catch(e){
     console.warn("Fallback aplicado para", url, e);
+    document.getElementById('dataSourceBadge').innerHTML = '<span class="dot"></span>Base local · pendiente de sync con Lista';
     return fallback;
   }
 }
 
 function fmtPct(n){ return n.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1}) + "%"; }
 
-(async function init(){
-  const origen = await loadJson(CONFIG.origenProblemaUrl, FALLBACK_ORIGEN);
-  const sucursales = await loadJson(CONFIG.callbackSucursalUrl, FALLBACK_SUCURSALES);
+function mesLabel(mesKey){
+  if(mesKey === 'all') return 'Todos los meses';
+  const [y,m] = mesKey.split('-');
+  return `${MESES_ES[parseInt(m,10)]} ${y}`;
+}
 
-  const totBuena = sucursales.reduce((s,r)=>s+r.buena,0);
-  const totMala = sucursales.reduce((s,r)=>s+r.mala,0);
-  const totNeutra = sucursales.reduce((s,r)=>s+r.neutra,0);
-  const totGeneral = totBuena+totMala+totNeutra;
+/* ---- Filtro central: aplica mes + sucursal sobre el set completo ---- */
+function getFiltered(){
+  const mes = document.getElementById('selMes').value;
+  const suc = document.getElementById('selSucursal').value;
+  return ALL_RECORDS.filter(r =>
+    (mes === 'all' || r.mes === mes) &&
+    (suc === 'all' || r.sucursal === suc)
+  );
+}
 
-  // KPIs
+/* ---- Agregación por sucursal a partir de una lista de registros ---- */
+function aggBySucursal(records){
+  const map = new Map();
+  records.forEach(r=>{
+    if(!map.has(r.sucursal)) map.set(r.sucursal, {sucursal:r.sucursal, buena:0, mala:0, neutra:0});
+    map.get(r.sucursal)[r.categoria]++;
+  });
+  return [...map.values()].map(v => ({...v, total: v.buena + v.mala + v.neutra}));
+}
+
+/* ---- Agregación por origen (normalizado a mayúsculas/trim para no duplicar por casing) ---- */
+function aggByOrigen(records){
+  const map = new Map();
+  records.forEach(r=>{
+    if(!r.origen) return;
+    const key = r.origen.trim().toUpperCase();
+    map.set(key, (map.get(key)||0) + 1);
+  });
+  const total = [...map.values()].reduce((a,b)=>a+b,0) || 1;
+  return [...map.entries()]
+    .map(([origen,q]) => ({origen, q, pct: q/total*100}))
+    .sort((a,b)=>b.q-a.q);
+}
+
+function renderAll(){
+  const filtered = getFiltered();
+  const mesSel = document.getElementById('selMes').value;
+  const sucSel = document.getElementById('selSucursal').value;
+
+  document.getElementById('kpiPeriodo').innerHTML =
+    `<span class="pill-dot"></span>${mesLabel(mesSel)}${sucSel !== 'all' ? ' · ' + sucSel : ''}`;
+
+  const sucursalesAgg = aggBySucursal(filtered).sort((a,b)=>b.total-a.total);
+  const origenAgg = aggByOrigen(filtered);
+
+  const totBuena = filtered.filter(r=>r.categoria==='buena').length;
+  const totMala = filtered.filter(r=>r.categoria==='mala').length;
+  const totNeutra = filtered.filter(r=>r.categoria==='neutra').length;
+  const totGeneral = filtered.length;
+
+  // ---- KPIs ----
   document.getElementById('kpiTotal').textContent = totGeneral;
-  document.getElementById('kpiBuena').textContent = fmtPct(totBuena/totGeneral*100);
+  document.getElementById('kpiBuena').textContent = totGeneral ? fmtPct(totBuena/totGeneral*100) : '—';
   document.getElementById('kpiBuenaN').textContent = totBuena + " casos";
-  document.getElementById('kpiMala').textContent = fmtPct(totMala/totGeneral*100);
+  document.getElementById('kpiMala').textContent = totGeneral ? fmtPct(totMala/totGeneral*100) : '—';
   document.getElementById('kpiMalaN').textContent = totMala + " casos";
 
-  // Selector de sucursal
-  const selSuc = document.getElementById('selSucursal');
-  sucursales.forEach(r=>{
-    const o = document.createElement('option');
-    o.value = r.sucursal; o.textContent = r.sucursal;
-    selSuc.appendChild(o);
-  });
+  if(origenAgg.length){
+    document.getElementById('kpiCausa').textContent = titleCase(origenAgg[0].origen);
+    document.getElementById('kpiCausaPct').textContent = fmtPct(origenAgg[0].pct) + " del total";
+  }else{
+    document.getElementById('kpiCausa').textContent = '—';
+    document.getElementById('kpiCausaPct').textContent = '—';
+  }
 
   // ---- Chart: sucursales (stacked horizontal bar) ----
-  const sortedSuc = [...sucursales].sort((a,b)=>b.total-a.total);
-  new Chart(document.getElementById('chartSucursales'), {
-    type:'bar',
-    data:{
-      labels: sortedSuc.map(r=>r.sucursal),
-      datasets:[
-        { label:'Buena', data: sortedSuc.map(r=>r.buena), backgroundColor: COLOR_GOOD, stack:'s' },
-        { label:'Mala', data: sortedSuc.map(r=>r.mala), backgroundColor: COLOR_BAD, stack:'s' },
-        { label:'Neutra', data: sortedSuc.map(r=>r.neutra), backgroundColor: COLOR_NEUTRAL, stack:'s' }
-      ]
-    },
-    options:{
-      indexAxis:'y',
-      responsive:true,
-      plugins:{ legend:{ display:false } },
-      scales:{
-        x:{ stacked:true, grid:{ color:'#EDEEF6' }, ticks:{ font:{ family:'Inter', size:11 } } },
-        y:{ stacked:true, grid:{ display:false }, ticks:{ font:{ family:'Inter', size:11 } } }
+  if(chartSucursales) chartSucursales.destroy();
+  if(sucursalesAgg.length){
+    chartSucursales = new Chart(document.getElementById('chartSucursales'), {
+      type:'bar',
+      data:{
+        labels: sucursalesAgg.map(r=>r.sucursal),
+        datasets:[
+          { label:'Buena', data: sucursalesAgg.map(r=>r.buena), backgroundColor: COLOR_GOOD, stack:'s' },
+          { label:'Mala', data: sucursalesAgg.map(r=>r.mala), backgroundColor: COLOR_BAD, stack:'s' },
+          { label:'Neutra', data: sucursalesAgg.map(r=>r.neutra), backgroundColor: COLOR_NEUTRAL, stack:'s' }
+        ]
+      },
+      options:{
+        indexAxis:'y',
+        responsive:true,
+        plugins:{ legend:{ display:false } },
+        scales:{
+          x:{ stacked:true, grid:{ color:'#EDEEF6' }, ticks:{ font:{ family:'Inter', size:11 }, precision:0 } },
+          y:{ stacked:true, grid:{ display:false }, ticks:{ font:{ family:'Inter', size:11 } } }
+        }
       }
-    }
-  });
+    });
+  }
 
   // ---- Chart: origen (doughnut) ----
-  new Chart(document.getElementById('chartOrigen'), {
-    type:'doughnut',
-    data:{
-      labels: origen.map(o=>o.origen),
-      datasets:[{ data: origen.map(o=>o.q), backgroundColor: ORIGIN_PALETTE, borderWidth:2, borderColor:'#fff' }]
-    },
-    options:{
-      responsive:true,
-      cutout:'62%',
-      plugins:{ legend:{ position:'bottom', labels:{ font:{ family:'Inter', size:10.5 }, boxWidth:9, padding:10 } } }
-    }
-  });
+  if(chartOrigen) chartOrigen.destroy();
+  if(origenAgg.length){
+    chartOrigen = new Chart(document.getElementById('chartOrigen'), {
+      type:'doughnut',
+      data:{
+        labels: origenAgg.map(o=>titleCase(o.origen)),
+        datasets:[{ data: origenAgg.map(o=>o.q), backgroundColor: ORIGIN_PALETTE, borderWidth:2, borderColor:'#fff' }]
+      },
+      options:{
+        responsive:true,
+        cutout:'62%',
+        plugins:{ legend:{ position:'bottom', labels:{ font:{ family:'Inter', size:10.5 }, boxWidth:9, padding:10 } } }
+      }
+    });
+  }
 
   // ---- Range list (ranking sucursales) ----
-  const maxTotal = Math.max(...sucursales.map(r=>r.total));
-  const rangeHtml = sortedSuc.map((r,i)=>`
-    <div class="range-item">
-      <div class="range-rank">${i+1}</div>
-      <div class="range-name">${r.sucursal}</div>
-      <div class="range-track"><div class="fill-track" style="width:${(r.total/maxTotal*100).toFixed(0)}%"></div></div>
-      <div class="range-val">${r.total}</div>
-    </div>`).join('');
-  document.getElementById('rangeList').innerHTML = rangeHtml;
+  const rangeListEl = document.getElementById('rangeList');
+  if(sucursalesAgg.length){
+    const maxTotal = Math.max(...sucursalesAgg.map(r=>r.total));
+    rangeListEl.innerHTML = sucursalesAgg.map((r,i)=>`
+      <div class="range-item">
+        <div class="range-rank">${i+1}</div>
+        <div class="range-name">${r.sucursal}</div>
+        <div class="range-track"><div class="fill-track" style="width:${(r.total/maxTotal*100).toFixed(0)}%"></div></div>
+        <div class="range-val">${r.total}</div>
+      </div>`).join('');
+  }else{
+    rangeListEl.innerHTML = `<div class="empty-state">Sin callbacks calificados para este período/sucursal.</div>`;
+  }
 
   // ---- Tabla sucursales ----
-  const rowsSuc = sortedSuc.map(r=>{
-    const pctMala = r.total ? (r.mala/r.total*100) : 0;
-    const badgeClass = pctMala >= 60 ? 'badge-bad' : (pctMala >= 30 ? 'badge-neutral' : 'badge-good');
-    return `<tr>
-      <td class="first">${r.sucursal}</td>
-      <td class="num">${r.buena ? `<span class="badge badge-good">${r.buena}</span>` : '0'}</td>
-      <td class="num">${r.mala ? `<span class="badge badge-bad">${r.mala}</span>` : '0'}</td>
-      <td class="num">${r.neutra ? `<span class="badge badge-neutral">${r.neutra}</span>` : '0'}</td>
-      <td class="num">${r.total}</td>
-      <td><span class="badge ${badgeClass}">${fmtPct(pctMala)}</span></td>
-    </tr>`;
-  }).join('');
-  const totalRow = `<tr class="total-row">
-      <td class="first">Total general</td>
-      <td class="num">${totBuena}</td>
-      <td class="num">${totMala}</td>
-      <td class="num">${totNeutra}</td>
-      <td class="num">${totGeneral}</td>
-      <td><span class="badge badge-max">${fmtPct(totMala/totGeneral*100)}</span></td>
-    </tr>`;
-  document.getElementById('tblSucursales').innerHTML = rowsSuc + totalRow;
+  document.getElementById('tblSucursalesSub').textContent =
+    `Calificación por sucursal (SucursalPDV) · ${mesLabel(mesSel)}`;
+  const tblSucBody = document.getElementById('tblSucursales');
+  if(sucursalesAgg.length){
+    const rowsSuc = sucursalesAgg.map(r=>{
+      const pctMala = r.total ? (r.mala/r.total*100) : 0;
+      const badgeClass = pctMala >= 60 ? 'badge-bad' : (pctMala >= 30 ? 'badge-neutral' : 'badge-good');
+      return `<tr>
+        <td class="first">${r.sucursal}</td>
+        <td class="num">${r.buena ? `<span class="badge badge-good">${r.buena}</span>` : '0'}</td>
+        <td class="num">${r.mala ? `<span class="badge badge-bad">${r.mala}</span>` : '0'}</td>
+        <td class="num">${r.neutra ? `<span class="badge badge-neutral">${r.neutra}</span>` : '0'}</td>
+        <td class="num">${r.total}</td>
+        <td><span class="badge ${badgeClass}">${fmtPct(pctMala)}</span></td>
+      </tr>`;
+    }).join('');
+    const totalRow = `<tr class="total-row">
+        <td class="first">Total general</td>
+        <td class="num">${totBuena}</td>
+        <td class="num">${totMala}</td>
+        <td class="num">${totNeutra}</td>
+        <td class="num">${totGeneral}</td>
+        <td><span class="badge badge-max">${totGeneral ? fmtPct(totMala/totGeneral*100) : '0,0%'}</span></td>
+      </tr>`;
+    tblSucBody.innerHTML = rowsSuc + totalRow;
+  }else{
+    tblSucBody.innerHTML = `<tr><td colspan="6"><div class="empty-state">Sin registros para este período/sucursal.</div></td></tr>`;
+  }
 
   // ---- Tabla origen ----
-  const totQ = origen.reduce((s,o)=>s+o.q,0);
-  const maxQ = Math.max(...origen.map(o=>o.q));
-  const rowsOrigen = origen.map(o=>`
-    <tr>
-      <td class="first">${o.origen}</td>
-      <td class="num">${o.q}</td>
-      <td>
-        <div style="display:flex; align-items:center; gap:10px;">
-          <div class="range-track" style="max-width:120px;"><div class="fill-track" style="width:${(o.q/maxQ*100).toFixed(0)}%"></div></div>
-          <span style="font-variant-numeric:tabular-nums; font-weight:700; color:var(--ink-900);">${fmtPct(o.pct)}</span>
-        </div>
-      </td>
-    </tr>`).join('');
-  const totalOrigenRow = `<tr class="total-row"><td class="first">Total general</td><td class="num">${totQ}</td><td>100,0%</td></tr>`;
-  document.getElementById('tblOrigen').innerHTML = rowsOrigen + totalOrigenRow;
+  const tblOrigenBody = document.getElementById('tblOrigen');
+  if(origenAgg.length){
+    const maxQ = Math.max(...origenAgg.map(o=>o.q));
+    const rowsOrigen = origenAgg.map(o=>`
+      <tr>
+        <td class="first">${titleCase(o.origen)}</td>
+        <td class="num">${o.q}</td>
+        <td>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div class="range-track" style="max-width:120px;"><div class="fill-track" style="width:${(o.q/maxQ*100).toFixed(0)}%"></div></div>
+            <span style="font-variant-numeric:tabular-nums; font-weight:700; color:var(--ink-900);">${fmtPct(o.pct)}</span>
+          </div>
+        </td>
+      </tr>`).join('');
+    const totQ = origenAgg.reduce((s,o)=>s+o.q,0);
+    const totalOrigenRow = `<tr class="total-row"><td class="first">Total general</td><td class="num">${totQ}</td><td>100,0%</td></tr>`;
+    tblOrigenBody.innerHTML = rowsOrigen + totalOrigenRow;
+  }else{
+    tblOrigenBody.innerHTML = `<tr><td colspan="3"><div class="empty-state">Sin origen de problema reportado para este período/sucursal.</div></td></tr>`;
+  }
+}
+
+function titleCase(s){
+  return s.toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase());
+}
+
+function populateSelectors(){
+  const mesesSet = new Set(ALL_RECORDS.map(r=>r.mes));
+  const meses = [...mesesSet].sort();
+  const selMes = document.getElementById('selMes');
+  selMes.innerHTML = '<option value="all">Todos los meses</option>' +
+    meses.map(m => `<option value="${m}">${mesLabel(m)}</option>`).join('');
+  // Selecciona por defecto el mes más reciente disponible.
+  if(meses.length) selMes.value = meses[meses.length - 1];
+
+  const sucursales = [...new Set(ALL_RECORDS.map(r=>r.sucursal))].sort((a,b)=>a.localeCompare(b,'es'));
+  const selSuc = document.getElementById('selSucursal');
+  selSuc.innerHTML = '<option value="all">Todas</option>' +
+    sucursales.map(s => `<option value="${s}">${s}</option>`).join('');
+
+  const fechas = ALL_RECORDS.map(r=>r.fecha).sort();
+  if(fechas.length){
+    const fmt = f => { const [y,m,d] = f.split('-'); return `${d}/${m}/${y}`; };
+    document.getElementById('asOfLabel').textContent = `Registros desde ${fmt(fechas[0])} hasta ${fmt(fechas[fechas.length-1])}`;
+  }
+}
+
+(async function init(){
+  ALL_RECORDS = await loadJson(CONFIG.registrosUrl, FALLBACK_REGISTROS);
+
+  populateSelectors();
+  renderAll();
 
   // ---- Tabbar interaction ----
   document.querySelectorAll('.tab').forEach(btn=>{
@@ -512,16 +1536,9 @@ function fmtPct(n){ return n.toLocaleString('es-CL',{minimumFractionDigits:1,max
     });
   });
 
-  // ---- Filtro por sucursal (resalta fila correspondiente en tabla + escala futura) ----
-  selSuc.addEventListener('change', ()=>{
-    const val = selSuc.value;
-    document.querySelectorAll('#tblSucursales tr').forEach(tr=>{
-      const nameCell = tr.querySelector('td.first');
-      if(!nameCell) return;
-      const match = (val === 'all') || (nameCell.textContent.trim() === val);
-      tr.style.opacity = match ? '1' : '.35';
-    });
-  });
+  // ---- Segmentación: mes y sucursal recalculan todas las vistas ----
+  document.getElementById('selMes').addEventListener('change', renderAll);
+  document.getElementById('selSucursal').addEventListener('change', renderAll);
 })();
 </script>
 </body>

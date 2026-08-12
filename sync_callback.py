@@ -3,8 +3,15 @@
 Sync RegistrosCallback (SharePoint List) -> JSON para el panel de Callback JT.
 
 Genera:
-  data/callback_sucursal.json   -> Buena/Mala/Neutra por SucursalPDV
-  data/origen_problema.json     -> Q y % por OrigenProblema
+  data/callback_registros.json  -> un registro por callback calificado, con
+                                    fecha, mes (YYYY-MM), sucursal, categoria
+                                    (buena/mala/neutra) y origen del problema.
+
+El HTML (PanelCallbackEpa.html) consume este único archivo y hace toda la
+segmentación por mes/sucursal en el cliente, así que este script NO agrega
+por sucursal ni por mes — solo aplana y clasifica cada registro. Esto evita
+tener que regenerar agregaciones distintas cada vez que se agrega un nuevo
+corte (mes, sucursal, ambos a la vez, etc.).
 
 Auth: app-only (client credentials) contra Microsoft Graph, misma app
       'MinutaComercialEjecutivos' ya usada en el flujo de Minuta de Ejecutivos.
@@ -18,6 +25,7 @@ Variables de entorno requeridas (se configuran como GitHub Secrets):
 import os
 import sys
 import json
+import datetime
 import requests
 
 TENANT_ID = os.environ["TENANT_ID"]          # a2c91f5e-f3c4-4e1a-a85e-d114d2650b65
@@ -28,11 +36,12 @@ SITE_ID = "clcomercialexpress.sharepoint.com,d331a44f-8002-4cab-8db4-061cb13eb49
 LIST_ID = "e6f62de4-a0ba-404d-9885-d75c0df7ba29"
 
 GRAPH_BASE = "https://graph.microsoft.com/v1.0"
-# Los JSON viven en la RAÍZ del repo, igual que ejecutivos.json / kpi.json / tienda.json
+# El JSON vive en la RAÍZ del repo, igual que ejecutivos.json / kpi.json / tienda.json
 OUT_DIR = "."
 
-# Regla de agregación Calif_Global (texto "1".."5") -> categoría.
-# Ajustar acá si el corte real de negocio es distinto.
+# Regla de agregación Calif_Global (texto/entero "1".."5") -> categoría.
+# 1-2 = mala, 3 = neutra, 4-5 = buena. Ajustar acá si el corte real de
+# negocio cambia — es el único lugar donde vive esta regla.
 def calif_to_categoria(valor_texto):
     try:
         n = int(str(valor_texto).strip())
@@ -44,6 +53,20 @@ def calif_to_categoria(valor_texto):
         return "neutra"
     if n >= 4:
         return "buena"
+    return None
+
+
+def parse_fecha(valor):
+    """SharePoint suele devolver fechas ISO (YYYY-MM-DDTHH:MM:SSZ) via Graph,
+    pero se deja tolerancia a dd/mm/aaaa por si la columna viaja como texto."""
+    if not valor:
+        return None
+    valor = str(valor).strip()
+    for fmt in ("%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%d", "%d/%m/%Y"):
+        try:
+            return datetime.datetime.strptime(valor, fmt).date()
+        except ValueError:
+            continue
     return None
 
 
@@ -82,57 +105,42 @@ def main():
     raw_items = fetch_all_items(token)
     print(f"Items obtenidos de RegistrosCallback: {len(raw_items)}", file=sys.stderr)
 
-    sucursal_agg = {}   # { sucursal: {"buena":0,"mala":0,"neutra":0} }
-    origen_agg = {}      # { origen: count }
+    registros = []
     excluidos = 0
 
     for item in raw_items:
         f = item.get("fields", {})
         sucursal = (f.get("SucursalPDV") or "").strip()
-        origen = (f.get("OrigenProblema") or "").strip()
+        origen = (f.get("OrigenProblema") or "").strip() or None
         categoria = calif_to_categoria(f.get("Calif_Global"))
+        fecha = parse_fecha(f.get("FechaAtencion"))
 
-        if sucursal and categoria:
-            sucursal_agg.setdefault(sucursal, {"buena": 0, "mala": 0, "neutra": 0})
-            sucursal_agg[sucursal][categoria] += 1
-        else:
+        if not sucursal or categoria is None or fecha is None:
             excluidos += 1
+            continue
 
-        if origen:
-            origen_agg[origen] = origen_agg.get(origen, 0) + 1
+        registros.append({
+            "fecha": fecha.strftime("%Y-%m-%d"),
+            "mes": fecha.strftime("%Y-%m"),
+            "sucursal": sucursal,
+            "categoria": categoria,
+            "origen": origen,
+        })
 
     if excluidos:
-        print(f"Registros excluidos del conteo por sucursal (sin SucursalPDV o Calif_Global inválido): {excluidos}", file=sys.stderr)
+        print(
+            f"Registros excluidos (sin SucursalPDV, Calif_Global inválido o "
+            f"FechaAtencion no parseable): {excluidos}",
+            file=sys.stderr,
+        )
 
-    # ---- Shape: callback_sucursal.json ----
-    callback_sucursal = [
-        {
-            "sucursal": nombre,
-            "buena": v["buena"],
-            "mala": v["mala"],
-            "neutra": v["neutra"],
-            "total": v["buena"] + v["mala"] + v["neutra"],
-        }
-        for nombre, v in sorted(sucursal_agg.items())
-    ]
+    # Orden estable por fecha para que el diff del commit sea legible.
+    registros.sort(key=lambda r: (r["fecha"], r["sucursal"]))
 
-    # ---- Shape: origen_problema.json ----
-    total_origen = sum(origen_agg.values()) or 1
-    origen_problema = [
-        {
-            "origen": nombre,
-            "q": q,
-            "pct": round(q / total_origen * 100, 2),
-        }
-        for nombre, q in sorted(origen_agg.items(), key=lambda kv: -kv[1])
-    ]
+    with open(os.path.join(OUT_DIR, "callback_registros.json"), "w", encoding="utf-8") as fh:
+        json.dump(registros, fh, ensure_ascii=False, indent=2)
 
-    with open(os.path.join(OUT_DIR, "callback_sucursal.json"), "w", encoding="utf-8") as fh:
-        json.dump(callback_sucursal, fh, ensure_ascii=False, indent=2)
-    with open(os.path.join(OUT_DIR, "origen_problema.json"), "w", encoding="utf-8") as fh:
-        json.dump(origen_problema, fh, ensure_ascii=False, indent=2)
-
-    print("OK: callback_sucursal.json y origen_problema.json generados en la raíz del repo.", file=sys.stderr)
+    print(f"OK: callback_registros.json generado en la raíz del repo ({len(registros)} registros).", file=sys.stderr)
 
 
 if __name__ == "__main__":
