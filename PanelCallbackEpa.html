@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Callback JT — Comercial Express</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1"></script>
+<style>
+:root{
+  --navy-900:#151936; --navy-800:#1F244A; --navy-700:#272E5C; --navy-600:#333C74; --navy-500:#454F92;
+  --orange-500:#F5821F; --orange-600:#DD6E10; --orange-100:#FDECD9;
+  --bg:#F3F4FA; --card:#FFFFFF;
+  --ink-900:#161A2E; --ink-700:#383D57; --ink-500:#666C8C; --ink-400:#9296AE;
+  --border:#E4E6F1; --border-soft:#EDEEF6;
+  --green-600:#158A4A; --green-100:#E3F7EC;
+  --red-600:#D6394A; --red-100:#FCE7E9;
+  --amber-600:#C97A11; --amber-100:#FCEEDB;
+  --purple-600:#7C4DBF; --purple-100:#EFE6FB;
+  --blue-600:#2A6FC9; --blue-100:#E4EFFC;
+  --radius-lg:18px; --radius-md:12px; --radius-sm:8px;
+  --shadow-card:0 1px 2px rgba(21,25,54,.04), 0 8px 24px -12px rgba(21,25,54,.12);
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--bg); color:var(--ink-900);
+  font-family:'Inter',sans-serif; font-size:13px;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px; margin:0 auto; padding:20px 20px 60px;}
+
+/* ---------- Header hero ---------- */
+.header-card{
+  position:relative; overflow:hidden;
+  background:linear-gradient(135deg,var(--navy-900),var(--navy-700) 55%,var(--navy-600));
+  border-radius:var(--radius-lg); padding:24px 26px; color:#fff;
+  box-shadow:var(--shadow-card); margin-bottom:16px;
+}
+.header-card::after{
+  content:""; position:absolute; top:-60px; right:-60px; width:280px; height:280px;
+  background:radial-gradient(circle,rgba(245,130,31,.45),rgba(245,130,31,0) 70%);
+  pointer-events:none;
+}
+.brand-row{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
+.brand-mark{
+  width:30px; height:30px; border-radius:8px; background:rgba(255,255,255,.12);
+  display:flex; align-items:center; justify-content:center; font-family:'Sora'; font-weight:800; font-size:13px;
+}
+.brand-div{width:1px; height:16px; background:rgba(255,255,255,.25);}
+.kicker{font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.65);}
+.h1{font-family:'Sora'; font-size:19px; font-weight:700; margin:2px 0 0;}
+.header-meta{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:4px; position:relative;}
+.asof{font-size:11.5px; color:rgba(255,255,255,.6);}
+.demo-badge{
+  display:inline-flex; align-items:center; gap:5px; background:var(--amber-100); color:var(--amber-600);
+  font-size:10.5px; font-weight:700; letter-spacing:.03em; padding:4px 10px; border-radius:999px;
+}
+.demo-badge .dot{width:6px; height:6px; border-radius:50%; background:var(--amber-600);}
+
+.selectors-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; position:relative; z-index:1;}
+.field{
+  background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.14);
+  border-radius:var(--radius-md); padding:8px 12px; min-width:150px;
+}
+.field label{display:block; font-size:9.5px; letter-spacing:.07em; text-transform:uppercase; color:rgba(255,255,255,.55); margin-bottom:2px;}
+.field select{
+  appearance:none; background:transparent; border:none; color:#fff; font-family:'Inter'; font-size:13px; font-weight:600;
+  width:100%; padding-right:16px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M1 1l4 4 4-4' stroke='white' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg>");
+  background-repeat:no-repeat; background-position:right center;
+}
+.field select option{color:#161A2E;}
+
+.chips-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; position:relative; z-index:1;}
+.chip{
+  display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,.09);
+  border:1px solid rgba(255,255,255,.14); border-radius:999px; padding:5px 11px; font-size:11.5px; font-weight:600;
+}
+.chip-dot{width:6px; height:6px; border-radius:50%;}
+
+/* ---------- Tabbar ---------- */
+.tabbar{display:flex; gap:6px; background:var(--card); border:1px solid var(--border); border-radius:var(--radius-md); padding:5px; margin-bottom:16px; box-shadow:var(--shadow-card);}
+.tab{
+  flex:1; text-align:center; padding:9px 10px; border-radius:8px; font-family:'Inter'; font-weight:600; font-size:12.5px;
+  color:var(--ink-500); cursor:pointer; border:none; background:transparent; transition:.15s ease;
+}
+.tab:hover{color:var(--navy-700);}
+.tab.active{background:var(--navy-800); color:#fff;}
+
+/* ---------- Panels ---------- */
+.panel{display:none;}
+.panel.active{display:block; animation:panelIn .32s cubic-bezier(.2,.7,.3,1);}
+@keyframes panelIn{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+
+/* ---------- KPI row ---------- */
+.kpi-row{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:16px;}
+.kpi-card{
+  background:var(--card); border:1px solid var(--border); border-radius:var(--radius-lg); padding:18px 20px;
+  box-shadow:var(--shadow-card); animation:cardIn .35s cubic-bezier(.2,.7,.3,1) both;
+}
+.kpi-card:nth-child(2){animation-delay:.06s;} .kpi-card:nth-child(3){animation-delay:.12s;} .kpi-card:nth-child(4){animation-delay:.18s;}
+@keyframes cardIn{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+.kpi-label{font-size:9.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-400); margin-bottom:8px;}
+.kpi-value{font-family:'Sora'; font-size:26px; font-weight:800; color:var(--ink-900); line-height:1;}
+.kpi-sub{margin-top:8px;}
+.pill{display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; background:var(--border-soft); color:var(--ink-500);}
+.pill-dot{width:6px; height:6px; border-radius:50%; background:currentColor;}
+.pill-good{background:var(--green-100); color:var(--green-600);}
+.pill-bad{background:var(--red-100); color:var(--red-600);}
+.pill-neutral{background:var(--blue-100); color:var(--blue-600);}
+.pill-brand{background:var(--orange-100); color:var(--orange-600);}
+
+/* ---------- Cards / charts ---------- */
+.grid-2{display:grid; grid-template-columns:1.1fr .9fr; gap:14px; margin-bottom:16px;}
+.card{
+  background:var(--card); border:1px solid var(--border); border-radius:var(--radius-lg); padding:20px;
+  box-shadow:var(--shadow-card);
+}
+.card-title-row{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:14px;}
+.card-title{font-family:'Sora'; font-size:13.5px; font-weight:700; color:var(--ink-900);}
+.card-sub{font-size:11px; color:var(--ink-500); margin-top:2px;}
+canvas{max-height:280px;}
+
+/* ---------- Range item (comparativa) ---------- */
+.range-item{display:flex; align-items:center; gap:12px; padding:10px 8px; border-radius:10px; cursor:default; transition:.15s ease;}
+.range-item:hover{background:var(--bg);}
+.range-rank{width:20px; font-family:'Sora'; font-weight:800; font-size:12px; color:var(--ink-400); text-align:right;}
+.range-name{flex:0 0 168px; font-weight:600; color:var(--ink-700); font-size:12.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.range-track{flex:1; height:8px; border-radius:999px; background:var(--border-soft); position:relative; overflow:hidden;}
+.fill-track{height:100%; border-radius:999px; background:var(--orange-500);}
+.range-val{width:42px; text-align:right; font-variant-numeric:tabular-nums; font-weight:700; color:var(--ink-900); font-size:12.5px;}
+
+/* ---------- Tables ---------- */
+.table-wrap{overflow-x:auto;}
+table.rol-table{width:100%; border-collapse:collapse; table-layout:fixed;}
+table.rol-table th{
+  text-align:left; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+  color:var(--ink-400); background:var(--bg); padding:10px 12px; border-bottom:1px solid var(--border);
+}
+table.rol-table td{padding:0 12px; height:48px; border-bottom:1px solid var(--border-soft); font-size:12.5px; color:var(--ink-700); vertical-align:middle;}
+table.rol-table tbody tr{transition:.12s ease;}
+table.rol-table tbody tr:hover{background:var(--bg);}
+table.rol-table td.num, table.rol-table th.num{text-align:right; font-variant-numeric:tabular-nums;}
+table.rol-table td.first, table.rol-table th.first{font-weight:700; color:var(--ink-900);}
+tr.total-row td{font-weight:800; color:var(--ink-900); background:var(--orange-100);}
+tr.total-row td.first{color:var(--orange-600);}
+
+.badge{display:inline-flex; align-items:center; justify-content:center; min-width:34px; padding:3px 9px; border-radius:999px; font-size:11.5px; font-weight:700; font-variant-numeric:tabular-nums;}
+.badge-good{background:var(--green-100); color:var(--green-600);}
+.badge-bad{background:var(--red-100); color:var(--red-600);}
+.badge-neutral{background:var(--blue-100); color:var(--blue-600);}
+.badge-max{background:var(--orange-100); color:var(--orange-600);}
+
+.legend-row{display:flex; gap:16px; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px dashed var(--border);}
+.legend-item{display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--ink-500); font-weight:600;}
+.legend-sw{width:10px; height:10px; border-radius:3px;}
+
+.footer-note{margin-top:18px; font-size:11px; color:var(--ink-400); text-align:center;}
+
+@media (max-width:860px){
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+  .grid-2{grid-template-columns:1fr;}
+  .range-name{flex-basis:120px;}
+}
+@media print{
+  body{background:#fff;}
+  .tabbar{display:none;}
+  .panel{display:block !important;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== Header hero ===== -->
+  <div class="header-card">
+    <div class="brand-row">
+      <div class="brand-mark">CE</div>
+      <div class="brand-div"></div>
+      <div>
+        <div class="kicker">Comercial Express · Calidad de Atención</div>
+      </div>
+    </div>
+    <div class="h1">Panel Callback JT</div>
+    <div class="header-meta">
+      <span class="asof">Datos al corte de julio 2026</span>
+      <span class="demo-badge"><span class="dot"></span>Base local · pendiente de sync con Lista</span>
+    </div>
+
+    <div class="selectors-row">
+      <div class="field">
+        <label>Mes</label>
+        <select id="selMes">
+          <option value="7" selected>Julio</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Sucursal (PVD)</label>
+        <select id="selSucursal">
+          <option value="all" selected>Todas</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="chips-row">
+      <div class="chip"><span class="chip-dot" style="background:var(--green-100)"></span>Buena</div>
+      <div class="chip"><span class="chip-dot" style="background:var(--red-100)"></span>Mala</div>
+      <div class="chip"><span class="chip-dot" style="background:var(--blue-100)"></span>Neutra</div>
+    </div>
+  </div>
+
+  <!-- ===== Tabbar ===== -->
+  <div class="tabbar">
+    <button class="tab active" data-tab="resumen">Resumen</button>
+    <button class="tab" data-tab="sucursales">Por Sucursal</button>
+    <button class="tab" data-tab="origen">Origen del Problema</button>
+  </div>
+
+  <!-- ===== PANEL: RESUMEN ===== -->
+  <div class="panel active" id="panel-resumen">
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">Callbacks calificados</div>
+        <div class="kpi-value" id="kpiTotal">—</div>
+        <div class="kpi-sub"><span class="pill"><span class="pill-dot"></span>Julio 2026</span></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">% Buena</div>
+        <div class="kpi-value" id="kpiBuena">—</div>
+        <div class="kpi-sub"><span class="pill pill-good" id="kpiBuenaN">—</span></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">% Mala</div>
+        <div class="kpi-value" id="kpiMala">—</div>
+        <div class="kpi-sub"><span class="pill pill-bad" id="kpiMalaN">—</span></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Principal causa</div>
+        <div class="kpi-value" style="font-size:16px;">Error de evaluación</div>
+        <div class="kpi-sub"><span class="pill pill-brand">28,3% del total</span></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title-row">
+          <div>
+            <div class="card-title">Calificación por sucursal</div>
+            <div class="card-sub">Distribución Buena / Mala / Neutra, ordenado por volumen</div>
+          </div>
+        </div>
+        <canvas id="chartSucursales"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title-row">
+          <div>
+            <div class="card-title">Origen del problema</div>
+            <div class="card-sub">% sobre el total de casos reportados</div>
+          </div>
+        </div>
+        <canvas id="chartOrigen"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title-row">
+        <div>
+          <div class="card-title">Ranking de sucursales por volumen de callback</div>
+          <div class="card-sub">Total de llamadas calificadas en el mes</div>
+        </div>
+      </div>
+      <div id="rangeList"></div>
+    </div>
+  </div>
+
+  <!-- ===== PANEL: SUCURSALES ===== -->
+  <div class="panel" id="panel-sucursales">
+    <div class="card">
+      <div class="card-title-row">
+        <div>
+          <div class="card-title">Base Call Back — Julio</div>
+          <div class="card-sub">Calificación por sucursal (SUCURSAL_EXPRESS)</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="rol-table">
+          <thead>
+            <tr>
+              <th class="first" style="width:34%">Sucursal Express</th>
+              <th class="num">Buena</th>
+              <th class="num">Mala</th>
+              <th class="num">Neutra</th>
+              <th class="num">Total general</th>
+              <th style="width:26%">% Mala</th>
+            </tr>
+          </thead>
+          <tbody id="tblSucursales"></tbody>
+        </table>
+      </div>
+      <div class="legend-row">
+        <div class="legend-item"><span class="legend-sw" style="background:var(--green-100)"></span>Buena</div>
+        <div class="legend-item"><span class="legend-sw" style="background:var(--red-100)"></span>Mala</div>
+        <div class="legend-item"><span class="legend-sw" style="background:var(--blue-100)"></span>Neutra</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PANEL: ORIGEN ===== -->
+  <div class="panel" id="panel-origen">
+    <div class="card">
+      <div class="card-title-row">
+        <div>
+          <div class="card-title">Origen del problema</div>
+          <div class="card-sub">Motivo declarado por el cliente en la calificación</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="rol-table">
+          <thead>
+            <tr>
+              <th class="first" style="width:46%">Origen del problema</th>
+              <th class="num">Q</th>
+              <th style="width:34%">%</th>
+            </tr>
+          </thead>
+          <tbody id="tblOrigen"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">Panel generado a partir de la base de callback JT · estructura preparada para consumir el JSON de la Lista de SharePoint una vez activo el sync.</div>
+</div>
+
+<script>
+/* ============================================================
+   CONFIG — único lugar a tocar cuando el sync con la Lista esté activo.
+   Reemplazar por las URLs raw.githubusercontent.com correspondientes.
+   ============================================================ */
+const CONFIG = {
+  // Reemplazar {ORG}/{REPO}/{BRANCH} por los reales del repo donde corre sync-callback.yml.
+  // Formato: https://raw.githubusercontent.com/{ORG}/{REPO}/{BRANCH}/data/archivo.json
+  origenProblemaUrl: null,   // ej: "https://raw.githubusercontent.com/{ORG}/{REPO}/main/data/origen_problema.json"
+  callbackSucursalUrl: null  // ej: "https://raw.githubusercontent.com/{ORG}/{REPO}/main/data/callback_sucursal.json"
+};
+
+/* ------------------------------------------------------------
+   Fallback local — datos reales de julio 2026 (extraídos de la
+   tabla dinámica de Excel), usados mientras el sync no esté activo.
+   ------------------------------------------------------------ */
+const FALLBACK_ORIGEN = [
+  { origen:"ERROR DE EVALUACIÓN", q:15, pct:28.30 },
+  { origen:"BUENA ATENCIÓN", q:13, pct:24.53 },
+  { origen:"COBERTURA", q:9, pct:16.98 },
+  { origen:"ATENCIÓN DEL EJECUTIVO", q:8, pct:15.09 },
+  { origen:"SISTEMA", q:6, pct:11.32 },
+  { origen:"TIEMPO DE ESPERA", q:1, pct:1.89 },
+  { origen:"ATENCIÓN DEL ANFITRIÓN", q:1, pct:1.89 }
+];
+
+const FALLBACK_SUCURSALES = [
+  { sucursal:"CURICÓ CAMILO HENRÍQUEZ", buena:0, mala:7, neutra:4, total:11 },
+  { sucursal:"MALL CENTER CURICÓ", buena:0, mala:1, neutra:0, total:1 },
+  { sucursal:"TALCA CENTRO", buena:0, mala:2, neutra:2, total:4 },
+  { sucursal:"TALCA MALL", buena:0, mala:2, neutra:0, total:2 },
+  { sucursal:"LINARES INDEPENDENCIA", buena:1, mala:8, neutra:2, total:11 },
+  { sucursal:"CHILLÁN EL ROBLE", buena:0, mala:6, neutra:0, total:6 },
+  { sucursal:"MALL ARAUCO CHILLÁN", buena:0, mala:1, neutra:0, total:1 },
+  { sucursal:"LOS ÁNGELES LATAURO", buena:0, mala:8, neutra:0, total:8 },
+  { sucursal:"MALL PLAZA LOS ÁNGELES", buena:5, mala:0, neutra:0, total:5 }
+];
+
+const COLOR_GOOD = "#158A4A", COLOR_BAD = "#D6394A", COLOR_NEUTRAL = "#2A6FC9";
+const ORIGIN_PALETTE = ["#F5821F","#158A4A","#2A6FC9","#7C4DBF","#C97A11","#D6394A","#454F92"];
+
+async function loadJson(url, fallback){
+  if(!url) return fallback;
+  try{
+    const res = await fetch(url);
+    if(!res.ok) throw new Error("bad status");
+    return await res.json();
+  }catch(e){
+    console.warn("Fallback aplicado para", url, e);
+    return fallback;
+  }
+}
+
+function fmtPct(n){ return n.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1}) + "%"; }
+
+(async function init(){
+  const origen = await loadJson(CONFIG.origenProblemaUrl, FALLBACK_ORIGEN);
+  const sucursales = await loadJson(CONFIG.callbackSucursalUrl, FALLBACK_SUCURSALES);
+
+  const totBuena = sucursales.reduce((s,r)=>s+r.buena,0);
+  const totMala = sucursales.reduce((s,r)=>s+r.mala,0);
+  const totNeutra = sucursales.reduce((s,r)=>s+r.neutra,0);
+  const totGeneral = totBuena+totMala+totNeutra;
+
+  // KPIs
+  document.getElementById('kpiTotal').textContent = totGeneral;
+  document.getElementById('kpiBuena').textContent = fmtPct(totBuena/totGeneral*100);
+  document.getElementById('kpiBuenaN').textContent = totBuena + " casos";
+  document.getElementById('kpiMala').textContent = fmtPct(totMala/totGeneral*100);
+  document.getElementById('kpiMalaN').textContent = totMala + " casos";
+
+  // Selector de sucursal
+  const selSuc = document.getElementById('selSucursal');
+  sucursales.forEach(r=>{
+    const o = document.createElement('option');
+    o.value = r.sucursal; o.textContent = r.sucursal;
+    selSuc.appendChild(o);
+  });
+
+  // ---- Chart: sucursales (stacked horizontal bar) ----
+  const sortedSuc = [...sucursales].sort((a,b)=>b.total-a.total);
+  new Chart(document.getElementById('chartSucursales'), {
+    type:'bar',
+    data:{
+      labels: sortedSuc.map(r=>r.sucursal),
+      datasets:[
+        { label:'Buena', data: sortedSuc.map(r=>r.buena), backgroundColor: COLOR_GOOD, stack:'s' },
+        { label:'Mala', data: sortedSuc.map(r=>r.mala), backgroundColor: COLOR_BAD, stack:'s' },
+        { label:'Neutra', data: sortedSuc.map(r=>r.neutra), backgroundColor: COLOR_NEUTRAL, stack:'s' }
+      ]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ stacked:true, grid:{ color:'#EDEEF6' }, ticks:{ font:{ family:'Inter', size:11 } } },
+        y:{ stacked:true, grid:{ display:false }, ticks:{ font:{ family:'Inter', size:11 } } }
+      }
+    }
+  });
+
+  // ---- Chart: origen (doughnut) ----
+  new Chart(document.getElementById('chartOrigen'), {
+    type:'doughnut',
+    data:{
+      labels: origen.map(o=>o.origen),
+      datasets:[{ data: origen.map(o=>o.q), backgroundColor: ORIGIN_PALETTE, borderWidth:2, borderColor:'#fff' }]
+    },
+    options:{
+      responsive:true,
+      cutout:'62%',
+      plugins:{ legend:{ position:'bottom', labels:{ font:{ family:'Inter', size:10.5 }, boxWidth:9, padding:10 } } }
+    }
+  });
+
+  // ---- Range list (ranking sucursales) ----
+  const maxTotal = Math.max(...sucursales.map(r=>r.total));
+  const rangeHtml = sortedSuc.map((r,i)=>`
+    <div class="range-item">
+      <div class="range-rank">${i+1}</div>
+      <div class="range-name">${r.sucursal}</div>
+      <div class="range-track"><div class="fill-track" style="width:${(r.total/maxTotal*100).toFixed(0)}%"></div></div>
+      <div class="range-val">${r.total}</div>
+    </div>`).join('');
+  document.getElementById('rangeList').innerHTML = rangeHtml;
+
+  // ---- Tabla sucursales ----
+  const rowsSuc = sortedSuc.map(r=>{
+    const pctMala = r.total ? (r.mala/r.total*100) : 0;
+    const badgeClass = pctMala >= 60 ? 'badge-bad' : (pctMala >= 30 ? 'badge-neutral' : 'badge-good');
+    return `<tr>
+      <td class="first">${r.sucursal}</td>
+      <td class="num">${r.buena ? `<span class="badge badge-good">${r.buena}</span>` : '0'}</td>
+      <td class="num">${r.mala ? `<span class="badge badge-bad">${r.mala}</span>` : '0'}</td>
+      <td class="num">${r.neutra ? `<span class="badge badge-neutral">${r.neutra}</span>` : '0'}</td>
+      <td class="num">${r.total}</td>
+      <td><span class="badge ${badgeClass}">${fmtPct(pctMala)}</span></td>
+    </tr>`;
+  }).join('');
+  const totalRow = `<tr class="total-row">
+      <td class="first">Total general</td>
+      <td class="num">${totBuena}</td>
+      <td class="num">${totMala}</td>
+      <td class="num">${totNeutra}</td>
+      <td class="num">${totGeneral}</td>
+      <td><span class="badge badge-max">${fmtPct(totMala/totGeneral*100)}</span></td>
+    </tr>`;
+  document.getElementById('tblSucursales').innerHTML = rowsSuc + totalRow;
+
+  // ---- Tabla origen ----
+  const totQ = origen.reduce((s,o)=>s+o.q,0);
+  const maxQ = Math.max(...origen.map(o=>o.q));
+  const rowsOrigen = origen.map(o=>`
+    <tr>
+      <td class="first">${o.origen}</td>
+      <td class="num">${o.q}</td>
+      <td>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div class="range-track" style="max-width:120px;"><div class="fill-track" style="width:${(o.q/maxQ*100).toFixed(0)}%"></div></div>
+          <span style="font-variant-numeric:tabular-nums; font-weight:700; color:var(--ink-900);">${fmtPct(o.pct)}</span>
+        </div>
+      </td>
+    </tr>`).join('');
+  const totalOrigenRow = `<tr class="total-row"><td class="first">Total general</td><td class="num">${totQ}</td><td>100,0%</td></tr>`;
+  document.getElementById('tblOrigen').innerHTML = rowsOrigen + totalOrigenRow;
+
+  // ---- Tabbar interaction ----
+  document.querySelectorAll('.tab').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ---- Filtro por sucursal (resalta fila correspondiente en tabla + escala futura) ----
+  selSuc.addEventListener('change', ()=>{
+    const val = selSuc.value;
+    document.querySelectorAll('#tblSucursales tr').forEach(tr=>{
+      const nameCell = tr.querySelector('td.first');
+      if(!nameCell) return;
+      const match = (val === 'all') || (nameCell.textContent.trim() === val);
+      tr.style.opacity = match ? '1' : '.35';
+    });
+  });
+})();
+</script>
+</body>
+</html>
