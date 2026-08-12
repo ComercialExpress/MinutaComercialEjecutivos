@@ -23,11 +23,21 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
+      - name: Debug - check secret lengths (no expone valores)
+        env:
+          TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        run: |
+          echo "TENANT_ID length: ${#TENANT_ID}"
+          echo "CLIENT_ID length: ${#CLIENT_ID}"
+          echo "CLIENT_SECRET length: ${#CLIENT_SECRET}"
+
       - name: Run sync script
         env:
-          TENANT_ID: ${{ secrets.TENANT_ID }}
-          CLIENT_ID: ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         run: python sync_callback.py
 
       - name: Commit updated JSON
