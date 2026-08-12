@@ -105,16 +105,11 @@ def main():
     raw_items = fetch_all_items(token)
     print(f"Items obtenidos de RegistrosCallback: {len(raw_items)}", file=sys.stderr)
 
-    # --- DEBUG TEMPORAL: ver valores crudos de los primeros 5 ítems ---
-    for i, item in enumerate(raw_items[:5]):
-        f = item.get("fields", {})
-        print(
-            f"[DEBUG] item {i}: "
-            f"SucursalPDV={f.get('SucursalPDV')!r}  "
-            f"Calif_Global={f.get('Calif_Global')!r}  "
-            f"FechaAtencion={f.get('FechaAtencion')!r}",
-            file=sys.stderr,
-        )
+    # --- DEBUG TEMPORAL: ver TODAS las claves reales que trae 'fields' ---
+    if raw_items:
+        f0 = raw_items[0].get("fields", {})
+        print(f"[DEBUG] claves disponibles en fields: {sorted(f0.keys())}", file=sys.stderr)
+        print(f"[DEBUG] fields completo item 0: {f0}", file=sys.stderr)
     # --- FIN DEBUG TEMPORAL ---
 
     registros = []
