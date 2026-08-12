@@ -105,6 +105,18 @@ def main():
     raw_items = fetch_all_items(token)
     print(f"Items obtenidos de RegistrosCallback: {len(raw_items)}", file=sys.stderr)
 
+    # --- DEBUG TEMPORAL: ver valores crudos de los primeros 5 ítems ---
+    for i, item in enumerate(raw_items[:5]):
+        f = item.get("fields", {})
+        print(
+            f"[DEBUG] item {i}: "
+            f"SucursalPDV={f.get('SucursalPDV')!r}  "
+            f"Calif_Global={f.get('Calif_Global')!r}  "
+            f"FechaAtencion={f.get('FechaAtencion')!r}",
+            file=sys.stderr,
+        )
+    # --- FIN DEBUG TEMPORAL ---
+
     registros = []
     excluidos = 0
 
