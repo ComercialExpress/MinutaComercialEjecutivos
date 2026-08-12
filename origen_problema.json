@@ -1,1 +1,112 @@
-[]
+[
+  {
+    "origen": "ERROR DE EVALUACIÓN",
+    "q": 66,
+    "pct": 25.38
+  },
+  {
+    "origen": "ATENCIÓN DEL EJECUTIVO",
+    "q": 48,
+    "pct": 18.46
+  },
+  {
+    "origen": "BUENA ATENCIÓN",
+    "q": 45,
+    "pct": 17.31
+  },
+  {
+    "origen": "SISTEMA",
+    "q": 33,
+    "pct": 12.69
+  },
+  {
+    "origen": "COBERTURA",
+    "q": 22,
+    "pct": 8.46
+  },
+  {
+    "origen": "TIEMPO DE ESPERA",
+    "q": 15,
+    "pct": 5.77
+  },
+  {
+    "origen": "ATENCIÓN DEL ANFITRIÓN",
+    "q": 9,
+    "pct": 3.46
+  },
+  {
+    "origen": "ERROR DE EVALUCACIÓN",
+    "q": 4,
+    "pct": 1.54
+  },
+  {
+    "origen": "Buena atención",
+    "q": 3,
+    "pct": 1.15
+  },
+  {
+    "origen": "Ninguna",
+    "q": 2,
+    "pct": 0.77
+  },
+  {
+    "origen": "buena atencion",
+    "q": 2,
+    "pct": 0.77
+  },
+  {
+    "origen": "CALL CENTER",
+    "q": 1,
+    "pct": 0.38
+  },
+  {
+    "origen": "Error al tipiar",
+    "q": 1,
+    "pct": 0.38
+  },
+  {
+    "origen": "Mala informacion de call",
+    "q": 1,
+    "pct": 0.38
+  },
+  {
+    "origen": "Responsabilidad cliente",
+    "q": 1,
+    "pct": 0.38
+  },
+  {
+    "origen": "NO CONTESTA",
+    "q": 1,
+    "pct": 0.38
+  },
+  {
+    "origen": "Cupo financiamiento",
+    "q": 1,
+    "pct": 0.38
+  },
+  {
+    "origen": "No existe problema",
+    "q": 1,
+    "pct": 0.38
+  },
+  {
+    "origen": "Ningún problema",
+    "q": 1,
+    "pct": 0.38
+  },
+  {
+    "origen": "cliente indica error al evaluar",
+    "q": 1,
+    "pct": 0.38
+  },
+  {
+    "origen": "ningun problema",
+    "q": 1,
+    "pct": 0.38
+  },
+  {
+    "origen": "ATENCIÓN SUPERVISOR",
+    "q": 1,
+    "pct": 0.38
+  }
+]

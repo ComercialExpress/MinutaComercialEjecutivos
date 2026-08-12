@@ -1,1 +1,65 @@
-[]
+[
+  {
+    "sucursal": "CHILLÁN MALL",
+    "buena": 5,
+    "mala": 8,
+    "neutra": 2,
+    "total": 15
+  },
+  {
+    "sucursal": "CHILLÁN R.",
+    "buena": 0,
+    "mala": 21,
+    "neutra": 7,
+    "total": 28
+  },
+  {
+    "sucursal": "CURICO C.H",
+    "buena": 6,
+    "mala": 22,
+    "neutra": 12,
+    "total": 40
+  },
+  {
+    "sucursal": "CURICO MALL",
+    "buena": 14,
+    "mala": 6,
+    "neutra": 1,
+    "total": 21
+  },
+  {
+    "sucursal": "LINARES IND.",
+    "buena": 4,
+    "mala": 30,
+    "neutra": 16,
+    "total": 50
+  },
+  {
+    "sucursal": "LOS ANGELES L.",
+    "buena": 0,
+    "mala": 28,
+    "neutra": 4,
+    "total": 32
+  },
+  {
+    "sucursal": "LOS ANGELES MALL",
+    "buena": 15,
+    "mala": 5,
+    "neutra": 1,
+    "total": 21
+  },
+  {
+    "sucursal": "TALCA CENTRO",
+    "buena": 0,
+    "mala": 29,
+    "neutra": 5,
+    "total": 34
+  },
+  {
+    "sucursal": "TALCA MALL",
+    "buena": 3,
+    "mala": 13,
+    "neutra": 3,
+    "total": 19
+  }
+]
