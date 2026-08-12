@@ -53,10 +53,12 @@ body{
 .header-meta{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:4px; position:relative;}
 .asof{font-size:11.5px; color:rgba(255,255,255,.6);}
 .demo-badge{
-  display:inline-flex; align-items:center; gap:5px; background:var(--amber-100); color:var(--amber-600);
+  display:inline-flex; align-items:center; gap:5px; background:var(--green-100); color:var(--green-600);
   font-size:10.5px; font-weight:700; letter-spacing:.03em; padding:4px 10px; border-radius:999px;
+  transition:.15s ease;
 }
-.demo-badge .dot{width:6px; height:6px; border-radius:50%; background:var(--amber-600);}
+.demo-badge .dot{width:6px; height:6px; border-radius:50%; background:currentColor;}
+.demo-badge.badge-error{background:var(--red-100); color:var(--red-600);}
 
 .selectors-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; position:relative; z-index:1;}
 .field{
@@ -187,7 +189,7 @@ tr.total-row td.first{color:var(--orange-600);}
     <div class="h1">Panel Callback JT</div>
     <div class="header-meta">
       <span class="asof" id="asOfLabel">Cargando datos…</span>
-      <span class="demo-badge" id="dataSourceBadge"><span class="dot"></span>Base local · pendiente de sync con Lista</span>
+      <span class="demo-badge" id="dataSourceBadge"><span class="dot"></span>Cargando…</span>
     </div>
 
     <div class="selectors-row">
@@ -328,7 +330,7 @@ tr.total-row td.first{color:var(--orange-600);}
     </div>
   </div>
 
-  <div class="footer-note">Panel generado a partir de la base de callback JT · estructura preparada para consumir el JSON de la Lista de SharePoint una vez activo el sync.</div>
+  <div class="footer-note">Panel Callback JT · lee en vivo el JSON publicado por sync_callback.py desde la Lista de SharePoint "RegistrosCallback".</div>
 </div>
 
 <script>
@@ -337,7 +339,8 @@ tr.total-row td.first{color:var(--orange-600);}
    Reemplazar por la URL raw.githubusercontent.com correspondiente.
    ============================================================ */
 const CONFIG = {
-  // Repo: MinutaComercialEjecutivos, rama main, JSON en la raíz (mismo patrón que ejecutivos.json / kpi.json).
+  // Repo: MinutaComercialEjecutivos, rama main, JSON en la raíz (mismo patrón que ejecutivos.json / kpi.json),
+  // generado por sync_callback.py a partir de la Lista de SharePoint "RegistrosCallback".
   // OJO: verificá que el {OWNER} de abajo coincida EXACTO (mayúsculas incluidas) con lo que
   // aparece en la barra de direcciones al entrar a github.com/tu-org/MinutaComercialEjecutivos
   // — raw.githubusercontent.com es sensible a mayúsculas/minúsculas en esa parte de la URL.
@@ -346,948 +349,12 @@ const CONFIG = {
   //   { fecha:"2026-03-16", mes:"2026-03", sucursal:"TALCA CENTRO", categoria:"mala"|"neutra"|"buena", origen:"SISTEMA"|null }
   // La categoría ya viene resuelta desde sync_callback.py aplicando la regla de negocio
   // (Calif_Global 1–2 = mala, 3 = neutra, 4–5 = buena) para que el HTML nunca reimplemente esa regla por su cuenta.
+  //
+  // Este panel NO tiene datos de prueba embebidos: si este fetch falla (JSON inexistente, sync
+  // todavía sin correr, URL mal escrita), el panel queda en estado vacío con el badge en rojo —
+  // nunca se muestran números inventados.
   registrosUrl: "https://raw.githubusercontent.com/ComercialExpress/MinutaComercialEjecutivos/main/callback_registros.json"
 };
-
-/* ------------------------------------------------------------
-   Fallback local — datos reales (marzo–mayo 2026) extraídos de
-   RegistrosCallback.csv (Lista de SharePoint), usados mientras
-   el sync automático no esté activo. Estructura a nivel de
-   registro individual, igual a lo que entregará el JSON real.
-   ------------------------------------------------------------ */
-const FALLBACK_REGISTROS = [
-  {
-    "fecha": "2026-03-16",
-    "mes": "2026-03",
-    "sucursal": "TALCA CENTRO",
-    "categoria": "mala",
-    "origen": null
-  },
-  {
-    "fecha": "2026-03-17",
-    "mes": "2026-03",
-    "sucursal": "LOS ÁNGELES LAUTARO",
-    "categoria": "mala",
-    "origen": "CALL CENTER"
-  },
-  {
-    "fecha": "2026-03-17",
-    "mes": "2026-03",
-    "sucursal": "TALCA CENTRO",
-    "categoria": "mala",
-    "origen": "SISTEMA"
-  },
-  {
-    "fecha": "2026-03-17",
-    "mes": "2026-03",
-    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
-    "categoria": "neutra",
-    "origen": "COBERTURA"
-  },
-  {
-    "fecha": "2026-03-17",
-    "mes": "2026-03",
-    "sucursal": "CHILLÁN EL ROBLE",
-    "categoria": "neutra",
-    "origen": "TIEMPO DE ESPERA"
-  },
-  {
-    "fecha": "2026-03-17",
-    "mes": "2026-03",
-    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
-    "categoria": "mala",
-    "origen": "ATENCIÓN DEL ANFITRIÓN"
-  },
-  {
-    "fecha": "2026-03-17",
-    "mes": "2026-03",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "neutra",
-    "origen": "COBERTURA"
-  },
-  {
-    "fecha": "2026-03-17",
-    "mes": "2026-03",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "mala",
-    "origen": "SISTEMA"
-  },
-  {
-    "fecha": "2026-03-17",
-    "mes": "2026-03",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "mala",
-    "origen": "SISTEMA"
-  },
-  {
-    "fecha": "2026-03-17",
-    "mes": "2026-03",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "neutra",
-    "origen": "Error al tipiar"
-  },
-  {
-    "fecha": "2026-03-17",
-    "mes": "2026-03",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "neutra",
-    "origen": "ATENCIÓN DEL ANFITRIÓN"
-  },
-  {
-    "fecha": "2026-03-17",
-    "mes": "2026-03",
-    "sucursal": "TALCA CENTRO",
-    "categoria": "mala",
-    "origen": "Mala informacion de call"
-  },
-  {
-    "fecha": "2026-03-17",
-    "mes": "2026-03",
-    "sucursal": "TALCA CENTRO",
-    "categoria": "mala",
-    "origen": "ATENCIÓN DEL EJECUTIVO"
-  },
-  {
-    "fecha": "2026-03-17",
-    "mes": "2026-03",
-    "sucursal": "TALCA CENTRO",
-    "categoria": "mala",
-    "origen": "SISTEMA"
-  },
-  {
-    "fecha": "2026-03-17",
-    "mes": "2026-03",
-    "sucursal": "TALCA CENTRO",
-    "categoria": "neutra",
-    "origen": "ATENCIÓN DEL ANFITRIÓN"
-  },
-  {
-    "fecha": "2026-03-18",
-    "mes": "2026-03",
-    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
-    "categoria": "mala",
-    "origen": "COBERTURA"
-  },
-  {
-    "fecha": "2026-03-18",
-    "mes": "2026-03",
-    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
-    "categoria": "buena",
-    "origen": "ATENCIÓN DEL EJECUTIVO"
-  },
-  {
-    "fecha": "2026-03-18",
-    "mes": "2026-03",
-    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
-    "categoria": "buena",
-    "origen": "TIEMPO DE ESPERA"
-  },
-  {
-    "fecha": "2026-03-18",
-    "mes": "2026-03",
-    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
-    "categoria": "neutra",
-    "origen": "Responsabilidad cliente"
-  },
-  {
-    "fecha": "2026-03-18",
-    "mes": "2026-03",
-    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
-    "categoria": "mala",
-    "origen": "SISTEMA"
-  },
-  {
-    "fecha": "2026-03-18",
-    "mes": "2026-03",
-    "sucursal": "TALCA CENTRO",
-    "categoria": "mala",
-    "origen": "buena atencion"
-  },
-  {
-    "fecha": "2026-03-18",
-    "mes": "2026-03",
-    "sucursal": "TALCA CENTRO",
-    "categoria": "mala",
-    "origen": "SISTEMA"
-  },
-  {
-    "fecha": "2026-03-19",
-    "mes": "2026-03",
-    "sucursal": "TALCA CENTRO",
-    "categoria": "mala",
-    "origen": "NO CONTESTA"
-  },
-  {
-    "fecha": "2026-03-19",
-    "mes": "2026-03",
-    "sucursal": "TALCA CENTRO",
-    "categoria": "mala",
-    "origen": "buena atencion"
-  },
-  {
-    "fecha": "2026-03-19",
-    "mes": "2026-03",
-    "sucursal": "TALCA MALL",
-    "categoria": "mala",
-    "origen": "COBERTURA"
-  },
-  {
-    "fecha": "2026-03-20",
-    "mes": "2026-03",
-    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
-    "categoria": "mala",
-    "origen": "Cupo financiamiento"
-  },
-  {
-    "fecha": "2026-03-20",
-    "mes": "2026-03",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "mala",
-    "origen": "No existe problema"
-  },
-  {
-    "fecha": "2026-03-23",
-    "mes": "2026-03",
-    "sucursal": "MALL CENTER CURICÓ",
-    "categoria": "neutra",
-    "origen": "Ningún problema"
-  },
-  {
-    "fecha": "2026-03-23",
-    "mes": "2026-03",
-    "sucursal": "MALL CENTER CURICÓ",
-    "categoria": "buena",
-    "origen": "Ninguna"
-  },
-  {
-    "fecha": "2026-03-23",
-    "mes": "2026-03",
-    "sucursal": "TALCA MALL",
-    "categoria": "mala",
-    "origen": "ATENCIÓN DEL EJECUTIVO"
-  },
-  {
-    "fecha": "2026-03-24",
-    "mes": "2026-03",
-    "sucursal": "LOS ÁNGELES LAUTARO",
-    "categoria": "mala",
-    "origen": "TIEMPO DE ESPERA"
-  },
-  {
-    "fecha": "2026-03-24",
-    "mes": "2026-03",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "mala",
-    "origen": "ATENCIÓN DEL EJECUTIVO"
-  },
-  {
-    "fecha": "2026-03-24",
-    "mes": "2026-03",
-    "sucursal": "TALCA CENTRO",
-    "categoria": "mala",
-    "origen": "ATENCIÓN DEL ANFITRIÓN"
-  },
-  {
-    "fecha": "2026-03-24",
-    "mes": "2026-03",
-    "sucursal": "MALL ARAUCO CHILLÁN",
-    "categoria": "neutra",
-    "origen": "ATENCIÓN DEL EJECUTIVO"
-  },
-  {
-    "fecha": "2026-03-25",
-    "mes": "2026-03",
-    "sucursal": "TALCA CENTRO",
-    "categoria": "mala",
-    "origen": "cliente indica error al evaluar"
-  },
-  {
-    "fecha": "2026-03-25",
-    "mes": "2026-03",
-    "sucursal": "MALL CENTER CURICÓ",
-    "categoria": "buena",
-    "origen": "TIEMPO DE ESPERA"
-  },
-  {
-    "fecha": "2026-03-26",
-    "mes": "2026-03",
-    "sucursal": "MALL CENTER CURICÓ",
-    "categoria": "buena",
-    "origen": "ningun problema"
-  },
-  {
-    "fecha": "2026-03-26",
-    "mes": "2026-03",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "neutra",
-    "origen": "ATENCIÓN DEL EJECUTIVO"
-  },
-  {
-    "fecha": "2026-03-27",
-    "mes": "2026-03",
-    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
-    "categoria": "buena",
-    "origen": "TIEMPO DE ESPERA"
-  },
-  {
-    "fecha": "2026-03-27",
-    "mes": "2026-03",
-    "sucursal": "TALCA MALL",
-    "categoria": "buena",
-    "origen": "ATENCIÓN DEL EJECUTIVO"
-  },
-  {
-    "fecha": "2026-03-27",
-    "mes": "2026-03",
-    "sucursal": "CHILLÁN EL ROBLE",
-    "categoria": "mala",
-    "origen": "TIEMPO DE ESPERA"
-  },
-  {
-    "fecha": "2026-03-27",
-    "mes": "2026-03",
-    "sucursal": "CHILLÁN EL ROBLE",
-    "categoria": "neutra",
-    "origen": "ERROR DE EVALUCACIÓN"
-  },
-  {
-    "fecha": "2026-03-27",
-    "mes": "2026-03",
-    "sucursal": "CHILLÁN EL ROBLE",
-    "categoria": "mala",
-    "origen": "ERROR DE EVALUCACIÓN"
-  },
-  {
-    "fecha": "2026-03-27",
-    "mes": "2026-03",
-    "sucursal": "MALL ARAUCO CHILLÁN",
-    "categoria": "mala",
-    "origen": "COBERTURA"
-  },
-  {
-    "fecha": "2026-03-27",
-    "mes": "2026-03",
-    "sucursal": "MALL ARAUCO CHILLÁN",
-    "categoria": "buena",
-    "origen": "Buena atención"
-  },
-  {
-    "fecha": "2026-03-27",
-    "mes": "2026-03",
-    "sucursal": "MALL ARAUCO CHILLÁN",
-    "categoria": "buena",
-    "origen": "Buena atención"
-  },
-  {
-    "fecha": "2026-03-27",
-    "mes": "2026-03",
-    "sucursal": "MALL ARAUCO CHILLÁN",
-    "categoria": "buena",
-    "origen": "Buena atención"
-  },
-  {
-    "fecha": "2026-03-26",
-    "mes": "2026-03",
-    "sucursal": "MALL PLAZA LOS ÁNGELES",
-    "categoria": "mala",
-    "origen": "ATENCIÓN DEL EJECUTIVO"
-  },
-  {
-    "fecha": "2026-03-27",
-    "mes": "2026-03",
-    "sucursal": "MALL PLAZA LOS ÁNGELES",
-    "categoria": "buena",
-    "origen": "ATENCIÓN DEL EJECUTIVO"
-  },
-  {
-    "fecha": "2026-03-27",
-    "mes": "2026-03",
-    "sucursal": "MALL PLAZA LOS ÁNGELES",
-    "categoria": "buena",
-    "origen": "ATENCIÓN DEL EJECUTIVO"
-  },
-  {
-    "fecha": "2026-03-27",
-    "mes": "2026-03",
-    "sucursal": "MALL PLAZA LOS ÁNGELES",
-    "categoria": "buena",
-    "origen": "ATENCIÓN DEL EJECUTIVO"
-  },
-  {
-    "fecha": "2026-03-27",
-    "mes": "2026-03",
-    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
-    "categoria": "buena",
-    "origen": "TIEMPO DE ESPERA"
-  },
-  {
-    "fecha": "2026-03-30",
-    "mes": "2026-03",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "mala",
-    "origen": "ATENCIÓN DEL EJECUTIVO"
-  },
-  {
-    "fecha": "2026-03-30",
-    "mes": "2026-03",
-    "sucursal": "LOS ÁNGELES LAUTARO",
-    "categoria": "mala",
-    "origen": "ERROR DE EVALUCACIÓN"
-  },
-  {
-    "fecha": "2026-03-31",
-    "mes": "2026-03",
-    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
-    "categoria": "mala",
-    "origen": "BUENA ATENCIÓN"
-  },
-  {
-    "fecha": "2026-03-31",
-    "mes": "2026-03",
-    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
-    "categoria": "mala",
-    "origen": "BUENA ATENCIÓN"
-  },
-  {
-    "fecha": "2026-03-31",
-    "mes": "2026-03",
-    "sucursal": "TALCA CENTRO",
-    "categoria": "mala",
-    "origen": "BUENA ATENCIÓN"
-  },
-  {
-    "fecha": "2026-03-31",
-    "mes": "2026-03",
-    "sucursal": "LOS ÁNGELES LAUTARO",
-    "categoria": "mala",
-    "origen": "ERROR DE EVALUCACIÓN"
-  },
-  {
-    "fecha": "2026-04-08",
-    "mes": "2026-04",
-    "sucursal": "TALCA CENTRO",
-    "categoria": "mala",
-    "origen": "BUENA ATENCIÓN"
-  },
-  {
-    "fecha": "2026-04-08",
-    "mes": "2026-04",
-    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
-    "categoria": "mala",
-    "origen": "BUENA ATENCIÓN"
-  },
-  {
-    "fecha": "2026-04-08",
-    "mes": "2026-04",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "mala",
-    "origen": "BUENA ATENCIÓN"
-  },
-  {
-    "fecha": "2026-04-09",
-    "mes": "2026-04",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "mala",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-04-10",
-    "mes": "2026-04",
-    "sucursal": "TALCA MALL",
-    "categoria": "mala",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-04-13",
-    "mes": "2026-04",
-    "sucursal": "LOS ÁNGELES LAUTARO",
-    "categoria": "mala",
-    "origen": "BUENA ATENCIÓN"
-  },
-  {
-    "fecha": "2026-04-13",
-    "mes": "2026-04",
-    "sucursal": "LOS ÁNGELES LAUTARO",
-    "categoria": "mala",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-04-13",
-    "mes": "2026-04",
-    "sucursal": "LOS ÁNGELES LAUTARO",
-    "categoria": "mala",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-04-13",
-    "mes": "2026-04",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "buena",
-    "origen": "BUENA ATENCIÓN"
-  },
-  {
-    "fecha": "2026-04-13",
-    "mes": "2026-04",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "neutra",
-    "origen": "SISTEMA"
-  },
-  {
-    "fecha": "2026-04-13",
-    "mes": "2026-04",
-    "sucursal": "CHILLÁN EL ROBLE",
-    "categoria": "mala",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-04-14",
-    "mes": "2026-04",
-    "sucursal": "MALL ARAUCO CHILLÁN",
-    "categoria": "buena",
-    "origen": "ATENCIÓN DEL EJECUTIVO"
-  },
-  {
-    "fecha": "2026-04-15",
-    "mes": "2026-04",
-    "sucursal": "TALCA CENTRO",
-    "categoria": "mala",
-    "origen": "ATENCIÓN DEL EJECUTIVO"
-  },
-  {
-    "fecha": "2026-04-15",
-    "mes": "2026-04",
-    "sucursal": "MALL ARAUCO CHILLÁN",
-    "categoria": "mala",
-    "origen": "ATENCIÓN DEL EJECUTIVO"
-  },
-  {
-    "fecha": "2026-04-15",
-    "mes": "2026-04",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "buena",
-    "origen": "BUENA ATENCIÓN"
-  },
-  {
-    "fecha": "2026-04-15",
-    "mes": "2026-04",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "mala",
-    "origen": "ATENCIÓN DEL EJECUTIVO"
-  },
-  {
-    "fecha": "2026-04-15",
-    "mes": "2026-04",
-    "sucursal": "CHILLÁN EL ROBLE",
-    "categoria": "mala",
-    "origen": "ATENCIÓN SUPERVISOR"
-  },
-  {
-    "fecha": "2026-04-15",
-    "mes": "2026-04",
-    "sucursal": "MALL ARAUCO CHILLÁN",
-    "categoria": "mala",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-04-16",
-    "mes": "2026-04",
-    "sucursal": "MALL CENTER CURICÓ",
-    "categoria": "mala",
-    "origen": "BUENA ATENCIÓN"
-  },
-  {
-    "fecha": "2026-04-16",
-    "mes": "2026-04",
-    "sucursal": "MALL CENTER CURICÓ",
-    "categoria": "buena",
-    "origen": "BUENA ATENCIÓN"
-  },
-  {
-    "fecha": "2026-04-16",
-    "mes": "2026-04",
-    "sucursal": "MALL CENTER CURICÓ",
-    "categoria": "buena",
-    "origen": "BUENA ATENCIÓN"
-  },
-  {
-    "fecha": "2026-04-16",
-    "mes": "2026-04",
-    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
-    "categoria": "mala",
-    "origen": "SISTEMA"
-  },
-  {
-    "fecha": "2026-04-16",
-    "mes": "2026-04",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "mala",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-04-16",
-    "mes": "2026-04",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "mala",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-04-16",
-    "mes": "2026-04",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "buena",
-    "origen": "BUENA ATENCIÓN"
-  },
-  {
-    "fecha": "2026-04-17",
-    "mes": "2026-04",
-    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
-    "categoria": "neutra",
-    "origen": "SISTEMA"
-  },
-  {
-    "fecha": "2026-04-17",
-    "mes": "2026-04",
-    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
-    "categoria": "neutra",
-    "origen": "COBERTURA"
-  },
-  {
-    "fecha": "2026-04-17",
-    "mes": "2026-04",
-    "sucursal": "TALCA MALL",
-    "categoria": "buena",
-    "origen": "TIEMPO DE ESPERA"
-  },
-  {
-    "fecha": "2026-04-17",
-    "mes": "2026-04",
-    "sucursal": "TALCA MALL",
-    "categoria": "mala",
-    "origen": "ATENCIÓN DEL EJECUTIVO"
-  },
-  {
-    "fecha": "2026-04-17",
-    "mes": "2026-04",
-    "sucursal": "TALCA MALL",
-    "categoria": "buena",
-    "origen": "TIEMPO DE ESPERA"
-  },
-  {
-    "fecha": "2026-04-20",
-    "mes": "2026-04",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "mala",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-04-20",
-    "mes": "2026-04",
-    "sucursal": "LOS ÁNGELES LAUTARO",
-    "categoria": "mala",
-    "origen": "ATENCIÓN DEL EJECUTIVO"
-  },
-  {
-    "fecha": "2026-04-21",
-    "mes": "2026-04",
-    "sucursal": "LOS ÁNGELES LAUTARO",
-    "categoria": "mala",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-04-21",
-    "mes": "2026-04",
-    "sucursal": "LOS ÁNGELES LAUTARO",
-    "categoria": "mala",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-04-21",
-    "mes": "2026-04",
-    "sucursal": "LOS ÁNGELES LAUTARO",
-    "categoria": "mala",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-04-21",
-    "mes": "2026-04",
-    "sucursal": "LOS ÁNGELES LAUTARO",
-    "categoria": "mala",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-04-23",
-    "mes": "2026-04",
-    "sucursal": "TALCA CENTRO",
-    "categoria": "mala",
-    "origen": "SISTEMA"
-  },
-  {
-    "fecha": "2026-04-23",
-    "mes": "2026-04",
-    "sucursal": "TALCA CENTRO",
-    "categoria": "neutra",
-    "origen": "BUENA ATENCIÓN"
-  },
-  {
-    "fecha": "2026-04-23",
-    "mes": "2026-04",
-    "sucursal": "CHILLÁN EL ROBLE",
-    "categoria": "neutra",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-04-23",
-    "mes": "2026-04",
-    "sucursal": "CHILLÁN EL ROBLE",
-    "categoria": "mala",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-04-23",
-    "mes": "2026-04",
-    "sucursal": "CHILLÁN EL ROBLE",
-    "categoria": "neutra",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-04-24",
-    "mes": "2026-04",
-    "sucursal": "MALL ARAUCO CHILLÁN",
-    "categoria": "mala",
-    "origen": "SISTEMA"
-  },
-  {
-    "fecha": "2026-04-26",
-    "mes": "2026-04",
-    "sucursal": "MALL PLAZA LOS ÁNGELES",
-    "categoria": "buena",
-    "origen": "BUENA ATENCIÓN"
-  },
-  {
-    "fecha": "2026-04-26",
-    "mes": "2026-04",
-    "sucursal": "MALL PLAZA LOS ÁNGELES",
-    "categoria": "buena",
-    "origen": "BUENA ATENCIÓN"
-  },
-  {
-    "fecha": "2026-04-26",
-    "mes": "2026-04",
-    "sucursal": "MALL PLAZA LOS ÁNGELES",
-    "categoria": "buena",
-    "origen": "BUENA ATENCIÓN"
-  },
-  {
-    "fecha": "2026-04-27",
-    "mes": "2026-04",
-    "sucursal": "CHILLÁN EL ROBLE",
-    "categoria": "mala",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-04-27",
-    "mes": "2026-04",
-    "sucursal": "CHILLÁN EL ROBLE",
-    "categoria": "mala",
-    "origen": "COBERTURA"
-  },
-  {
-    "fecha": "2026-04-27",
-    "mes": "2026-04",
-    "sucursal": "CHILLÁN EL ROBLE",
-    "categoria": "neutra",
-    "origen": "SISTEMA"
-  },
-  {
-    "fecha": "2026-04-27",
-    "mes": "2026-04",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "neutra",
-    "origen": "TIEMPO DE ESPERA"
-  },
-  {
-    "fecha": "2026-04-28",
-    "mes": "2026-04",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "mala",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-04-28",
-    "mes": "2026-04",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "neutra",
-    "origen": "TIEMPO DE ESPERA"
-  },
-  {
-    "fecha": "2026-04-28",
-    "mes": "2026-04",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "mala",
-    "origen": "SISTEMA"
-  },
-  {
-    "fecha": "2026-04-28",
-    "mes": "2026-04",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "mala",
-    "origen": "SISTEMA"
-  },
-  {
-    "fecha": "2026-04-29",
-    "mes": "2026-04",
-    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
-    "categoria": "neutra",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-04-29",
-    "mes": "2026-04",
-    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
-    "categoria": "mala",
-    "origen": "SISTEMA"
-  },
-  {
-    "fecha": "2026-04-29",
-    "mes": "2026-04",
-    "sucursal": "TALCA MALL",
-    "categoria": "neutra",
-    "origen": "ATENCIÓN DEL EJECUTIVO"
-  },
-  {
-    "fecha": "2026-04-29",
-    "mes": "2026-04",
-    "sucursal": "MALL CENTER CURICÓ",
-    "categoria": "buena",
-    "origen": "BUENA ATENCIÓN"
-  },
-  {
-    "fecha": "2026-05-07",
-    "mes": "2026-05",
-    "sucursal": "MALL CENTER CURICÓ",
-    "categoria": "mala",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-05-08",
-    "mes": "2026-05",
-    "sucursal": "MALL ARAUCO CHILLÁN",
-    "categoria": "mala",
-    "origen": "ATENCIÓN DEL EJECUTIVO"
-  },
-  {
-    "fecha": "2026-05-09",
-    "mes": "2026-05",
-    "sucursal": "LINARES INDEPENDENCIA",
-    "categoria": "mala",
-    "origen": "COBERTURA"
-  },
-  {
-    "fecha": "2026-05-14",
-    "mes": "2026-05",
-    "sucursal": "TALCA MALL",
-    "categoria": "neutra",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-05-15",
-    "mes": "2026-05",
-    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
-    "categoria": "mala",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-05-15",
-    "mes": "2026-05",
-    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
-    "categoria": "mala",
-    "origen": "SISTEMA"
-  },
-  {
-    "fecha": "2026-05-15",
-    "mes": "2026-05",
-    "sucursal": "TALCA CENTRO",
-    "categoria": "mala",
-    "origen": "BUENA ATENCIÓN"
-  },
-  {
-    "fecha": "2026-05-15",
-    "mes": "2026-05",
-    "sucursal": "TALCA CENTRO",
-    "categoria": "mala",
-    "origen": "COBERTURA"
-  },
-  {
-    "fecha": "2026-05-15",
-    "mes": "2026-05",
-    "sucursal": "TALCA CENTRO",
-    "categoria": "mala",
-    "origen": "SISTEMA"
-  },
-  {
-    "fecha": "2026-05-16",
-    "mes": "2026-05",
-    "sucursal": "CHILLÁN EL ROBLE",
-    "categoria": "neutra",
-    "origen": "TIEMPO DE ESPERA"
-  },
-  {
-    "fecha": "2026-05-16",
-    "mes": "2026-05",
-    "sucursal": "CHILLÁN EL ROBLE",
-    "categoria": "mala",
-    "origen": "SISTEMA"
-  },
-  {
-    "fecha": "2026-05-16",
-    "mes": "2026-05",
-    "sucursal": "CHILLÁN EL ROBLE",
-    "categoria": "mala",
-    "origen": "ATENCIÓN DEL EJECUTIVO"
-  },
-  {
-    "fecha": "2026-05-18",
-    "mes": "2026-05",
-    "sucursal": "LOS ÁNGELES LAUTARO",
-    "categoria": "mala",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-05-18",
-    "mes": "2026-05",
-    "sucursal": "LOS ÁNGELES LAUTARO",
-    "categoria": "mala",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-05-18",
-    "mes": "2026-05",
-    "sucursal": "TALCA MALL",
-    "categoria": "mala",
-    "origen": "ERROR DE EVALUACIÓN"
-  },
-  {
-    "fecha": "2026-05-18",
-    "mes": "2026-05",
-    "sucursal": "MALL PLAZA LOS ÁNGELES",
-    "categoria": "mala",
-    "origen": "COBERTURA"
-  },
-  {
-    "fecha": "2026-05-18",
-    "mes": "2026-05",
-    "sucursal": "MALL PLAZA LOS ÁNGELES",
-    "categoria": "buena",
-    "origen": "BUENA ATENCIÓN"
-  },
-  {
-    "fecha": "2026-05-18",
-    "mes": "2026-05",
-    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
-    "categoria": "neutra",
-    "origen": "ERROR DE EVALUACIÓN"
-  }
-];
 
 const COLOR_GOOD = "#158A4A", COLOR_BAD = "#D6394A", COLOR_NEUTRAL = "#2A6FC9";
 const ORIGIN_PALETTE = ["#F5821F","#158A4A","#2A6FC9","#7C4DBF","#C97A11","#D6394A","#454F92","#9296AE","#F5821F"];
@@ -1297,18 +364,19 @@ let chartSucursales = null;
 let chartOrigen = null;
 let ALL_RECORDS = [];
 
-async function loadJson(url, fallback){
-  if(!url) return fallback;
+async function loadRegistros(url){
   try{
     const res = await fetch(url);
-    if(!res.ok) throw new Error("bad status");
+    if(!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
     document.getElementById('dataSourceBadge').innerHTML = '<span class="dot"></span>Datos sincronizados desde la Lista';
+    document.getElementById('dataSourceBadge').classList.remove('badge-error');
     return data;
   }catch(e){
-    console.warn("Fallback aplicado para", url, e);
-    document.getElementById('dataSourceBadge').innerHTML = '<span class="dot"></span>Base local · pendiente de sync con Lista';
-    return fallback;
+    console.error("No se pudo cargar el JSON sincronizado desde", url, e);
+    document.getElementById('dataSourceBadge').innerHTML = '<span class="dot"></span>Sin datos — el sync aún no ha corrido o el JSON no existe';
+    document.getElementById('dataSourceBadge').classList.add('badge-error');
+    return [];
   }
 }
 
@@ -1500,16 +568,28 @@ function titleCase(s){
 }
 
 function populateSelectors(){
+  const selMes = document.getElementById('selMes');
+  const selSuc = document.getElementById('selSucursal');
+
+  if(!ALL_RECORDS.length){
+    selMes.innerHTML = '<option value="all">Sin datos</option>';
+    selSuc.innerHTML = '<option value="all">Sin datos</option>';
+    selMes.disabled = true;
+    selSuc.disabled = true;
+    document.getElementById('asOfLabel').textContent = 'Sin datos sincronizados todavía';
+    return;
+  }
+  selMes.disabled = false;
+  selSuc.disabled = false;
+
   const mesesSet = new Set(ALL_RECORDS.map(r=>r.mes));
   const meses = [...mesesSet].sort();
-  const selMes = document.getElementById('selMes');
   selMes.innerHTML = '<option value="all">Todos los meses</option>' +
     meses.map(m => `<option value="${m}">${mesLabel(m)}</option>`).join('');
   // Selecciona por defecto el mes más reciente disponible.
   if(meses.length) selMes.value = meses[meses.length - 1];
 
   const sucursales = [...new Set(ALL_RECORDS.map(r=>r.sucursal))].sort((a,b)=>a.localeCompare(b,'es'));
-  const selSuc = document.getElementById('selSucursal');
   selSuc.innerHTML = '<option value="all">Todas</option>' +
     sucursales.map(s => `<option value="${s}">${s}</option>`).join('');
 
@@ -1521,7 +601,7 @@ function populateSelectors(){
 }
 
 (async function init(){
-  ALL_RECORDS = await loadJson(CONFIG.registrosUrl, FALLBACK_REGISTROS);
+  ALL_RECORDS = await loadRegistros(CONFIG.registrosUrl);
 
   populateSelectors();
   renderAll();
