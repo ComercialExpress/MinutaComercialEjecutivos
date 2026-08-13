@@ -153,6 +153,17 @@ tr.total-row td.first{color:var(--orange-600);}
 .badge-bad{background:var(--red-100); color:var(--red-600);}
 .badge-neutral{background:var(--blue-100); color:var(--blue-600);}
 .badge-max{background:var(--orange-100); color:var(--orange-600);}
+.badge-nodata{background:var(--border-soft); color:var(--ink-400); font-weight:600;}
+
+/* ---------- Sucursales sin datos aún (listado oficial siempre visible) ---------- */
+tr.row-nodata td{color:var(--ink-400);}
+tr.row-nodata td.first{color:var(--ink-400); font-weight:600;}
+tr.row-nodata{background:#FAFAFC;}
+.range-item.no-data .range-name{color:var(--ink-400);}
+.range-item.no-data .range-rank{color:var(--ink-400);}
+.range-item.no-data .range-track{background:var(--border-soft);}
+.range-item.no-data .fill-track{background:var(--ink-400); opacity:.35;}
+.range-item.no-data .range-val{color:var(--ink-400); font-weight:600; width:auto; white-space:nowrap; font-size:11px;}
 
 .legend-row{display:flex; gap:16px; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px dashed var(--border);}
 .legend-item{display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--ink-500); font-weight:600;}
@@ -266,8 +277,8 @@ tr.total-row td.first{color:var(--orange-600);}
     <div class="card">
       <div class="card-title-row">
         <div>
-          <div class="card-title">Ranking de sucursales por volumen de callback</div>
-          <div class="card-sub">Total de llamadas calificadas en el período seleccionado</div>
+          <div class="card-title">Callbacks por sucursal</div>
+          <div class="card-sub">Listado oficial de sucursales · total de llamadas calificadas en el período seleccionado</div>
         </div>
       </div>
       <div id="rangeList"></div>
@@ -360,6 +371,24 @@ const COLOR_GOOD = "#158A4A", COLOR_BAD = "#D6394A", COLOR_NEUTRAL = "#2A6FC9";
 const ORIGIN_PALETTE = ["#F5821F","#158A4A","#2A6FC9","#7C4DBF","#C97A11","#D6394A","#454F92","#9296AE","#F5821F"];
 const MESES_ES = ["","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
+/* Listado oficial de sucursales y su orden fijo de despliegue.
+   Estas sucursales SIEMPRE se muestran (en tabla, ranking y gráfico),
+   incluso si todavía no tienen callbacks calificados en el período/filtro
+   seleccionado — en ese caso se listan en gris ("Sin datos") en vez de
+   desaparecer u omitirse. Cualquier sucursal que llegue en el JSON y no
+   esté en este listado se agrega al final, ordenada por volumen. */
+const SUCURSALES_ORDEN = [
+  "CURICÓ CAMILO HENRÍQUEZ",
+  "MALL CENTER CURICÓ",
+  "TALCA CENTRO",
+  "TALCA MALL",
+  "LINARES INDEPENDENCIA",
+  "CHILLÁN EL ROBLE",
+  "MALL ARAUCO CHILLÁN",
+  "LOS ÁNGELES LAUTARO",
+  "MALL PLAZA LOS ÁNGELES"
+];
+
 let chartSucursales = null;
 let chartOrigen = null;
 let ALL_RECORDS = [];
@@ -398,14 +427,30 @@ function getFiltered(){
   );
 }
 
-/* ---- Agregación por sucursal a partir de una lista de registros ---- */
+/* ---- Agregación por sucursal a partir de una lista de registros ----
+   Siempre incluye el listado oficial completo (SUCURSALES_ORDEN), aunque
+   una sucursal no tenga ningún registro en el corte filtrado — queda con
+   los contadores en 0 y se marca como "sin datos" en el render. El orden
+   final respeta SUCURSALES_ORDEN; cualquier sucursal fuera del listado
+   oficial se agrega al final, ordenada por volumen descendente. */
 function aggBySucursal(records){
   const map = new Map();
+  SUCURSALES_ORDEN.forEach(s=>{
+    map.set(s, {sucursal:s, buena:0, mala:0, neutra:0});
+  });
   records.forEach(r=>{
     if(!map.has(r.sucursal)) map.set(r.sucursal, {sucursal:r.sucursal, buena:0, mala:0, neutra:0});
     map.get(r.sucursal)[r.categoria]++;
   });
-  return [...map.values()].map(v => ({...v, total: v.buena + v.mala + v.neutra}));
+  const result = [...map.values()].map(v => ({...v, total: v.buena + v.mala + v.neutra}));
+  return result.sort((a,b)=>{
+    const ia = SUCURSALES_ORDEN.indexOf(a.sucursal);
+    const ib = SUCURSALES_ORDEN.indexOf(b.sucursal);
+    if(ia !== -1 && ib !== -1) return ia - ib;
+    if(ia !== -1) return -1;
+    if(ib !== -1) return 1;
+    return b.total - a.total;
+  });
 }
 
 /* ---- Agregación por origen (normalizado a mayúsculas/trim para no duplicar por casing) ---- */
@@ -430,7 +475,10 @@ function renderAll(){
   document.getElementById('kpiPeriodo').innerHTML =
     `<span class="pill-dot"></span>${mesLabel(mesSel)}${sucSel !== 'all' ? ' · ' + sucSel : ''}`;
 
-  const sucursalesAgg = aggBySucursal(filtered).sort((a,b)=>b.total-a.total);
+  // Orden fijo del listado oficial de sucursales (ver SUCURSALES_ORDEN);
+  // aggBySucursal ya devuelve el arreglo en ese orden, con 0s para las
+  // sucursales sin datos en el período/filtro actual.
+  const sucursalesAgg = aggBySucursal(filtered);
   const origenAgg = aggByOrigen(filtered);
 
   const totBuena = filtered.filter(r=>r.categoria==='buena').length;
@@ -498,14 +546,17 @@ function renderAll(){
   // ---- Range list (ranking sucursales) ----
   const rangeListEl = document.getElementById('rangeList');
   if(sucursalesAgg.length){
-    const maxTotal = Math.max(...sucursalesAgg.map(r=>r.total));
-    rangeListEl.innerHTML = sucursalesAgg.map((r,i)=>`
-      <div class="range-item">
+    const maxTotal = Math.max(...sucursalesAgg.map(r=>r.total), 1);
+    rangeListEl.innerHTML = sucursalesAgg.map((r,i)=>{
+      const sinDatos = r.total === 0;
+      return `
+      <div class="range-item${sinDatos ? ' no-data' : ''}">
         <div class="range-rank">${i+1}</div>
         <div class="range-name">${r.sucursal}</div>
         <div class="range-track"><div class="fill-track" style="width:${(r.total/maxTotal*100).toFixed(0)}%"></div></div>
-        <div class="range-val">${r.total}</div>
-      </div>`).join('');
+        <div class="range-val">${sinDatos ? 'Sin datos' : r.total}</div>
+      </div>`;
+    }).join('');
   }else{
     rangeListEl.innerHTML = `<div class="empty-state">Sin callbacks calificados para este período/sucursal.</div>`;
   }
@@ -516,7 +567,17 @@ function renderAll(){
   const tblSucBody = document.getElementById('tblSucursales');
   if(sucursalesAgg.length){
     const rowsSuc = sucursalesAgg.map(r=>{
-      const pctMala = r.total ? (r.mala/r.total*100) : 0;
+      if(r.total === 0){
+        return `<tr class="row-nodata">
+        <td class="first">${r.sucursal}</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td><span class="badge badge-nodata">Sin datos</span></td>
+      </tr>`;
+      }
+      const pctMala = r.mala/r.total*100;
       const badgeClass = pctMala >= 60 ? 'badge-bad' : (pctMala >= 30 ? 'badge-neutral' : 'badge-good');
       return `<tr>
         <td class="first">${r.sucursal}</td>
@@ -589,7 +650,12 @@ function populateSelectors(){
   // Selecciona por defecto el mes más reciente disponible.
   if(meses.length) selMes.value = meses[meses.length - 1];
 
-  const sucursales = [...new Set(ALL_RECORDS.map(r=>r.sucursal))].sort((a,b)=>a.localeCompare(b,'es'));
+  // Mismo criterio de orden que la tabla/ranking: listado oficial primero
+  // (SUCURSALES_ORDEN), luego cualquier sucursal extra que llegue en el
+  // JSON y no esté en el listado, ordenada alfabéticamente.
+  const sucursalesEnData = new Set(ALL_RECORDS.map(r=>r.sucursal));
+  const extras = [...sucursalesEnData].filter(s => !SUCURSALES_ORDEN.includes(s)).sort((a,b)=>a.localeCompare(b,'es'));
+  const sucursales = [...SUCURSALES_ORDEN, ...extras];
   selSuc.innerHTML = '<option value="all">Todas</option>' +
     sucursales.map(s => `<option value="${s}">${s}</option>`).join('');
 
