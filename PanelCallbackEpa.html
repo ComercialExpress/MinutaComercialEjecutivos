@@ -137,14 +137,14 @@ canvas{max-height:280px;}
 .table-wrap{overflow-x:auto;}
 table.rol-table{width:100%; border-collapse:collapse; table-layout:fixed;}
 table.rol-table th{
-  text-align:left; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+  text-align:center; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
   color:var(--ink-400); background:var(--bg); padding:10px 12px; border-bottom:1px solid var(--border);
 }
-table.rol-table td{padding:0 12px; height:48px; border-bottom:1px solid var(--border-soft); font-size:12.5px; color:var(--ink-700); vertical-align:middle;}
+table.rol-table td{padding:0 12px; height:48px; border-bottom:1px solid var(--border-soft); font-size:12.5px; color:var(--ink-700); vertical-align:middle; text-align:center;}
 table.rol-table tbody tr{transition:.12s ease;}
 table.rol-table tbody tr:hover{background:var(--bg);}
-table.rol-table td.num, table.rol-table th.num{text-align:right; font-variant-numeric:tabular-nums;}
-table.rol-table td.first, table.rol-table th.first{font-weight:700; color:var(--ink-900);}
+table.rol-table td.num, table.rol-table th.num{font-variant-numeric:tabular-nums;}
+table.rol-table td.first, table.rol-table th.first{font-weight:700; color:var(--ink-900); text-align:left;}
 tr.total-row td{font-weight:800; color:var(--ink-900); background:var(--orange-100);}
 tr.total-row td.first{color:var(--orange-600);}
 
@@ -154,6 +154,7 @@ tr.total-row td.first{color:var(--orange-600);}
 .badge-neutral{background:var(--blue-100); color:var(--blue-600);}
 .badge-max{background:var(--orange-100); color:var(--orange-600);}
 .badge-nodata{background:var(--border-soft); color:var(--ink-400); font-weight:600;}
+.badge-zero{background:var(--border-soft); color:var(--ink-400); font-weight:700;}
 
 /* ---------- Sucursales sin datos aún (listado oficial siempre visible) ---------- */
 tr.row-nodata td{color:var(--ink-400);}
@@ -298,12 +299,12 @@ tr.row-nodata{background:#FAFAFC;}
         <table class="rol-table">
           <thead>
             <tr>
-              <th class="first" style="width:34%">Sucursal Express</th>
-              <th class="num">Buena</th>
-              <th class="num">Mala</th>
-              <th class="num">Neutra</th>
-              <th class="num">Total general</th>
-              <th style="width:26%">% Mala</th>
+              <th class="first" style="width:28%">Sucursal Express</th>
+              <th class="num" style="width:12%">Buena</th>
+              <th class="num" style="width:12%">Mala</th>
+              <th class="num" style="width:12%">Neutra</th>
+              <th class="num" style="width:14%">Total general</th>
+              <th class="num" style="width:22%">% Mala</th>
             </tr>
           </thead>
           <tbody id="tblSucursales"></tbody>
@@ -330,9 +331,9 @@ tr.row-nodata{background:#FAFAFC;}
         <table class="rol-table">
           <thead>
             <tr>
-              <th class="first" style="width:46%">Origen del problema</th>
-              <th class="num">Q</th>
-              <th style="width:34%">%</th>
+              <th class="first" style="width:42%">Origen del problema</th>
+              <th class="num" style="width:16%">Q</th>
+              <th class="num" style="width:42%">%</th>
             </tr>
           </thead>
           <tbody id="tblOrigen"></tbody>
@@ -358,6 +359,12 @@ const CONFIG = {
   //
   // Shape esperado: array de registros individuales (no pre-agregados), uno por callback calificado:
   //   { fecha:"2026-03-16", mes:"2026-03", sucursal:"TALCA CENTRO", categoria:"mala"|"neutra"|"buena", origen:"SISTEMA"|null }
+  // "origen" ya viene normalizado desde sync_callback.py contra el catálogo
+  // oficial cerrado (ORIGEN_ORDEN en este archivo, ORIGEN_CATALOGO en el
+  // script): CALL CENTER, SISTEMA, COBERTURA, TIEMPO DE ESPERA, ATENCIÓN DEL
+  // ANFITRIÓN, ERROR DE EVALUACIÓN, ATENCIÓN DEL EJECUTIVO, NO CONTESTA,
+  // OTROS, BUENA ATENCIÓN, ATENCIÓN SUPERVISOR — cualquier valor libre no
+  // reconocido cae en "OTROS", nunca se inventa una categoría nueva.
   // La categoría ya viene resuelta desde sync_callback.py aplicando la regla de negocio
   // (Calif_Global 1–2 = mala, 3 = neutra, 4–5 = buena) para que el HTML nunca reimplemente esa regla por su cuenta.
   //
@@ -368,7 +375,7 @@ const CONFIG = {
 };
 
 const COLOR_GOOD = "#158A4A", COLOR_BAD = "#D6394A", COLOR_NEUTRAL = "#2A6FC9";
-const ORIGIN_PALETTE = ["#F5821F","#158A4A","#2A6FC9","#7C4DBF","#C97A11","#D6394A","#454F92","#9296AE","#F5821F"];
+const ORIGIN_PALETTE = ["#F5821F","#158A4A","#2A6FC9","#7C4DBF","#C97A11","#D6394A","#454F92","#9296AE","#333C74","#DD6E10","#1F244A"];
 const MESES_ES = ["","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
 /* Listado oficial de sucursales y su orden fijo de despliegue.
@@ -387,6 +394,26 @@ const SUCURSALES_ORDEN = [
   "MALL ARAUCO CHILLÁN",
   "LOS ÁNGELES LAUTARO",
   "MALL PLAZA LOS ÁNGELES"
+];
+
+/* Catálogo oficial y cerrado de "Origen del problema" (el mismo que aplica
+   sync_callback.py al generar callback_registros.json). Estas 11 categorías
+   SIEMPRE se muestran en la tabla/gráfico, incluso sin registros en el
+   período/sucursal filtrado — en ese caso se marcan en gris ("Sin datos").
+   Cualquier valor libre no reconocido ya llega normalizado a "OTROS" desde
+   el sync, así que acá no hace falta re-mapear texto suelto. */
+const ORIGEN_ORDEN = [
+  "CALL CENTER",
+  "SISTEMA",
+  "COBERTURA",
+  "TIEMPO DE ESPERA",
+  "ATENCIÓN DEL ANFITRIÓN",
+  "ERROR DE EVALUACIÓN",
+  "ATENCIÓN DEL EJECUTIVO",
+  "NO CONTESTA",
+  "OTROS",
+  "BUENA ATENCIÓN",
+  "ATENCIÓN SUPERVISOR"
 ];
 
 let chartSucursales = null;
@@ -453,9 +480,15 @@ function aggBySucursal(records){
   });
 }
 
-/* ---- Agregación por origen (normalizado a mayúsculas/trim para no duplicar por casing) ---- */
+/* ---- Agregación por origen del problema ----
+   Siempre incluye el catálogo oficial completo (ORIGEN_ORDEN), aunque una
+   categoría no tenga ningún registro en el corte filtrado — queda en 0 y se
+   marca como "sin datos" en el render. El origen ya llega normalizado desde
+   sync_callback.py (mayúsculas + catálogo cerrado + "OTROS" como catch-all),
+   así que acá solo se agrupa tal cual, sin reinterpretar texto libre. */
 function aggByOrigen(records){
   const map = new Map();
+  ORIGEN_ORDEN.forEach(o=>{ map.set(o, 0); });
   records.forEach(r=>{
     if(!r.origen) return;
     const key = r.origen.trim().toUpperCase();
@@ -464,7 +497,14 @@ function aggByOrigen(records){
   const total = [...map.values()].reduce((a,b)=>a+b,0) || 1;
   return [...map.entries()]
     .map(([origen,q]) => ({origen, q, pct: q/total*100}))
-    .sort((a,b)=>b.q-a.q);
+    .sort((a,b)=>{
+      const ia = ORIGEN_ORDEN.indexOf(a.origen);
+      const ib = ORIGEN_ORDEN.indexOf(b.origen);
+      if(ia !== -1 && ib !== -1) return ia - ib;
+      if(ia !== -1) return -1;
+      if(ib !== -1) return 1;
+      return b.q - a.q;
+    });
 }
 
 function renderAll(){
@@ -479,7 +519,12 @@ function renderAll(){
   // aggBySucursal ya devuelve el arreglo en ese orden, con 0s para las
   // sucursales sin datos en el período/filtro actual.
   const sucursalesAgg = aggBySucursal(filtered);
+  // Idem para origen del problema: aggByOrigen devuelve el catálogo oficial
+  // completo (ORIGEN_ORDEN) en su orden fijo, con 0s para las categorías sin
+  // datos. Para la KPI "Principal causa" sí necesitamos la de mayor volumen,
+  // así que se calcula aparte sin alterar el orden fijo de tabla/gráfico.
   const origenAgg = aggByOrigen(filtered);
+  const origenTop = [...origenAgg].filter(o=>o.q>0).sort((a,b)=>b.q-a.q)[0];
 
   const totBuena = filtered.filter(r=>r.categoria==='buena').length;
   const totMala = filtered.filter(r=>r.categoria==='mala').length;
@@ -493,9 +538,9 @@ function renderAll(){
   document.getElementById('kpiMala').textContent = totGeneral ? fmtPct(totMala/totGeneral*100) : '—';
   document.getElementById('kpiMalaN').textContent = totMala + " casos";
 
-  if(origenAgg.length){
-    document.getElementById('kpiCausa').textContent = titleCase(origenAgg[0].origen);
-    document.getElementById('kpiCausaPct').textContent = fmtPct(origenAgg[0].pct) + " del total";
+  if(origenTop){
+    document.getElementById('kpiCausa').textContent = titleCase(origenTop.origen);
+    document.getElementById('kpiCausaPct').textContent = fmtPct(origenTop.pct) + " del total";
   }else{
     document.getElementById('kpiCausa').textContent = '—';
     document.getElementById('kpiCausaPct').textContent = '—';
@@ -527,13 +572,17 @@ function renderAll(){
   }
 
   // ---- Chart: origen (doughnut) ----
+  // El doughnut solo grafica categorías con datos (un gráfico con 11 slices,
+  // varias en 0, no aporta); el catálogo completo con las categorías sin
+  // datos en gris se ve en la tabla "Origen del problema" más abajo.
   if(chartOrigen) chartOrigen.destroy();
-  if(origenAgg.length){
+  const origenConDatos = origenAgg.filter(o=>o.q>0);
+  if(origenConDatos.length){
     chartOrigen = new Chart(document.getElementById('chartOrigen'), {
       type:'doughnut',
       data:{
-        labels: origenAgg.map(o=>titleCase(o.origen)),
-        datasets:[{ data: origenAgg.map(o=>o.q), backgroundColor: ORIGIN_PALETTE, borderWidth:2, borderColor:'#fff' }]
+        labels: origenConDatos.map(o=>titleCase(o.origen)),
+        datasets:[{ data: origenConDatos.map(o=>o.q), backgroundColor: ORIGIN_PALETTE, borderWidth:2, borderColor:'#fff' }]
       },
       options:{
         responsive:true,
@@ -570,22 +619,22 @@ function renderAll(){
       if(r.total === 0){
         return `<tr class="row-nodata">
         <td class="first">${r.sucursal}</td>
-        <td class="num">0</td>
-        <td class="num">0</td>
-        <td class="num">0</td>
-        <td class="num">0</td>
-        <td><span class="badge badge-nodata">Sin datos</span></td>
+        <td class="num"><span class="badge badge-zero">0</span></td>
+        <td class="num"><span class="badge badge-zero">0</span></td>
+        <td class="num"><span class="badge badge-zero">0</span></td>
+        <td class="num"><span class="badge badge-zero">0</span></td>
+        <td class="num"><span class="badge badge-nodata">Sin datos</span></td>
       </tr>`;
       }
       const pctMala = r.mala/r.total*100;
       const badgeClass = pctMala >= 60 ? 'badge-bad' : (pctMala >= 30 ? 'badge-neutral' : 'badge-good');
       return `<tr>
         <td class="first">${r.sucursal}</td>
-        <td class="num">${r.buena ? `<span class="badge badge-good">${r.buena}</span>` : '0'}</td>
-        <td class="num">${r.mala ? `<span class="badge badge-bad">${r.mala}</span>` : '0'}</td>
-        <td class="num">${r.neutra ? `<span class="badge badge-neutral">${r.neutra}</span>` : '0'}</td>
-        <td class="num">${r.total}</td>
-        <td><span class="badge ${badgeClass}">${fmtPct(pctMala)}</span></td>
+        <td class="num">${r.buena ? `<span class="badge badge-good">${r.buena}</span>` : `<span class="badge badge-zero">0</span>`}</td>
+        <td class="num">${r.mala ? `<span class="badge badge-bad">${r.mala}</span>` : `<span class="badge badge-zero">0</span>`}</td>
+        <td class="num">${r.neutra ? `<span class="badge badge-neutral">${r.neutra}</span>` : `<span class="badge badge-zero">0</span>`}</td>
+        <td class="num"><span class="badge badge-nodata" style="color:var(--ink-900); background:var(--border-soft);">${r.total}</span></td>
+        <td class="num"><span class="badge ${badgeClass}">${fmtPct(pctMala)}</span></td>
       </tr>`;
     }).join('');
     const totalRow = `<tr class="total-row">
@@ -594,7 +643,7 @@ function renderAll(){
         <td class="num">${totMala}</td>
         <td class="num">${totNeutra}</td>
         <td class="num">${totGeneral}</td>
-        <td><span class="badge badge-max">${totGeneral ? fmtPct(totMala/totGeneral*100) : '0,0%'}</span></td>
+        <td class="num"><span class="badge badge-max">${totGeneral ? fmtPct(totMala/totGeneral*100) : '0,0%'}</span></td>
       </tr>`;
     tblSucBody.innerHTML = rowsSuc + totalRow;
   }else{
@@ -604,20 +653,28 @@ function renderAll(){
   // ---- Tabla origen ----
   const tblOrigenBody = document.getElementById('tblOrigen');
   if(origenAgg.length){
-    const maxQ = Math.max(...origenAgg.map(o=>o.q));
-    const rowsOrigen = origenAgg.map(o=>`
-      <tr>
+    const maxQ = Math.max(...origenAgg.map(o=>o.q), 1);
+    const rowsOrigen = origenAgg.map(o=>{
+      if(o.q === 0){
+        return `<tr class="row-nodata">
         <td class="first">${titleCase(o.origen)}</td>
-        <td class="num">${o.q}</td>
-        <td>
-          <div style="display:flex; align-items:center; gap:10px;">
-            <div class="range-track" style="max-width:120px;"><div class="fill-track" style="width:${(o.q/maxQ*100).toFixed(0)}%"></div></div>
-            <span style="font-variant-numeric:tabular-nums; font-weight:700; color:var(--ink-900);">${fmtPct(o.pct)}</span>
+        <td class="num"><span class="badge badge-zero">0</span></td>
+        <td class="num"><span class="badge badge-nodata">Sin datos</span></td>
+      </tr>`;
+      }
+      return `<tr>
+        <td class="first">${titleCase(o.origen)}</td>
+        <td class="num"><span class="badge badge-nodata" style="color:var(--ink-900);">${o.q}</span></td>
+        <td class="num">
+          <div style="display:flex; align-items:center; justify-content:center; gap:10px;">
+            <div class="range-track" style="max-width:110px; width:100%;"><div class="fill-track" style="width:${(o.q/maxQ*100).toFixed(0)}%"></div></div>
+            <span style="font-variant-numeric:tabular-nums; font-weight:700; color:var(--ink-900); width:52px; text-align:right;">${fmtPct(o.pct)}</span>
           </div>
         </td>
-      </tr>`).join('');
+      </tr>`;
+    }).join('');
     const totQ = origenAgg.reduce((s,o)=>s+o.q,0);
-    const totalOrigenRow = `<tr class="total-row"><td class="first">Total general</td><td class="num">${totQ}</td><td>100,0%</td></tr>`;
+    const totalOrigenRow = `<tr class="total-row"><td class="first">Total general</td><td class="num">${totQ}</td><td class="num">100,0%</td></tr>`;
     tblOrigenBody.innerHTML = rowsOrigen + totalOrigenRow;
   }else{
     tblOrigenBody.innerHTML = `<tr><td colspan="3"><div class="empty-state">Sin origen de problema reportado para este período/sucursal.</div></td></tr>`;

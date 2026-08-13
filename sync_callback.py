@@ -5,7 +5,10 @@ Sync RegistrosCallback (SharePoint List) -> JSON para el panel de Callback JT.
 Genera:
   data/callback_registros.json  -> un registro por callback calificado, con
                                     fecha, mes (YYYY-MM), sucursal, categoria
-                                    (buena/mala/neutra) y origen del problema.
+                                    (buena/mala/neutra) y origen del problema
+                                    (normalizado contra el catálogo oficial
+                                    cerrado ORIGEN_CATALOGO; cualquier valor
+                                    libre no reconocido cae en "OTROS").
 
 El HTML (PanelCallbackEpa.html) consume este único archivo y hace toda la
 segmentación por mes/sucursal en el cliente, así que este script NO agrega
@@ -26,6 +29,7 @@ import os
 import sys
 import json
 import datetime
+import unicodedata
 import requests
 
 TENANT_ID = os.environ["TENANT_ID"]          # a2c91f5e-f3c4-4e1a-a85e-d114d2650b65
@@ -54,6 +58,59 @@ def calif_to_categoria(valor_texto):
     if n >= 4:
         return "buena"
     return None
+
+
+# Catálogo oficial y cerrado de "Origen del problema" (confirmado por el
+# negocio). Cualquier valor libre que llegue desde SharePoint se mapea a una
+# de estas 11 categorías; lo que no calce cae en "OTROS" — nunca se inventan
+# categorías nuevas ni se descarta el registro por tener un origen "raro".
+ORIGEN_CATALOGO = [
+    "CALL CENTER",
+    "SISTEMA",
+    "COBERTURA",
+    "TIEMPO DE ESPERA",
+    "ATENCIÓN DEL ANFITRIÓN",
+    "ERROR DE EVALUACIÓN",
+    "ATENCIÓN DEL EJECUTIVO",
+    "NO CONTESTA",
+    "OTROS",
+    "BUENA ATENCIÓN",
+    "ATENCIÓN SUPERVISOR",
+]
+
+# Errores de tipeo conocidos en la Lista de SharePoint que deben resolver al
+# mismo valor del catálogo oficial. Agregar acá si aparece un caso nuevo en
+# vez de dejar que caiga silenciosamente en "OTROS".
+ORIGEN_ALIASES = {
+    "ERROR DE EVALUCACION": "ERROR DE EVALUACIÓN",  # typo: falta la "A"
+}
+
+
+def _strip_accents(s):
+    return "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
+
+
+# Índice de búsqueda: catálogo oficial normalizado (sin acentos, mayúsculas) -> valor oficial tal cual.
+_ORIGEN_LOOKUP = {_strip_accents(o).upper(): o for o in ORIGEN_CATALOGO}
+
+
+def normalize_origen(valor_texto):
+    """Mapea un valor libre de OrigenProblema al catálogo oficial cerrado.
+
+    - Tolera mayúsculas/minúsculas y acentos (ej. 'buena atencion' == 'BUENA ATENCIÓN').
+    - Corrige errores de tipeo conocidos vía ORIGEN_ALIASES.
+    - Cualquier valor no reconocido después de eso se agrupa en 'OTROS'.
+    - Vacío/None -> None (sin origen reportado; el registro se mantiene para
+      las métricas de calificación, pero se excluye del conteo por origen).
+    """
+    if not valor_texto:
+        return None
+    limpio = _strip_accents(str(valor_texto).strip()).upper()
+    if not limpio:
+        return None
+    if limpio in ORIGEN_ALIASES:
+        return ORIGEN_ALIASES[limpio]
+    return _ORIGEN_LOOKUP.get(limpio, "OTROS")
 
 
 def parse_fecha(valor):
@@ -105,20 +162,13 @@ def main():
     raw_items = fetch_all_items(token)
     print(f"Items obtenidos de RegistrosCallback: {len(raw_items)}", file=sys.stderr)
 
-    # --- DEBUG TEMPORAL: ver TODAS las claves reales que trae 'fields' ---
-    if raw_items:
-        f0 = raw_items[0].get("fields", {})
-        print(f"[DEBUG] claves disponibles en fields: {sorted(f0.keys())}", file=sys.stderr)
-        print(f"[DEBUG] fields completo item 0: {f0}", file=sys.stderr)
-    # --- FIN DEBUG TEMPORAL ---
-
     registros = []
     excluidos = 0
 
     for item in raw_items:
         f = item.get("fields", {})
         sucursal = (f.get("SucursalPDV") or "").strip()
-        origen = (f.get("OrigenProblema") or "").strip() or None
+        origen = normalize_origen(f.get("OrigenProblema"))
         categoria = calif_to_categoria(f.get("Calif_Global"))
         fecha = parse_fecha(f.get("FechaAtencion"))
 
