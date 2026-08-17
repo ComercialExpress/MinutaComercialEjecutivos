@@ -368,22 +368,37 @@ const CONFIG = {
   // La categoría ya viene resuelta desde sync_callback.py aplicando la regla de negocio
   // (Calif_Global 1–2 = mala, 3 = neutra, 4–5 = buena) para que el HTML nunca reimplemente esa regla por su cuenta.
   //
-  // Este panel NO tiene datos de prueba embebidos: si este fetch falla (JSON inexistente, sync
-  // todavía sin correr, URL mal escrita), el panel queda en estado vacío con el badge en rojo —
-  // nunca se muestran números inventados.
+  // Este panel NO tiene datos de prueba embebidos: si TODAS las fuentes fallan (JSON
+  // inexistente, sync todavía sin correr, URL mal escrita), el panel queda en estado
+  // vacío con el badge en rojo — nunca se muestran números inventados.
   //
-  // NOTA (12-08-2026): se cambió de raw.githubusercontent.com a jsDelivr (cdn.jsdelivr.net).
-  // raw.githubusercontent.com aplica rate limiting agresivo por IP (HTTP 429) que se dispara
-  // fácil con recargas frecuentes durante pruebas — no está pensado para servir tráfico real,
-  // solo para lecturas puntuales (ej. un curl aislado). jsDelivr es un CDN público gratuito que
-  // espeja cualquier archivo de un repo de GitHub sin ese límite, mantiene CORS nativo y no
-  // requiere ningún cambio en sync_callback.py ni en el GitHub Action.
-  // Formato: https://cdn.jsdelivr.net/gh/{owner}/{repo}@{branch}/{path}
-  // OJO: jsDelivr cachea el archivo hasta ~12h. Si necesitas ver un dato recién sincronizado
-  // de inmediato, purga la caché pegando esta URL en el navegador (o agrégala como último paso
-  // del GitHub Action, después del commit):
-  //   https://purge.jsdelivr.net/gh/ComercialExpress/MinutaComercialEjecutivos@main/callback_registros.json
-  registrosUrl: "https://cdn.jsdelivr.net/gh/ComercialExpress/MinutaComercialEjecutivos@main/callback_registros.json"
+  // HISTORIAL:
+  //  - raw.githubusercontent.com (fuente original): confiable para lecturas puntuales,
+  //    pero aplica rate limiting agresivo por IP (HTTP 429) que se dispara con recargas
+  //    frecuentes durante pruebas — no pensado para servir tráfico real.
+  //  - cdn.jsdelivr.net (mirror agregado 12-08-2026): CDN público sin ese límite, pero
+  //    puede tardar en propagar un archivo recién creado/movido y cachea hasta ~12h.
+  //  - cdn.statically.io (mirror agregado 17-08-2026): segundo CDN público independiente,
+  //    como red de respaldo si jsDelivr también falla.
+  //
+  // Ninguna fuente estática única es 100% confiable bajo pruebas repetidas, así que el
+  // panel ahora prueba esta lista EN ORDEN y se queda con la primera que responda 200 OK
+  // con JSON válido. owner/repo/branch/path quedan centralizados acá arriba — es el único
+  // lugar que hay que tocar si el repo, la rama o el nombre del archivo cambian.
+  repo: {
+    owner: "ComercialExpress",
+    name: "MinutaComercialEjecutivos",
+    branch: "main",
+    path: "callback_registros.json"
+  },
+  get registrosSources(){
+    const { owner, name, branch, path } = this.repo;
+    return [
+      `https://cdn.jsdelivr.net/gh/${owner}/${name}@${branch}/${path}`,
+      `https://cdn.statically.io/gh/${owner}/${name}/${branch}/${path}`,
+      `https://raw.githubusercontent.com/${owner}/${name}/${branch}/${path}`
+    ];
+  }
 };
 
 const COLOR_GOOD = "#158A4A", COLOR_BAD = "#D6394A", COLOR_NEUTRAL = "#2A6FC9";
@@ -432,20 +447,42 @@ let chartSucursales = null;
 let chartOrigen = null;
 let ALL_RECORDS = [];
 
-async function loadRegistros(url){
-  try{
-    const res = await fetch(url);
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
-    document.getElementById('dataSourceBadge').innerHTML = '<span class="dot"></span>Datos sincronizados desde la Lista';
-    document.getElementById('dataSourceBadge').classList.remove('badge-error');
-    return data;
-  }catch(e){
-    console.error("No se pudo cargar el JSON sincronizado desde", url, e);
-    document.getElementById('dataSourceBadge').innerHTML = '<span class="dot"></span>Sin datos — el sync aún no ha corrido o el JSON no existe';
-    document.getElementById('dataSourceBadge').classList.add('badge-error');
-    return [];
+/* Prueba cada mirror de CONFIG.registrosSources en orden y se queda con el primero
+   que responda 200 OK + JSON parseable. Cada intento fallido queda logueado en
+   consola con la URL y el motivo exacto (status HTTP o error de red/parseo), para
+   que un futuro diagnóstico no tenga que adivinar cuál mirror falló ni por qué. */
+async function loadRegistros(urls){
+  const fallos = [];
+  for(const url of urls){
+    try{
+      const res = await fetch(url, { cache: 'no-store' });
+      if(!res.ok){
+        fallos.push(`${url} → HTTP ${res.status}`);
+        console.warn(`[callback] fuente no disponible (HTTP ${res.status}):`, url);
+        continue;
+      }
+      const data = await res.json();
+      if(!Array.isArray(data)){
+        fallos.push(`${url} → respuesta no es un array JSON`);
+        console.warn('[callback] respuesta inesperada (no es array) desde', url, data);
+        continue;
+      }
+      const host = new URL(url).hostname;
+      document.getElementById('dataSourceBadge').innerHTML = `<span class="dot"></span>Datos sincronizados (vía ${host})`;
+      document.getElementById('dataSourceBadge').classList.remove('badge-error');
+      if(fallos.length){
+        console.info('[callback] mirrors descartados antes de encontrar uno funcional:', fallos);
+      }
+      return data;
+    }catch(e){
+      fallos.push(`${url} → ${e.message}`);
+      console.warn('[callback] error de red/parseo en', url, e);
+    }
   }
+  console.error('[callback] ninguna fuente respondió con datos válidos:', fallos);
+  document.getElementById('dataSourceBadge').innerHTML = '<span class="dot"></span>Sin datos — todas las fuentes fallaron (ver consola)';
+  document.getElementById('dataSourceBadge').classList.add('badge-error');
+  return [];
 }
 
 function fmtPct(n){ return n.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1}) + "%"; }
@@ -736,7 +773,7 @@ function populateSelectors(){
 }
 
 (async function init(){
-  ALL_RECORDS = await loadRegistros(CONFIG.registrosUrl);
+  ALL_RECORDS = await loadRegistros(CONFIG.registrosSources);
 
   populateSelectors();
   renderAll();
