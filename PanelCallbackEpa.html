@@ -371,7 +371,19 @@ const CONFIG = {
   // Este panel NO tiene datos de prueba embebidos: si este fetch falla (JSON inexistente, sync
   // todavía sin correr, URL mal escrita), el panel queda en estado vacío con el badge en rojo —
   // nunca se muestran números inventados.
-  registrosUrl: "https://raw.githubusercontent.com/ComercialExpress/MinutaComercialEjecutivos/main/callback_registros.json"
+  //
+  // NOTA (12-08-2026): se cambió de raw.githubusercontent.com a jsDelivr (cdn.jsdelivr.net).
+  // raw.githubusercontent.com aplica rate limiting agresivo por IP (HTTP 429) que se dispara
+  // fácil con recargas frecuentes durante pruebas — no está pensado para servir tráfico real,
+  // solo para lecturas puntuales (ej. un curl aislado). jsDelivr es un CDN público gratuito que
+  // espeja cualquier archivo de un repo de GitHub sin ese límite, mantiene CORS nativo y no
+  // requiere ningún cambio en sync_callback.py ni en el GitHub Action.
+  // Formato: https://cdn.jsdelivr.net/gh/{owner}/{repo}@{branch}/{path}
+  // OJO: jsDelivr cachea el archivo hasta ~12h. Si necesitas ver un dato recién sincronizado
+  // de inmediato, purga la caché pegando esta URL en el navegador (o agrégala como último paso
+  // del GitHub Action, después del commit):
+  //   https://purge.jsdelivr.net/gh/ComercialExpress/MinutaComercialEjecutivos@main/callback_registros.json
+  registrosUrl: "https://cdn.jsdelivr.net/gh/ComercialExpress/MinutaComercialEjecutivos@main/callback_registros.json"
 };
 
 const COLOR_GOOD = "#158A4A", COLOR_BAD = "#D6394A", COLOR_NEUTRAL = "#2A6FC9";
