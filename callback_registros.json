@@ -1734,5 +1734,12 @@
     "sucursal": "LOS ÁNGELES LAUTARO",
     "categoria": "neutra",
     "origen": "TIEMPO DE ESPERA"
+  },
+  {
+    "fecha": "2026-08-12",
+    "mes": "2026-08",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
   }
 ]
