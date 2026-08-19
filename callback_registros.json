@@ -1729,6 +1729,13 @@
     "origen": "BUENA ATENCIÓN"
   },
   {
+    "fecha": "2026-08-10",
+    "mes": "2026-08",
+    "sucursal": "TALCA MALL",
+    "categoria": "mala",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
     "fecha": "2026-08-12",
     "mes": "2026-08",
     "sucursal": "LOS ÁNGELES LAUTARO",
@@ -1739,6 +1746,13 @@
     "fecha": "2026-08-12",
     "mes": "2026-08",
     "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-08-12",
+    "mes": "2026-08",
+    "sucursal": "TALCA MALL",
     "categoria": "mala",
     "origen": "ERROR DE EVALUACIÓN"
   }
