@@ -1755,5 +1755,12 @@
     "sucursal": "TALCA MALL",
     "categoria": "mala",
     "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-08-12",
+    "mes": "2026-08",
+    "sucursal": "TALCA MALL",
+    "categoria": "mala",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
   }
 ]
