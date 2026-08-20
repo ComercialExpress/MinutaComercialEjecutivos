@@ -1790,5 +1790,12 @@
     "sucursal": "TALCA MALL",
     "categoria": "mala",
     "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-08-20",
+    "mes": "2026-08",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "buena",
+    "origen": "BUENA ATENCIÓN"
   }
 ]
