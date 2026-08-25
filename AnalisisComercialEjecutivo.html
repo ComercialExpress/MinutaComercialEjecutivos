@@ -608,6 +608,13 @@
   .evo-delta.pos{color:var(--green-600);}
   .evo-delta.neg{color:var(--red-600);}
   .evo-delta.flat{color:var(--ink-400);}
+  .evo-fcst{display:block;font-size:10px;font-weight:700;color:var(--ink-400);margin-top:2px;}
+  .evo-fcst b{color:var(--ink-500);font-weight:800;}
+  /* Fila un poco más alta solo en el Evolutivo de Tiendas, para dar espacio
+     a la línea de FCST bajo el valor+delta (Evolutivo de Ejecutivos no
+     cambia, sigue en 52px). */
+  #tiendaFichaTabContent table.evolutivo-table tbody td{height:64px;}
+  #tiendaFichaTabContent table.evolutivo-table tbody td:not(:first-child){cursor:help;}
   .ind-cell .nombre{font-family:'Sora',sans-serif;font-weight:700;color:var(--navy-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;}
   .exec-col{background:#FAFAFE;}
   .exec-col .exec-val{font-family:'Sora',sans-serif;font-weight:800;color:var(--navy-900);}
@@ -1131,10 +1138,22 @@ function buildTiendaDemoRows(){
       tiendaRows.push({SUCURSAL: store.sucursal, CLUSTER: store.cluster, YM: ym});
       TIENDA_INDICATOR_KEYS.forEach((key, kIdx) => {
         const [min, max] = rangos[key];
+        const tipo = (INDICATOR_META[key] || {}).tipo;
         const base = min + pseudo(store.seed * 31 + kIdx * 7) * (max - min);
         // leve crecimiento en el período más reciente, para que se note movimiento
         const val = pIdx === TIENDA_DEMO_PERIODS.length - 1 ? base * 1.04 : base;
-        tiendaKpiRows.push({SUCURSAL: store.sucursal, INDICADOR_KEY: key, YM: ym, MTD: Math.round(val)});
+        // META/FCST/CUMPL sintéticos, solo para que el fallback demo también
+        // muestre el patrón de la tarjeta real (Power BI entrega estas 3
+        // columnas ya calculadas; acá se simulan de forma determinística).
+        const metaFactor = 1.08 + pseudo(store.seed * 13 + kIdx * 3) * 0.12;
+        const meta = tipo === 'pct' ? Math.min(val * metaFactor, 99) : val * metaFactor;
+        const fcst = val + (meta - val) * (0.35 + pseudo(store.seed * 17 + kIdx * 5) * 0.4);
+        const cumpl = meta ? (fcst / meta) * 100 : null;
+        tiendaKpiRows.push({
+          SUCURSAL: store.sucursal, INDICADOR_KEY: key, YM: ym,
+          MTD: Math.round(val), META: Math.round(meta), FCST: Math.round(fcst),
+          CUMPL: cumpl === null ? null : Math.round(cumpl * 10) / 10
+        });
       });
     });
   });
@@ -1158,7 +1177,8 @@ function buildTiendasFromRows(tiendaRows, tiendaKpiRows){
       id,
       nombre: pick(row,'SUCURSAL_EXPRESS','SUCURSAL','NOMBRE_SUCURSAL','TIENDA') || id,
       cluster: pick(row,'CLUSTER') || '—',
-      periodos: {}
+      periodos: {},
+      detalle: {} // META/FCST/CUMPL por período+indicador — ver tiendaDetalle()
     };
     return byId[id];
   }
@@ -1166,6 +1186,11 @@ function buildTiendasFromRows(tiendaRows, tiendaKpiRows){
     const key = ym || 'SIN_PERIODO';
     if(!tienda.periodos[key]) tienda.periodos[key] = {};
     return tienda.periodos[key];
+  }
+  function ensureDetalle(tienda, ym){
+    const key = ym || 'SIN_PERIODO';
+    if(!tienda.detalle[key]) tienda.detalle[key] = {};
+    return tienda.detalle[key];
   }
 
   tiendaRows.forEach(row => {
@@ -1185,11 +1210,31 @@ function buildTiendasFromRows(tiendaRows, tiendaKpiRows){
     const tipo = INDICATOR_META[key].tipo;
     const mtdRaw = toNum(pick(row,'MTD'), null);
     period[key] = mtdRaw === null ? null : (tipo === 'pct' ? normalizePct(mtdRaw) : mtdRaw);
+
+    // META / FCST / CUMPL — Consulta_Tienda_KPI ya trae estas 3 columnas
+    // además de MTD. CUMPL viene precalculado desde Power BI (columna
+    // propia); NO se recalcula acá (misma disciplina que TIENDA_TOTAL_*).
+    const detalle = ensureDetalle(tienda, ymFor(row));
+    const metaRaw = toNum(pick(row,'META'), null);
+    const fcstRaw = toNum(pick(row,'FCST'), null);
+    const cumplRaw = toNum(pick(row,'CUMPL','PCT_CUMPL','CUMPLIMIENTO'), null);
+    detalle[key] = {
+      meta: metaRaw === null ? null : (tipo === 'pct' ? normalizePct(metaRaw) : metaRaw),
+      fcst: fcstRaw === null ? null : (tipo === 'pct' ? normalizePct(fcstRaw) : fcstRaw),
+      cumpl: cumplRaw === null ? null : normalizePct(cumplRaw)
+    };
   });
 
   const all = Object.values(byId);
   all.sort((a,b) => a.nombre.localeCompare(b.nombre));
   return all;
+}
+
+// Detalle META/FCST/CUMPL de un indicador de tienda en un período dado.
+// Exclusivo de Tiendas (Ejecutivos aún no trae estas columnas en su kpi.json).
+function tiendaDetalle(tienda, ym, key){
+  if(!tienda || !tienda.detalle || !ym || !tienda.detalle[ym]) return null;
+  return tienda.detalle[ym][key] || null;
 }
 
 // La Consulta_Tienda en Power BI entrega, además de cada sucursal real, una
@@ -2244,11 +2289,60 @@ function tiendaEvolutivoHtml(tienda, keys){
         }
       }
       const curCls = ym === state.tiendaYm ? ' evo-current' : '';
-      return `<td class="num${curCls}"><span class="evo-val">${formatByType(key, val)}</span>${deltaHtml}</td>`;
+      const det = tiendaDetalle(tienda, ym, key);
+      const fcstHtml = det && det.fcst !== null && det.fcst !== undefined
+        ? `<span class="evo-fcst">FCST <b>${formatByType(key, det.fcst)}</b></span>`
+        : `<span class="evo-fcst">FCST —</span>`;
+      return `<td class="num${curCls}" data-key="${key}" data-ym="${ym}"><span class="evo-val">${formatByType(key, val)}</span>${deltaHtml}${fcstHtml}</td>`;
     }).join('');
     return `<tr><td>${info.nombre}</td>${cells}</tr>`;
   }).join('');
-  return `<div class="table-wrap"><table class="rol-table evolutivo-table"><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>`;
+  return `<div class="tienda-evo-host" style="position:relative;">
+    <div class="table-wrap"><table class="rol-table evolutivo-table" id="tiendaEvolutivoTable"><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>
+    <div class="rich-tooltip" id="tiendaEvolutivoTooltip"></div>
+  </div>`;
+}
+
+// Tooltip enriquecido del Evolutivo de Tienda: META, MTD, FCST y CUMPL del
+// indicador+período sobre el que se posiciona el mouse. Mismo patrón visual
+// que attachRangeTooltip()/attachTiendaStatsTooltip() (clases .rich-tooltip/
+// .rt-*), reutilizado tal cual por consistencia.
+function attachTiendaEvolutivoTooltip(tienda){
+  const host = document.querySelector('.tienda-evo-host');
+  const tooltip = document.getElementById('tiendaEvolutivoTooltip');
+  const table = document.getElementById('tiendaEvolutivoTable');
+  if(!host || !tooltip || !table) return;
+
+  const showTooltip = (cellEl, clientX, clientY) => {
+    const key = cellEl.dataset.key;
+    const ym = cellEl.dataset.ym;
+    if(!key || !ym) return;
+    const info = INDICATOR_META[key] || {nombre:key, sub:''};
+    const mtd = execValue(tienda, ym, key);
+    const det = tiendaDetalle(tienda, ym, key);
+    const meta = det ? det.meta : null;
+    const fcst = det ? det.fcst : null;
+    const cumpl = det ? det.cumpl : null;
+    tooltip.innerHTML = `
+      <div class="rt-title">${info.nombre}</div>
+      <div class="rt-sub">${ymLabel(ym)}</div>
+      <div class="rt-row"><span class="rt-dot" style="background:var(--navy-700);"></span>Meta<b>${meta !== null && meta !== undefined ? formatByType(key, meta) : '—'}</b></div>
+      <div class="rt-row"><span class="rt-dot" style="background:var(--orange-500);"></span>MTD<b>${mtd !== null && mtd !== undefined ? formatByType(key, mtd) : '—'}</b></div>
+      <div class="rt-row"><span class="rt-dot" style="background:var(--ink-400);"></span>FCST<b>${fcst !== null && fcst !== undefined ? formatByType(key, fcst) : '—'}</b></div>
+      <div class="rt-delta ${cumpl !== null && cumpl !== undefined && cumpl >= 100 ? 'pos' : 'neg'}">Cumpl. ${cumpl !== null && cumpl !== undefined ? fmtPct1(cumpl) : '—'}</div>
+    `;
+    const rect = host.getBoundingClientRect();
+    tooltip.style.left = (clientX - rect.left + 14) + 'px';
+    tooltip.style.top = (clientY - rect.top - 10) + 'px';
+    tooltip.classList.add('visible');
+  };
+  const hideTooltip = () => tooltip.classList.remove('visible');
+
+  table.querySelectorAll('tbody td[data-key]').forEach(cellEl => {
+    cellEl.addEventListener('mouseenter', (e) => showTooltip(cellEl, e.clientX, e.clientY));
+    cellEl.addEventListener('mousemove', (e) => showTooltip(cellEl, e.clientX, e.clientY));
+    cellEl.addEventListener('mouseleave', hideTooltip);
+  });
 }
 
 // --- MATRIZ COMPARATIVA — MTD de la tienda + participación dentro del total
@@ -2278,6 +2372,8 @@ function tiendaMatrizHtml(tienda, group){
   const rows = TIENDA_INDICATOR_KEYS.map(key => {
     const info = INDICATOR_META[key] || {nombre:key, tipo:'int'};
     const val = execValue(tienda, state.tiendaYm, key);
+    const det = tiendaDetalle(tienda, state.tiendaYm, key);
+    const fcst = det ? det.fcst : null;
     const clusterTotal = computeGroupTotal(group, state.tiendaYm, key, info.tipo, clusterTotalEntity);
     const redTotal = computeGroupTotal(TIENDAS_ALL, state.tiendaYm, key, info.tipo, redTotalEntity);
     const pctCluster = (val !== null && clusterTotal) ? (val / clusterTotal * 100) : null;
@@ -2285,13 +2381,14 @@ function tiendaMatrizHtml(tienda, group){
     return `<tr>
       <td>${info.nombre}</td>
       <td class="num">${val !== null ? formatByType(key, val) : '—'}</td>
+      <td class="num">${fcst !== null && fcst !== undefined ? formatByType(key, fcst) : '—'}</td>
       <td class="num">${pctCluster !== null ? fmtPct1(pctCluster) : '—'}</td>
       <td class="num">${pctRed !== null ? fmtPct1(pctRed) : '—'}</td>
     </tr>`;
   }).join('');
   return `<div class="table-wrap">
     <table class="matrix-table">
-      <thead><tr><th>Indicador</th><th class="num">MTD</th><th class="num">% del cluster</th><th class="num">% de la red</th></tr></thead>
+      <thead><tr><th>Indicador</th><th class="num">MTD</th><th class="num">FCST</th><th class="num">% del cluster</th><th class="num">% de la red</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
     <div class="matrix-note">En unidades y montos, el % es la participación real de esta tienda sobre la suma del grupo. En indicadores %, es un índice respecto al promedio del grupo (100% = en el promedio).</div>
@@ -2437,10 +2534,10 @@ function renderTiendaStatsRadar(tienda){
     `;
   }
 
-  attachTiendaStatsTooltip(keys, curRaw, cmpRaw, ymLabel(curYm), hasCmpData ? ymLabel(cmpYm) : null);
+  attachTiendaStatsTooltip(keys, curRaw, cmpRaw, ymLabel(curYm), hasCmpData ? ymLabel(cmpYm) : null, tienda, curYm);
 }
 
-function attachTiendaStatsTooltip(keys, curRaw, cmpRaw, curLabel, cmpLabel){
+function attachTiendaStatsTooltip(keys, curRaw, cmpRaw, curLabel, cmpLabel, tienda, curYm){
   const wrap = document.getElementById('tiendaStatsRadarWrap');
   const tooltip = document.getElementById('tiendaStatsRadarTooltip');
   const container = document.getElementById('tiendaStatsRadarCardInner');
@@ -2452,6 +2549,8 @@ function attachTiendaStatsTooltip(keys, curRaw, cmpRaw, curLabel, cmpLabel){
     const info = INDICATOR_META[key] || {nombre:key};
     const cVal = curRaw[idx];
     const pVal = cmpRaw[idx];
+    const det = tienda ? tiendaDetalle(tienda, curYm, key) : null;
+    const fcst = det ? det.fcst : null;
     let deltaHtml = '';
     if(pVal !== null && pVal !== undefined && pVal !== 0 && cVal !== null && cVal !== undefined){
       const diffPct = ((cVal - pVal) / Math.abs(pVal)) * 100;
@@ -2464,6 +2563,7 @@ function attachTiendaStatsTooltip(keys, curRaw, cmpRaw, curLabel, cmpLabel){
       ${info.sub ? `<div class="rt-sub">${info.sub}</div>` : ''}
       <div class="rt-row"><span class="rt-dot" style="background:var(--orange-500);"></span>${curLabel}<b>${formatByType(key, cVal)}</b></div>
       <div class="rt-row"><span class="rt-dot" style="background:var(--navy-700);"></span>${cmpLabel || 'Sin datos'}<b>${pVal === null || pVal === undefined ? '—' : formatByType(key, pVal)}</b></div>
+      <div class="rt-row"><span class="rt-dot" style="background:var(--ink-400);"></span>FCST ${curLabel}<b>${fcst !== null && fcst !== undefined ? formatByType(key, fcst) : '—'}</b></div>
       ${deltaHtml}
     `;
     const rect = container.getBoundingClientRect();
@@ -2505,6 +2605,7 @@ function renderTiendaFichaTabContent(tienda, group){
   if(!wrap) return;
   if(state.tiendaFichaTab === 'evolutivo'){
     wrap.innerHTML = tiendaEvolutivoHtml(tienda, TIENDA_INDICATOR_KEYS);
+    attachTiendaEvolutivoTooltip(tienda);
     return;
   }
   wrap.innerHTML = tiendaMatrizHtml(tienda, group) + tiendaStatsCardHtml(tienda);
