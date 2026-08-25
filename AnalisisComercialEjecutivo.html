@@ -608,8 +608,8 @@
   .evo-delta.pos{color:var(--green-600);}
   .evo-delta.neg{color:var(--red-600);}
   .evo-delta.flat{color:var(--ink-400);}
-  .evo-fcst{display:block;font-size:10px;font-weight:700;color:var(--ink-400);margin-top:2px;}
-  .evo-fcst b{color:var(--ink-500);font-weight:800;}
+  .evo-mtd{display:block;font-size:10px;font-weight:700;color:var(--ink-400);margin-top:2px;}
+  .evo-mtd b{color:var(--ink-500);font-weight:800;}
   /* Fila un poco más alta solo en el Evolutivo de Tiendas, para dar espacio
      a la línea de FCST bajo el valor+delta (Evolutivo de Ejecutivos no
      cambia, sigue en 52px). */
@@ -2257,6 +2257,15 @@ function currentTiendaFicha(){
 function periodsForTiendaSorted(tienda){
   return periodsForTienda(tienda).slice().sort((a,b) => a.localeCompare(b));
 }
+// Valor principal del Evolutivo Mensual: FCST del indicador; si no llegó FCST
+// para ese período (pipeline aún no lo trae, o dato histórico sin proyección),
+// cae a MTD como respaldo, mismo criterio de degradación gradual que el resto
+// del ecosistema (ver computeGroupTotal/demo fallback).
+function tiendaFcstOrMtd(tienda, ym, key){
+  const det = tiendaDetalle(tienda, ym, key);
+  if(det && det.fcst !== null && det.fcst !== undefined) return det.fcst;
+  return execValue(tienda, ym, key);
+}
 
 // --- EVOLUTIVO MENSUAL (por tienda) — mismo patrón visual que el Evolutivo
 // de Ejecutivos, reutilizando la clase .evolutivo-table.
@@ -2269,31 +2278,29 @@ function tiendaEvolutivoHtml(tienda, keys){
   const tbody = keys.map(key => {
     const info = INDICATOR_META[key] || {nombre:key, tipo:'int'};
     const cells = periods.map((ym, idx) => {
-      const val = execValue(tienda, ym, key);
+      const mainVal = tiendaFcstOrMtd(tienda, ym, key);
       const prevYm = idx > 0 ? periods[idx - 1] : null;
-      const prevVal = prevYm !== null ? execValue(tienda, prevYm, key) : null;
+      const prevMain = prevYm !== null ? tiendaFcstOrMtd(tienda, prevYm, key) : null;
       let deltaHtml = `<span class="evo-delta flat">—</span>`;
-      if(val !== null && prevVal !== null){
+      if(mainVal !== null && prevMain !== null){
         if(info.tipo === 'pct'){
-          const diff = val - prevVal;
+          const diff = mainVal - prevMain;
           const cls = diff > 0.05 ? 'pos' : (diff < -0.05 ? 'neg' : 'flat');
           const sign = diff > 0 ? '+' : '';
           deltaHtml = `<span class="evo-delta ${cls}">${sign}${diff.toFixed(1).replace('.', ',')} pts</span>`;
-        } else if(prevVal !== 0){
-          const pctDiff = ((val - prevVal) / Math.abs(prevVal)) * 100;
+        } else if(prevMain !== 0){
+          const pctDiff = ((mainVal - prevMain) / Math.abs(prevMain)) * 100;
           const cls = pctDiff > 0.05 ? 'pos' : (pctDiff < -0.05 ? 'neg' : 'flat');
           const sign = pctDiff > 0 ? '+' : '';
           deltaHtml = `<span class="evo-delta ${cls}">${sign}${pctDiff.toFixed(1).replace('.', ',')}%</span>`;
-        } else if(val !== 0){
+        } else if(mainVal !== 0){
           deltaHtml = `<span class="evo-delta pos">Nuevo</span>`;
         }
       }
       const curCls = ym === state.tiendaYm ? ' evo-current' : '';
-      const det = tiendaDetalle(tienda, ym, key);
-      const fcstHtml = det && det.fcst !== null && det.fcst !== undefined
-        ? `<span class="evo-fcst">FCST <b>${formatByType(key, det.fcst)}</b></span>`
-        : `<span class="evo-fcst">FCST —</span>`;
-      return `<td class="num${curCls}" data-key="${key}" data-ym="${ym}"><span class="evo-val">${formatByType(key, val)}</span>${deltaHtml}${fcstHtml}</td>`;
+      const mtdVal = execValue(tienda, ym, key);
+      const mtdHtml = `<span class="evo-mtd">MTD <b>${mtdVal !== null && mtdVal !== undefined ? formatByType(key, mtdVal) : '—'}</b></span>`;
+      return `<td class="num${curCls}" data-key="${key}" data-ym="${ym}"><span class="evo-val">${formatByType(key, mainVal)}</span>${deltaHtml}${mtdHtml}</td>`;
     }).join('');
     return `<tr><td>${info.nombre}</td>${cells}</tr>`;
   }).join('');
@@ -2367,31 +2374,27 @@ function computeGroupTotal(group, ym, key, tipo, precomputedEntity){
     : values.reduce((s,v) => s+v, 0);
 }
 function tiendaMatrizHtml(tienda, group){
-  const clusterTotalEntity = TIENDA_TOTAL_POR_CLUSTER[normalizeStr(tienda.cluster)] || null;
   const redTotalEntity = TIENDA_TOTAL_GLOBAL || null;
   const rows = TIENDA_INDICATOR_KEYS.map(key => {
     const info = INDICATOR_META[key] || {nombre:key, tipo:'int'};
     const val = execValue(tienda, state.tiendaYm, key);
     const det = tiendaDetalle(tienda, state.tiendaYm, key);
     const fcst = det ? det.fcst : null;
-    const clusterTotal = computeGroupTotal(group, state.tiendaYm, key, info.tipo, clusterTotalEntity);
-    const redTotal = computeGroupTotal(TIENDAS_ALL, state.tiendaYm, key, info.tipo, redTotalEntity);
-    const pctCluster = (val !== null && clusterTotal) ? (val / clusterTotal * 100) : null;
-    const pctRed = (val !== null && redTotal) ? (val / redTotal * 100) : null;
+    const totalGlobal = computeGroupTotal(TIENDAS_ALL, state.tiendaYm, key, info.tipo, redTotalEntity);
+    const pctTotal = (val !== null && totalGlobal) ? (val / totalGlobal * 100) : null;
     return `<tr>
       <td>${info.nombre}</td>
       <td class="num">${val !== null ? formatByType(key, val) : '—'}</td>
       <td class="num">${fcst !== null && fcst !== undefined ? formatByType(key, fcst) : '—'}</td>
-      <td class="num">${pctCluster !== null ? fmtPct1(pctCluster) : '—'}</td>
-      <td class="num">${pctRed !== null ? fmtPct1(pctRed) : '—'}</td>
+      <td class="num">${pctTotal !== null ? fmtPct1(pctTotal) : '—'}</td>
     </tr>`;
   }).join('');
   return `<div class="table-wrap">
     <table class="matrix-table">
-      <thead><tr><th>Indicador</th><th class="num">MTD</th><th class="num">FCST</th><th class="num">% del cluster</th><th class="num">% de la red</th></tr></thead>
+      <thead><tr><th>Indicador</th><th class="num">MTD</th><th class="num">FCST</th><th class="num">% del total</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
-    <div class="matrix-note">En unidades y montos, el % es la participación real de esta tienda sobre la suma del grupo. En indicadores %, es un índice respecto al promedio del grupo (100% = en el promedio).</div>
+    <div class="matrix-note">El % es la participación real de esta tienda sobre la suma de la red (en indicadores %, es un índice respecto al promedio de la red; 100% = en el promedio).</div>
   </div>`;
 }
 
@@ -2456,19 +2459,25 @@ function renderTiendaStatsRadar(tienda){
   const n = keys.length;
   const angleFor = i => -Math.PI/2 + i * (2*Math.PI/n);
 
-  const curPts = [], cmpPts = [], curRaw = [], cmpRaw = [];
+  const curPts = [], cmpPts = [], fcstPts = [], curRaw = [], cmpRaw = [], fcstRaw = [];
   keys.forEach((key, i) => {
     const curVal = execValue(tienda, curYm, key) || 0;
     const cmpValRaw = hasCmpData ? execValue(tienda, cmpYm, key) : null;
     const cmpVal = cmpValRaw || 0;
-    const maxScale = Math.max(tiendaIndicatorHistMax(tienda, key), curVal, cmpVal, 0.0001) * 1.12;
+    const detCur = tiendaDetalle(tienda, curYm, key);
+    const fcstValRaw = detCur && detCur.fcst !== null && detCur.fcst !== undefined ? detCur.fcst : null;
+    const fcstVal = fcstValRaw || 0;
+    const maxScale = Math.max(tiendaIndicatorHistMax(tienda, key), curVal, cmpVal, fcstVal, 0.0001) * 1.12;
     const rCur = Math.min(1, curVal / maxScale) * R;
     const rCmp = Math.min(1, cmpVal / maxScale) * R;
+    const rFcst = Math.min(1, fcstVal / maxScale) * R;
     const a = angleFor(i);
     curPts.push([cx + rCur*Math.cos(a), cy + rCur*Math.sin(a)]);
     cmpPts.push([cx + rCmp*Math.cos(a), cy + rCmp*Math.sin(a)]);
+    fcstPts.push([cx + rFcst*Math.cos(a), cy + rFcst*Math.sin(a)]);
     curRaw.push(curVal);
     cmpRaw.push(cmpValRaw);
+    fcstRaw.push(fcstValRaw);
   });
 
   const gridLevels = [0.25, 0.5, 0.75, 1];
@@ -2506,6 +2515,8 @@ function renderTiendaStatsRadar(tienda){
 
   const curPoly = curPts.map(p => p.join(',')).join(' ');
   const cmpPoly = cmpPts.map(p => p.join(',')).join(' ');
+  const fcstPoly = fcstPts.map(p => p.join(',')).join(' ');
+  const hasFcstData = fcstRaw.some(v => v !== null && v !== undefined);
 
   let ptsHtml = '';
   curPts.forEach((p, i) => {
@@ -2518,10 +2529,18 @@ function renderTiendaStatsRadar(tienda){
         <circle class="radar-pt-visible" cx="${p[0]}" cy="${p[1]}" r="3.2" fill="var(--navy-700)" stroke="#fff" stroke-width="1.3"/>`;
     });
   }
+  if(hasFcstData){
+    fcstPts.forEach((p, i) => {
+      if(fcstRaw[i] === null || fcstRaw[i] === undefined) return;
+      ptsHtml += `<circle class="radar-pt-hit" data-series="fcst" data-idx="${i}" cx="${p[0]}" cy="${p[1]}" r="16" fill="transparent"/>
+        <circle class="radar-pt-visible" cx="${p[0]}" cy="${p[1]}" r="3.2" fill="var(--purple-600)" stroke="#fff" stroke-width="1.3"/>`;
+    });
+  }
 
   wrap.innerHTML = `<svg viewBox="0 0 ${size} ${size}" style="width:100%;height:auto;display:block;overflow:visible;">
     ${gridHtml}${spokesHtml}
     ${hasCmpData ? `<polygon points="${cmpPoly}" fill="rgba(39,46,92,.12)" stroke="var(--navy-700)" stroke-width="2" stroke-dasharray="5,4"/>` : ''}
+    ${hasFcstData ? `<polygon points="${fcstPoly}" fill="none" stroke="var(--purple-600)" stroke-width="2" stroke-dasharray="2,5"/>` : ''}
     <polygon points="${curPoly}" fill="rgba(245,130,31,.20)" stroke="var(--orange-500)" stroke-width="2.6"/>
     ${labelsHtml}
     ${ptsHtml}
@@ -2529,15 +2548,16 @@ function renderTiendaStatsRadar(tienda){
 
   if(legend){
     legend.innerHTML = `
-      <span><span class="legend-swatch" style="background:var(--orange-500);"></span>${ymLabel(curYm)}</span>
+      <span><span class="legend-swatch" style="background:var(--orange-500);"></span>${ymLabel(curYm)} · MTD</span>
       <span><span class="legend-swatch dashed"></span>${hasCmpData ? ymLabel(cmpYm) : `${cmpLabel} · sin datos`}</span>
+      <span><span class="legend-swatch dashed" style="border-color:var(--purple-600);"></span>${hasFcstData ? `${ymLabel(curYm)} · FCST` : 'FCST · sin datos'}</span>
     `;
   }
 
-  attachTiendaStatsTooltip(keys, curRaw, cmpRaw, ymLabel(curYm), hasCmpData ? ymLabel(cmpYm) : null, tienda, curYm);
+  attachTiendaStatsTooltip(keys, curRaw, cmpRaw, ymLabel(curYm), hasCmpData ? ymLabel(cmpYm) : null, tienda, curYm, fcstRaw);
 }
 
-function attachTiendaStatsTooltip(keys, curRaw, cmpRaw, curLabel, cmpLabel, tienda, curYm){
+function attachTiendaStatsTooltip(keys, curRaw, cmpRaw, curLabel, cmpLabel, tienda, curYm, fcstRaw){
   const wrap = document.getElementById('tiendaStatsRadarWrap');
   const tooltip = document.getElementById('tiendaStatsRadarTooltip');
   const container = document.getElementById('tiendaStatsRadarCardInner');
@@ -2549,8 +2569,7 @@ function attachTiendaStatsTooltip(keys, curRaw, cmpRaw, curLabel, cmpLabel, tien
     const info = INDICATOR_META[key] || {nombre:key};
     const cVal = curRaw[idx];
     const pVal = cmpRaw[idx];
-    const det = tienda ? tiendaDetalle(tienda, curYm, key) : null;
-    const fcst = det ? det.fcst : null;
+    const fcst = fcstRaw ? fcstRaw[idx] : null;
     let deltaHtml = '';
     if(pVal !== null && pVal !== undefined && pVal !== 0 && cVal !== null && cVal !== undefined){
       const diffPct = ((cVal - pVal) / Math.abs(pVal)) * 100;
@@ -2561,9 +2580,9 @@ function attachTiendaStatsTooltip(keys, curRaw, cmpRaw, curLabel, cmpLabel, tien
     tooltip.innerHTML = `
       <div class="rt-title">${info.nombre}</div>
       ${info.sub ? `<div class="rt-sub">${info.sub}</div>` : ''}
-      <div class="rt-row"><span class="rt-dot" style="background:var(--orange-500);"></span>${curLabel}<b>${formatByType(key, cVal)}</b></div>
       <div class="rt-row"><span class="rt-dot" style="background:var(--navy-700);"></span>${cmpLabel || 'Sin datos'}<b>${pVal === null || pVal === undefined ? '—' : formatByType(key, pVal)}</b></div>
-      <div class="rt-row"><span class="rt-dot" style="background:var(--ink-400);"></span>FCST ${curLabel}<b>${fcst !== null && fcst !== undefined ? formatByType(key, fcst) : '—'}</b></div>
+      <div class="rt-row"><span class="rt-dot" style="background:var(--orange-500);"></span>${curLabel} · MTD<b>${formatByType(key, cVal)}</b></div>
+      <div class="rt-row"><span class="rt-dot" style="background:var(--purple-600);"></span>${curLabel} · FCST<b>${fcst !== null && fcst !== undefined ? formatByType(key, fcst) : '—'}</b></div>
       ${deltaHtml}
     `;
     const rect = container.getBoundingClientRect();
