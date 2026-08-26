@@ -2375,6 +2375,7 @@ function computeGroupTotal(group, ym, key, tipo, precomputedEntity){
 }
 function tiendaMatrizHtml(tienda, group){
   const redTotalEntity = TIENDA_TOTAL_GLOBAL || null;
+  const clusterTotalEntity = TIENDA_TOTAL_POR_CLUSTER[normalizeStr(tienda.cluster)] || null;
   const rows = TIENDA_INDICATOR_KEYS.map(key => {
     const info = INDICATOR_META[key] || {nombre:key, tipo:'int'};
     const val = execValue(tienda, state.tiendaYm, key);
@@ -2382,19 +2383,22 @@ function tiendaMatrizHtml(tienda, group){
     const fcst = det ? det.fcst : null;
     const totalGlobal = computeGroupTotal(TIENDAS_ALL, state.tiendaYm, key, info.tipo, redTotalEntity);
     const pctTotal = (val !== null && totalGlobal) ? (val / totalGlobal * 100) : null;
+    const totalCluster = computeGroupTotal(group, state.tiendaYm, key, info.tipo, clusterTotalEntity);
+    const pctCluster = (val !== null && totalCluster) ? (val / totalCluster * 100) : null;
     return `<tr>
       <td>${info.nombre}</td>
       <td class="num">${val !== null ? formatByType(key, val) : '—'}</td>
       <td class="num">${fcst !== null && fcst !== undefined ? formatByType(key, fcst) : '—'}</td>
+      <td class="num">${pctCluster !== null ? fmtPct1(pctCluster) : '—'}</td>
       <td class="num">${pctTotal !== null ? fmtPct1(pctTotal) : '—'}</td>
     </tr>`;
   }).join('');
   return `<div class="table-wrap">
     <table class="matrix-table">
-      <thead><tr><th>Indicador</th><th class="num">MTD</th><th class="num">FCST</th><th class="num">% del total</th></tr></thead>
+      <thead><tr><th>Indicador</th><th class="num">MTD</th><th class="num">FCST</th><th class="num">% del cluster</th><th class="num">% del total</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
-    <div class="matrix-note">El % es la participación real de esta tienda sobre la suma de la red (en indicadores %, es un índice respecto al promedio de la red; 100% = en el promedio).</div>
+    <div class="matrix-note">El % es la participación real de esta tienda sobre la suma del cluster ${tienda.cluster} y sobre la suma de la red (en indicadores %, es un índice respecto al promedio del grupo; 100% = en el promedio).</div>
   </div>`;
 }
 
