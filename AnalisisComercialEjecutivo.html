@@ -2381,16 +2381,21 @@ function tiendaMatrizHtml(tienda, group){
     const val = execValue(tienda, state.tiendaYm, key);
     const det = tiendaDetalle(tienda, state.tiendaYm, key);
     const fcst = det ? det.fcst : null;
-    const totalGlobal = computeGroupTotal(TIENDAS_ALL, state.tiendaYm, key, info.tipo, redTotalEntity);
-    const pctTotal = (val !== null && totalGlobal) ? (val / totalGlobal * 100) : null;
-    const totalCluster = computeGroupTotal(group, state.tiendaYm, key, info.tipo, clusterTotalEntity);
-    const pctCluster = (val !== null && totalCluster) ? (val / totalCluster * 100) : null;
+    // Para indicadores expresados en % (CUMPL, PCT_*, etc.) no corresponde
+    // mostrar participación sobre el cluster/red — sumar o promediar
+    // porcentajes entre tiendas no representa una magnitud válida. Se deja
+    // en blanco ('—'), igual criterio que ya se aplica cuando no hay FCST.
+    const isPct = info.tipo === 'pct';
+    const totalGlobal = isPct ? null : computeGroupTotal(TIENDAS_ALL, state.tiendaYm, key, info.tipo, redTotalEntity);
+    const pctTotal = (!isPct && val !== null && totalGlobal) ? (val / totalGlobal * 100) : null;
+    const totalCluster = isPct ? null : computeGroupTotal(group, state.tiendaYm, key, info.tipo, clusterTotalEntity);
+    const pctCluster = (!isPct && val !== null && totalCluster) ? (val / totalCluster * 100) : null;
     return `<tr>
       <td>${info.nombre}</td>
       <td class="num">${val !== null ? formatByType(key, val) : '—'}</td>
       <td class="num">${fcst !== null && fcst !== undefined ? formatByType(key, fcst) : '—'}</td>
-      <td class="num">${pctCluster !== null ? fmtPct1(pctCluster) : '—'}</td>
-      <td class="num">${pctTotal !== null ? fmtPct1(pctTotal) : '—'}</td>
+      <td class="num">${isPct ? '—' : (pctCluster !== null ? fmtPct1(pctCluster) : '—')}</td>
+      <td class="num">${isPct ? '—' : (pctTotal !== null ? fmtPct1(pctTotal) : '—')}</td>
     </tr>`;
   }).join('');
   return `<div class="table-wrap">
@@ -2398,7 +2403,7 @@ function tiendaMatrizHtml(tienda, group){
       <thead><tr><th>Indicador</th><th class="num">MTD</th><th class="num">FCST</th><th class="num">% del cluster</th><th class="num">% del total</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
-    <div class="matrix-note">El % es la participación real de esta tienda sobre la suma del cluster ${tienda.cluster} y sobre la suma de la red (en indicadores %, es un índice respecto al promedio del grupo; 100% = en el promedio).</div>
+    <div class="matrix-note">El % es la participación real de esta tienda sobre la suma del cluster ${tienda.cluster} y sobre la suma de la red. En indicadores expresados en % (CUMPL, attach, EPA, etc.) esta participación no aplica y se muestra en blanco.</div>
   </div>`;
 }
 
@@ -2544,7 +2549,7 @@ function renderTiendaStatsRadar(tienda){
   wrap.innerHTML = `<svg viewBox="0 0 ${size} ${size}" style="width:100%;height:auto;display:block;overflow:visible;">
     ${gridHtml}${spokesHtml}
     ${hasCmpData ? `<polygon points="${cmpPoly}" fill="rgba(39,46,92,.12)" stroke="var(--navy-700)" stroke-width="2" stroke-dasharray="5,4"/>` : ''}
-    ${hasFcstData ? `<polygon points="${fcstPoly}" fill="none" stroke="var(--purple-600)" stroke-width="2" stroke-dasharray="2,5"/>` : ''}
+    ${hasFcstData ? `<polygon points="${fcstPoly}" fill="none" stroke="var(--purple-600)" stroke-width="3" stroke-dasharray="9,5" stroke-linecap="round" style="filter:drop-shadow(0 0 3px rgba(124,77,191,.55));"/>` : ''}
     <polygon points="${curPoly}" fill="rgba(245,130,31,.20)" stroke="var(--orange-500)" stroke-width="2.6"/>
     ${labelsHtml}
     ${ptsHtml}
