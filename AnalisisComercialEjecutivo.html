@@ -281,10 +281,12 @@
 
   /* --- hero "Total CEX" --- */
   .cex-hero{
+    cursor:pointer;transition:transform .15s ease, box-shadow .15s ease;
     background:radial-gradient(120% 140% at 85% 0%, rgba(245,130,31,.16), transparent 55%), linear-gradient(160deg, var(--navy-900), var(--navy-800));
     border-radius:var(--radius-lg);padding:26px 28px;color:#fff;box-shadow:var(--shadow-card);
     position:relative;overflow:hidden;
   }
+  .cex-hero:hover{transform:translateY(-2px);box-shadow:0 8px 20px -8px rgba(21,25,54,.35);}
   .cex-hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px;}
   .cex-hero-title{font-family:'Sora',sans-serif;font-weight:800;font-size:22px;margin:0 0 4px;}
   .cex-hero-sub{font-family:'Sora',sans-serif;font-weight:700;font-size:11.5px;letter-spacing:.04em;color:var(--orange-500);}
@@ -1349,6 +1351,57 @@ function computeNetworkEntity(ym){
   return { id:'__NETWORK__', nombre:'Total CEX', periodos: { [ym]: period } };
 }
 
+// Entidad "Total Express" con historial COMPLETO (todos los períodos), para
+// alimentar la Ficha de red (Evolutivo Mensual + Comparativo Mensual) igual
+// que una tienda real. Por período usa la fila precalculada TOTAL del Snap
+// (TIENDA_TOTAL_GLOBAL) si existe — ya viene ponderada por Power BI — y solo
+// cae al promedio/suma manual como respaldo (p.ej. datos demo, donde el Snap
+// aún no trae la fila TOTAL). Mismo criterio de degradación que
+// computeNetworkEntity(), pero construido para TODOS los YM, no solo el
+// período seleccionado, porque el Evolutivo y el radar necesitan histórico.
+function buildNetworkTiendaEntity(){
+  const periods = allAvailableTiendaPeriods();
+  const periodos = {};
+  const detalle = {};
+  periods.forEach(ym => {
+    if(TIENDA_TOTAL_GLOBAL && TIENDA_TOTAL_GLOBAL.periodos[ym]){
+      periodos[ym] = TIENDA_TOTAL_GLOBAL.periodos[ym];
+      detalle[ym] = (TIENDA_TOTAL_GLOBAL.detalle && TIENDA_TOTAL_GLOBAL.detalle[ym]) || {};
+      return;
+    }
+    const tiendas = TIENDAS_ALL.filter(t => t.periodos[ym]);
+    const period = {};
+    const det = {};
+    TIENDA_INDICATOR_KEYS.forEach(key => {
+      const tipo = (INDICATOR_META[key] || {}).tipo;
+      const values = tiendas.map(t => execValue(t, ym, key)).filter(v => v !== null && v !== undefined && !isNaN(v));
+      period[key] = values.length
+        ? (tipo === 'pct' ? values.reduce((s,v) => s+v, 0) / values.length : values.reduce((s,v) => s+v, 0))
+        : null;
+      const metas = [], fcsts = [], cumpls = [];
+      tiendas.forEach(t => {
+        const d = tiendaDetalle(t, ym, key);
+        if(!d) return;
+        if(d.meta !== null && d.meta !== undefined) metas.push(d.meta);
+        if(d.fcst !== null && d.fcst !== undefined) fcsts.push(d.fcst);
+        if(d.cumpl !== null && d.cumpl !== undefined) cumpls.push(d.cumpl);
+      });
+      const agg = (arr) => {
+        if(!arr.length) return null;
+        return tipo === 'pct' ? arr.reduce((s,v) => s+v, 0) / arr.length : arr.reduce((s,v) => s+v, 0);
+      };
+      det[key] = {
+        meta: agg(metas),
+        fcst: agg(fcsts),
+        cumpl: cumpls.length ? cumpls.reduce((s,v) => s+v, 0) / cumpls.length : null
+      };
+    });
+    periodos[ym] = period;
+    detalle[ym] = det;
+  });
+  return { id:'__NETWORK__', nombre:'Total Express', cluster:null, periodos, detalle };
+}
+
 function periodsFor(exec){
   return Object.keys(exec.periodos || {}).filter(k => k !== 'SIN_PERIODO').sort((a,b) => b.localeCompare(a));
 }
@@ -2164,9 +2217,12 @@ function renderTiendaHero(){
   const networkOvr = ovrs.length ? Math.round(ovrs.reduce((s,v) => s+v, 0) / ovrs.length) : null;
   const execNames = EXECS_ALL.map(e => e.nombre);
 
-  // Hero informativo: resume la red completa pero no deriva a Ejecutivos —
-  // esa navegación queda reservada exclusivamente a nivel tienda.
-  wrap.innerHTML = `<div class="cex-hero">
+  // Hero informativo: resume la red completa. Es clickeable y abre la Ficha
+  // de red (mismo patrón de Evolutivo Mensual / Matriz Comparativa / radar
+  // que la Ficha de tienda), pero sin rail de ejecutivos ni navegación a
+  // Ejecutivos — es un resumen agregado de toda la franquicia, no de un
+  // cluster o tienda puntual.
+  wrap.innerHTML = `<div class="cex-hero" id="cexHeroCard" role="button" tabindex="0">
     <div class="cex-hero-top">
       <div>
         <h2 class="cex-hero-title">Total Express</h2>
@@ -2183,6 +2239,14 @@ function renderTiendaHero(){
       <span style="font-size:11.5px;font-weight:600;color:rgba(255,255,255,.45);">${execNames.length} ejecutivos en la red</span>
     </div>
   </div>`;
+
+  const heroCard = document.getElementById('cexHeroCard');
+  if(heroCard){
+    heroCard.addEventListener('click', goToNetworkFicha);
+    heroCard.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); goToNetworkFicha(); }
+    });
+  }
 }
 
 function renderTiendaPanel(){
@@ -2252,6 +2316,7 @@ function groupForTienda(tienda){
   return TIENDAS_ALL.filter(t => normalizeStr(t.cluster) === normalizeStr(tienda.cluster));
 }
 function currentTiendaFicha(){
+  if(state.tiendaFichaId === '__NETWORK__') return buildNetworkTiendaEntity();
   return TIENDAS_ALL.find(t => t.id === state.tiendaFichaId) || null;
 }
 function periodsForTiendaSorted(tienda){
@@ -2372,6 +2437,30 @@ function computeGroupTotal(group, ym, key, tipo, precomputedEntity){
   return tipo === 'pct'
     ? values.reduce((s,v) => s+v, 0) / values.length
     : values.reduce((s,v) => s+v, 0);
+}
+// --- MATRIZ COMPARATIVA — variante para la Ficha de red (Total Express).
+// A diferencia de una tienda real, esta fila ES el total: no tiene sentido
+// mostrar participación sobre "el cluster" o "el total" (sería siempre
+// circular o 100%). Se muestra solo MTD y FCST por indicador.
+function networkMatrizHtml(entity){
+  const rows = TIENDA_INDICATOR_KEYS.map(key => {
+    const info = INDICATOR_META[key] || {nombre:key, tipo:'int'};
+    const val = execValue(entity, state.tiendaYm, key);
+    const det = tiendaDetalle(entity, state.tiendaYm, key);
+    const fcst = det ? det.fcst : null;
+    return `<tr>
+      <td>${info.nombre}</td>
+      <td class="num">${val !== null ? formatByType(key, val) : '—'}</td>
+      <td class="num">${fcst !== null && fcst !== undefined ? formatByType(key, fcst) : '—'}</td>
+    </tr>`;
+  }).join('');
+  return `<div class="table-wrap">
+    <table class="matrix-table">
+      <thead><tr><th>Indicador</th><th class="num">MTD</th><th class="num">FCST</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="matrix-note">Total Express agrega el comportamiento de toda la red; no aplica participación por cluster o por total, ya que esta fila corresponde al total mismo.</div>
+  </div>`;
 }
 function tiendaMatrizHtml(tienda, group){
   const redTotalEntity = TIENDA_TOTAL_GLOBAL || null;
@@ -2631,12 +2720,13 @@ function attachTiendaStatsEvents(tienda){
 function renderTiendaFichaTabContent(tienda, group){
   const wrap = document.getElementById('tiendaFichaTabContent');
   if(!wrap) return;
+  const isNetwork = tienda.id === '__NETWORK__';
   if(state.tiendaFichaTab === 'evolutivo'){
     wrap.innerHTML = tiendaEvolutivoHtml(tienda, TIENDA_INDICATOR_KEYS);
     attachTiendaEvolutivoTooltip(tienda);
     return;
   }
-  wrap.innerHTML = tiendaMatrizHtml(tienda, group) + tiendaStatsCardHtml(tienda);
+  wrap.innerHTML = (isNetwork ? networkMatrizHtml(tienda) : tiendaMatrizHtml(tienda, group)) + tiendaStatsCardHtml(tienda);
   renderTiendaStatsRadar(tienda);
   attachTiendaStatsEvents(tienda);
 }
@@ -2646,29 +2736,34 @@ function renderTiendaFicha(){
   const content = document.getElementById('tiendaFichaContent');
   if(!tienda){ content.innerHTML = '<div class="empty-state">Tienda no encontrada.</div>'; return; }
 
-  const group = groupForTienda(tienda);
-  const ovr = computeTiendaOVR(tienda, state.tiendaYm, group);
-  const execsCluster = EXECS_ALL.filter(e => e.cluster === tienda.cluster).sort((a,b) => a.nombre.localeCompare(b.nombre));
+  const isNetwork = tienda.id === '__NETWORK__';
+  const group = isNetwork ? [] : groupForTienda(tienda);
+  const ovr = isNetwork ? null : computeTiendaOVR(tienda, state.tiendaYm, group);
+  const execsCluster = isNetwork ? [] : EXECS_ALL.filter(e => e.cluster === tienda.cluster).sort((a,b) => a.nombre.localeCompare(b.nombre));
 
   const railAvatars = execsCluster.length
     ? execsCluster.map((e, i) => `<span class="avatar-chip on-light" data-exec-id="${e.id}" style="background:${avatarColorForIndex(i)};" title="${e.nombre}">${initialsFor(e.nombre)}</span>`).join('')
     : '<span class="exec-rail-empty">Aún no hay ejecutivos cargados para este cluster.</span>';
 
+  // La Ficha de red (Total Express) es un resumen agregado de toda la
+  // franquicia: no muestra el rail de ejecutivos ni el botón "Ver
+  // ejecutivos", ya que esa navegación no aplica a nivel red (solo a nivel
+  // tienda/cluster).
   content.innerHTML = `
     <div class="tienda-ficha-head">
       <div>
-        <h2 class="tienda-ficha-name">${tienda.nombre}</h2>
-        <div class="tienda-ficha-sub">CLUSTER ${tienda.cluster} · Datos al <b style="color:#fff;">${state.tiendaYm ? ymLabel(state.tiendaYm) : '—'}</b></div>
+        <h2 class="tienda-ficha-name">${isNetwork ? 'Total Express' : tienda.nombre}</h2>
+        <div class="tienda-ficha-sub">${isNetwork ? `TODOS LOS CLUSTERS · ${TIENDAS_ALL.length} SUCURSAL${TIENDAS_ALL.length === 1 ? '' : 'ES'}` : `CLUSTER ${tienda.cluster}`} · Datos al <b style="color:#fff;">${state.tiendaYm ? ymLabel(state.tiendaYm) : '—'}</b></div>
       </div>
       <div class="tienda-ficha-actions">
-        ${ringHtml(ovr, {large:true})}
+        ${isNetwork ? '<span class="cex-status-pill">RED COMPLETA</span>' : ringHtml(ovr, {large:true})}
       </div>
     </div>
 
-    <div class="exec-rail">
+    ${isNetwork ? '' : `<div class="exec-rail">
       <div class="exec-rail-avatars"><span class="exec-rail-label">Ejecutivos</span>${railAvatars}</div>
       <button class="btn-primary-pill" id="tiendaFichaVerEjecutivosBtn" data-cluster="${tienda.cluster}">Ver ejecutivos (${execsCluster.length}) →</button>
-    </div>
+    </div>`}
 
     <div class="tabbar" style="margin-top:18px;">
       <button data-tab="evolutivo" class="${state.tiendaFichaTab === 'evolutivo' ? 'active' : ''}" id="tiendaTabEvolutivoBtn">Evolutivo Mensual</button>
@@ -2680,11 +2775,13 @@ function renderTiendaFicha(){
 
   renderTiendaFichaTabContent(tienda, group);
 
-  content.querySelectorAll('.exec-rail-avatars .avatar-chip[data-exec-id]').forEach(chip => {
-    chip.addEventListener('click', () => goToEjecutivos(tienda.cluster, chip.dataset.execId));
-  });
-  const ctaBtn = document.getElementById('tiendaFichaVerEjecutivosBtn');
-  if(ctaBtn) ctaBtn.addEventListener('click', () => goToEjecutivos(tienda.cluster));
+  if(!isNetwork){
+    content.querySelectorAll('.exec-rail-avatars .avatar-chip[data-exec-id]').forEach(chip => {
+      chip.addEventListener('click', () => goToEjecutivos(tienda.cluster, chip.dataset.execId));
+    });
+    const ctaBtn = document.getElementById('tiendaFichaVerEjecutivosBtn');
+    if(ctaBtn) ctaBtn.addEventListener('click', () => goToEjecutivos(tienda.cluster));
+  }
 
   document.getElementById('tiendaTabEvolutivoBtn').addEventListener('click', () => {
     if(state.tiendaFichaTab === 'evolutivo') return;
@@ -2720,6 +2817,16 @@ function switchPanel(panel){
 
 function goToTiendaFicha(tiendaId){
   state.tiendaFichaId = tiendaId;
+  switchPanel('tienda-ficha');
+  renderTiendaFicha();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// Abre la Ficha de red (Total Express) — mismo panel/patrón visual que la
+// Ficha de tienda, activado desde el hero clickeable del Panel de Tiendas.
+function goToNetworkFicha(){
+  state.tiendaFichaId = '__NETWORK__';
+  state.tiendaFichaTab = 'evolutivo';
   switchPanel('tienda-ficha');
   renderTiendaFicha();
   window.scrollTo({top:0, behavior:'smooth'});
