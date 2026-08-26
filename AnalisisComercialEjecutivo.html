@@ -1217,7 +1217,7 @@ function buildTiendasFromRows(tiendaRows, tiendaKpiRows){
     // además de MTD. CUMPL viene precalculado desde Power BI (columna
     // propia); NO se recalcula acá (misma disciplina que TIENDA_TOTAL_*).
     const detalle = ensureDetalle(tienda, ymFor(row));
-    const metaRaw = toNum(pick(row,'META'), null);
+    const metaRaw = toNum(pick(row,'META_EXPRESS','META'), null);
     const fcstRaw = toNum(pick(row,'FCST'), null);
     const cumplRaw = toNum(pick(row,'CUMPL','PCT_CUMPL','CUMPLIMIENTO'), null);
     detalle[key] = {
@@ -2447,16 +2447,18 @@ function networkMatrizHtml(entity){
     const info = INDICATOR_META[key] || {nombre:key, tipo:'int'};
     const val = execValue(entity, state.tiendaYm, key);
     const det = tiendaDetalle(entity, state.tiendaYm, key);
+    const meta = det ? det.meta : null;
     const fcst = det ? det.fcst : null;
     return `<tr>
       <td>${info.nombre}</td>
       <td class="num">${val !== null ? formatByType(key, val) : '—'}</td>
+      <td class="num">${meta !== null && meta !== undefined ? formatByType(key, meta) : '—'}</td>
       <td class="num">${fcst !== null && fcst !== undefined ? formatByType(key, fcst) : '—'}</td>
     </tr>`;
   }).join('');
   return `<div class="table-wrap">
     <table class="matrix-table">
-      <thead><tr><th>Indicador</th><th class="num">MTD</th><th class="num">FCST</th></tr></thead>
+      <thead><tr><th>Indicador</th><th class="num">MTD</th><th class="num">Meta</th><th class="num">FCST</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
     <div class="matrix-note">Total Express agrega el comportamiento de toda la red; no aplica participación por cluster o por total, ya que esta fila corresponde al total mismo.</div>
@@ -2469,6 +2471,7 @@ function tiendaMatrizHtml(tienda, group){
     const info = INDICATOR_META[key] || {nombre:key, tipo:'int'};
     const val = execValue(tienda, state.tiendaYm, key);
     const det = tiendaDetalle(tienda, state.tiendaYm, key);
+    const meta = det ? det.meta : null;
     const fcst = det ? det.fcst : null;
     // Para indicadores expresados en % (CUMPL, PCT_*, etc.) no corresponde
     // mostrar participación sobre el cluster/red — sumar o promediar
@@ -2482,6 +2485,7 @@ function tiendaMatrizHtml(tienda, group){
     return `<tr>
       <td>${info.nombre}</td>
       <td class="num">${val !== null ? formatByType(key, val) : '—'}</td>
+      <td class="num">${meta !== null && meta !== undefined ? formatByType(key, meta) : '—'}</td>
       <td class="num">${fcst !== null && fcst !== undefined ? formatByType(key, fcst) : '—'}</td>
       <td class="num">${isPct ? '—' : (pctCluster !== null ? fmtPct1(pctCluster) : '—')}</td>
       <td class="num">${isPct ? '—' : (pctTotal !== null ? fmtPct1(pctTotal) : '—')}</td>
@@ -2489,7 +2493,7 @@ function tiendaMatrizHtml(tienda, group){
   }).join('');
   return `<div class="table-wrap">
     <table class="matrix-table">
-      <thead><tr><th>Indicador</th><th class="num">MTD</th><th class="num">FCST</th><th class="num">% del cluster</th><th class="num">% del total</th></tr></thead>
+      <thead><tr><th>Indicador</th><th class="num">MTD</th><th class="num">Meta</th><th class="num">FCST</th><th class="num">% del cluster</th><th class="num">% del total</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
     <div class="matrix-note">El % es la participación real de esta tienda sobre la suma del cluster ${tienda.cluster} y sobre la suma de la red. En indicadores expresados en % (CUMPL, attach, EPA, etc.) esta participación no aplica y se muestra en blanco.</div>
