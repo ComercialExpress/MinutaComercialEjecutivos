@@ -2492,11 +2492,11 @@ function networkMatrizHtml(entity){
     const cumpEntel = det ? det.cumpEntel : null;
     return `<tr>
       <td>${info.nombre}</td>
+      <td class="num val-express">${meta !== null && meta !== undefined ? formatByType(key, meta) : '—'}</td>
+      <td class="num val-entel">${metaEntel !== null && metaEntel !== undefined ? formatByType(key, metaEntel) : '—'}</td>
       <td class="num">${val !== null ? formatByType(key, val) : '—'}</td>
       <td class="num">${fcst !== null && fcst !== undefined ? formatByType(key, fcst) : '—'}</td>
-      <td class="num val-express">${meta !== null && meta !== undefined ? formatByType(key, meta) : '—'}</td>
       <td class="num val-express">${cumpExpress !== null && cumpExpress !== undefined ? fmtPct1(cumpExpress) : '—'}</td>
-      <td class="num val-entel">${metaEntel !== null && metaEntel !== undefined ? formatByType(key, metaEntel) : '—'}</td>
       <td class="num val-entel">${cumpEntel !== null && cumpEntel !== undefined ? fmtPct1(cumpEntel) : '—'}</td>
     </tr>`;
   }).join('');
@@ -2505,16 +2505,16 @@ function networkMatrizHtml(entity){
       <thead>
         <tr>
           <th rowspan="2">Indicador</th>
+          <th colspan="2" class="num group-label">Meta</th>
           <th rowspan="2" class="num">MTD</th>
           <th rowspan="2" class="num">FCST</th>
-          <th colspan="2" class="num group-express group-label">Express</th>
-          <th colspan="2" class="num group-entel group-label">Entel</th>
+          <th colspan="2" class="num group-label">Cump.</th>
         </tr>
         <tr>
-          <th class="num sub-express group-express">Meta</th>
-          <th class="num sub-express group-express">Cump.</th>
-          <th class="num sub-entel group-entel">Meta</th>
-          <th class="num sub-entel group-entel">Cump.</th>
+          <th class="num sub-express group-express">Express</th>
+          <th class="num sub-entel group-entel">Entel</th>
+          <th class="num sub-express group-express">Express</th>
+          <th class="num sub-entel group-entel">Entel</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -2545,11 +2545,11 @@ function tiendaMatrizHtml(tienda, group){
     const pctCluster = (!isPct && val !== null && totalCluster) ? (val / totalCluster * 100) : null;
     return `<tr>
       <td>${info.nombre}</td>
+      <td class="num val-express">${meta !== null && meta !== undefined ? formatByType(key, meta) : '—'}</td>
+      <td class="num val-entel">${metaEntel !== null && metaEntel !== undefined ? formatByType(key, metaEntel) : '—'}</td>
       <td class="num">${val !== null ? formatByType(key, val) : '—'}</td>
       <td class="num">${fcst !== null && fcst !== undefined ? formatByType(key, fcst) : '—'}</td>
-      <td class="num val-express">${meta !== null && meta !== undefined ? formatByType(key, meta) : '—'}</td>
       <td class="num val-express">${cumpExpress !== null && cumpExpress !== undefined ? fmtPct1(cumpExpress) : '—'}</td>
-      <td class="num val-entel">${metaEntel !== null && metaEntel !== undefined ? formatByType(key, metaEntel) : '—'}</td>
       <td class="num val-entel">${cumpEntel !== null && cumpEntel !== undefined ? fmtPct1(cumpEntel) : '—'}</td>
       <td class="num">${isPct ? '—' : (pctCluster !== null ? fmtPct1(pctCluster) : '—')}</td>
       <td class="num">${isPct ? '—' : (pctTotal !== null ? fmtPct1(pctTotal) : '—')}</td>
@@ -2560,18 +2560,18 @@ function tiendaMatrizHtml(tienda, group){
       <thead>
         <tr>
           <th rowspan="2">Indicador</th>
+          <th colspan="2" class="num group-label">Meta</th>
           <th rowspan="2" class="num">MTD</th>
           <th rowspan="2" class="num">FCST</th>
-          <th colspan="2" class="num group-express group-label">Express</th>
-          <th colspan="2" class="num group-entel group-label">Entel</th>
+          <th colspan="2" class="num group-label">Cump.</th>
           <th rowspan="2" class="num">% del cluster</th>
           <th rowspan="2" class="num">% del total</th>
         </tr>
         <tr>
-          <th class="num sub-express group-express">Meta</th>
-          <th class="num sub-express group-express">Cump.</th>
-          <th class="num sub-entel group-entel">Meta</th>
-          <th class="num sub-entel group-entel">Cump.</th>
+          <th class="num sub-express group-express">Express</th>
+          <th class="num sub-entel group-entel">Entel</th>
+          <th class="num sub-express group-express">Express</th>
+          <th class="num sub-entel group-entel">Entel</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
