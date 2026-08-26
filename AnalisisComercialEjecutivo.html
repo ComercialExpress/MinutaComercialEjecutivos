@@ -34,6 +34,8 @@
     --purple-100:#EFE6FB;
     --blue-600:#2A6FC9;
     --blue-100:#E4EFFC;
+    --entel-600:#0A84C7;
+    --entel-100:#DFF3FC;
     --radius-lg:18px;
     --radius-md:12px;
     --radius-sm:8px;
@@ -366,6 +368,19 @@
   table.matrix-table tbody tr:last-child td{border-bottom:none;}
   table.matrix-table tbody tr:hover{background:var(--bg);}
   .matrix-note{padding:12px 16px;font-size:11.5px;color:var(--ink-400);line-height:1.5;border-top:1px solid var(--border-soft);}
+
+  /* --- grupos de marca (Express/Entel) dentro de la Matriz Comparativa ---
+     Encabezado de dos filas: la fila superior agrupa "Express"/"Entel" con
+     un fondo tenue de marca; la inferior nombra Meta/Cump. Los valores en
+     el cuerpo heredan el mismo color de texto que su grupo para que la
+     lectura vertical (¿esta columna es Express o Entel?) sea inmediata sin
+     necesidad de releer el encabezado. */
+  table.matrix-table thead th.group-express{background:var(--orange-100);color:var(--orange-600);border-bottom:1px solid var(--border);}
+  table.matrix-table thead th.group-entel{background:var(--entel-100);color:var(--entel-600);border-bottom:1px solid var(--border);}
+  table.matrix-table thead th.group-label{text-align:center;font-size:10.5px;}
+  table.matrix-table thead th.sub-express, table.matrix-table thead th.sub-entel{font-size:10.5px;}
+  table.matrix-table tbody td.val-express{color:var(--orange-600);font-weight:700;}
+  table.matrix-table tbody td.val-entel{color:var(--entel-600);font-weight:700;}
 
   /* --- botón primario (naranja) para navegar a Ejecutivos desde la Ficha --- */
   .btn-primary-pill{
@@ -1144,17 +1159,25 @@ function buildTiendaDemoRows(){
         const base = min + pseudo(store.seed * 31 + kIdx * 7) * (max - min);
         // leve crecimiento en el período más reciente, para que se note movimiento
         const val = pIdx === TIENDA_DEMO_PERIODS.length - 1 ? base * 1.04 : base;
-        // META/FCST/CUMPL sintéticos, solo para que el fallback demo también
-        // muestre el patrón de la tarjeta real (Power BI entrega estas 3
-        // columnas ya calculadas; acá se simulan de forma determinística).
+        // META/FCST/META_ENTEL/CUMP_EXPRESS/CUMP_ENTEL sintéticos, solo para
+        // que el fallback demo también muestre el patrón de la tarjeta real
+        // (Power BI entrega estas columnas ya calculadas; acá se simulan de
+        // forma determinística).
         const metaFactor = 1.08 + pseudo(store.seed * 13 + kIdx * 3) * 0.12;
         const meta = tipo === 'pct' ? Math.min(val * metaFactor, 99) : val * metaFactor;
         const fcst = val + (meta - val) * (0.35 + pseudo(store.seed * 17 + kIdx * 5) * 0.4);
-        const cumpl = meta ? (fcst / meta) * 100 : null;
+        const cumpExpress = meta ? (fcst / meta) * 100 : null;
+        // Meta Entel: variante independiente de la meta (distinto reparto de
+        // marca), con su propio cumplimiento proyectado sobre el mismo FCST.
+        const entelFactor = 0.85 + pseudo(store.seed * 23 + kIdx * 11) * 0.3;
+        const metaEntel = tipo === 'pct' ? Math.min(meta * entelFactor, 99) : meta * entelFactor;
+        const cumpEntel = metaEntel ? (fcst / metaEntel) * 100 : null;
         tiendaKpiRows.push({
           SUCURSAL: store.sucursal, INDICADOR_KEY: key, YM: ym,
           MTD: Math.round(val), META: Math.round(meta), FCST: Math.round(fcst),
-          CUMPL: cumpl === null ? null : Math.round(cumpl * 10) / 10
+          META_ENTEL: Math.round(metaEntel),
+          CUMP_EXPRESS: cumpExpress === null ? null : Math.round(cumpExpress * 10) / 10,
+          CUMP_ENTEL: cumpEntel === null ? null : Math.round(cumpEntel * 10) / 10
         });
       });
     });
@@ -1180,7 +1203,7 @@ function buildTiendasFromRows(tiendaRows, tiendaKpiRows){
       nombre: pick(row,'SUCURSAL_EXPRESS','SUCURSAL','NOMBRE_SUCURSAL','TIENDA') || id,
       cluster: pick(row,'CLUSTER') || '—',
       periodos: {},
-      detalle: {} // META/FCST/CUMPL por período+indicador — ver tiendaDetalle()
+      detalle: {} // META/FCST/META_ENTEL/CUMP_EXPRESS/CUMP_ENTEL por período+indicador — ver tiendaDetalle()
     };
     return byId[id];
   }
@@ -1213,17 +1236,23 @@ function buildTiendasFromRows(tiendaRows, tiendaKpiRows){
     const mtdRaw = toNum(pick(row,'MTD'), null);
     period[key] = mtdRaw === null ? null : (tipo === 'pct' ? normalizePct(mtdRaw) : mtdRaw);
 
-    // META / FCST / CUMPL — Consulta_Tienda_KPI ya trae estas 3 columnas
-    // además de MTD. CUMPL viene precalculado desde Power BI (columna
-    // propia); NO se recalcula acá (misma disciplina que TIENDA_TOTAL_*).
+    // META / FCST / META_ENTEL / CUMP_EXPRESS / CUMP_ENTEL — Consulta_Tienda_KPI
+    // ya trae estas columnas además de MTD. Todas vienen precalculadas desde
+    // Power BI (columnas propias); NO se recalculan acá (misma disciplina que
+    // TIENDA_TOTAL_*). CUMP_EXPRESS/CUMP_ENTEL reemplazan al CUMPL genérico
+    // que existía antes de que el modelo distinguiera cumplimiento por marca.
     const detalle = ensureDetalle(tienda, ymFor(row));
     const metaRaw = toNum(pick(row,'META_EXPRESS','META'), null);
     const fcstRaw = toNum(pick(row,'FCST'), null);
-    const cumplRaw = toNum(pick(row,'CUMPL','PCT_CUMPL','CUMPLIMIENTO'), null);
+    const metaEntelRaw = toNum(pick(row,'META_ENTEL'), null);
+    const cumpExpressRaw = toNum(pick(row,'CUMP_EXPRESS'), null);
+    const cumpEntelRaw = toNum(pick(row,'CUMP_ENTEL'), null);
     detalle[key] = {
       meta: metaRaw === null ? null : (tipo === 'pct' ? normalizePct(metaRaw) : metaRaw),
       fcst: fcstRaw === null ? null : (tipo === 'pct' ? normalizePct(fcstRaw) : fcstRaw),
-      cumpl: cumplRaw === null ? null : normalizePct(cumplRaw)
+      metaEntel: metaEntelRaw === null ? null : (tipo === 'pct' ? normalizePct(metaEntelRaw) : metaEntelRaw),
+      cumpExpress: cumpExpressRaw === null ? null : normalizePct(cumpExpressRaw),
+      cumpEntel: cumpEntelRaw === null ? null : normalizePct(cumpEntelRaw)
     };
   });
 
@@ -1232,7 +1261,7 @@ function buildTiendasFromRows(tiendaRows, tiendaKpiRows){
   return all;
 }
 
-// Detalle META/FCST/CUMPL de un indicador de tienda en un período dado.
+// Detalle META/FCST/META_ENTEL/CUMP_EXPRESS/CUMP_ENTEL de un indicador de tienda en un período dado.
 // Exclusivo de Tiendas (Ejecutivos aún no trae estas columnas en su kpi.json).
 function tiendaDetalle(tienda, ym, key){
   if(!tienda || !tienda.detalle || !ym || !tienda.detalle[ym]) return null;
@@ -1378,22 +1407,29 @@ function buildNetworkTiendaEntity(){
       period[key] = values.length
         ? (tipo === 'pct' ? values.reduce((s,v) => s+v, 0) / values.length : values.reduce((s,v) => s+v, 0))
         : null;
-      const metas = [], fcsts = [], cumpls = [];
+      const metas = [], fcsts = [], metaEntels = [], cumpExpresses = [], cumpEntels = [];
       tiendas.forEach(t => {
         const d = tiendaDetalle(t, ym, key);
         if(!d) return;
         if(d.meta !== null && d.meta !== undefined) metas.push(d.meta);
         if(d.fcst !== null && d.fcst !== undefined) fcsts.push(d.fcst);
-        if(d.cumpl !== null && d.cumpl !== undefined) cumpls.push(d.cumpl);
+        if(d.metaEntel !== null && d.metaEntel !== undefined) metaEntels.push(d.metaEntel);
+        if(d.cumpExpress !== null && d.cumpExpress !== undefined) cumpExpresses.push(d.cumpExpress);
+        if(d.cumpEntel !== null && d.cumpEntel !== undefined) cumpEntels.push(d.cumpEntel);
       });
       const agg = (arr) => {
         if(!arr.length) return null;
         return tipo === 'pct' ? arr.reduce((s,v) => s+v, 0) / arr.length : arr.reduce((s,v) => s+v, 0);
       };
+      // Cump Express / Cump Entel son siempre % (independiente del tipo del
+      // indicador base), mismo criterio que ya se usaba para el CUMPL genérico.
+      const avgPct = (arr) => arr.length ? arr.reduce((s,v) => s+v, 0) / arr.length : null;
       det[key] = {
         meta: agg(metas),
         fcst: agg(fcsts),
-        cumpl: cumpls.length ? cumpls.reduce((s,v) => s+v, 0) / cumpls.length : null
+        metaEntel: agg(metaEntels),
+        cumpExpress: avgPct(cumpExpresses),
+        cumpEntel: avgPct(cumpEntels)
       };
     });
     periodos[ym] = period;
@@ -2375,7 +2411,7 @@ function tiendaEvolutivoHtml(tienda, keys){
   </div>`;
 }
 
-// Tooltip enriquecido del Evolutivo de Tienda: META, MTD, FCST y CUMPL del
+// Tooltip enriquecido del Evolutivo de Tienda: META, MTD, FCST y Cump. Express/Entel del
 // indicador+período sobre el que se posiciona el mouse. Mismo patrón visual
 // que attachRangeTooltip()/attachTiendaStatsTooltip() (clases .rich-tooltip/
 // .rt-*), reutilizado tal cual por consistencia.
@@ -2394,14 +2430,16 @@ function attachTiendaEvolutivoTooltip(tienda){
     const det = tiendaDetalle(tienda, ym, key);
     const meta = det ? det.meta : null;
     const fcst = det ? det.fcst : null;
-    const cumpl = det ? det.cumpl : null;
+    const cumpExpress = det ? det.cumpExpress : null;
+    const cumpEntel = det ? det.cumpEntel : null;
     tooltip.innerHTML = `
       <div class="rt-title">${info.nombre}</div>
       <div class="rt-sub">${ymLabel(ym)}</div>
       <div class="rt-row"><span class="rt-dot" style="background:var(--navy-700);"></span>Meta<b>${meta !== null && meta !== undefined ? formatByType(key, meta) : '—'}</b></div>
       <div class="rt-row"><span class="rt-dot" style="background:var(--orange-500);"></span>MTD<b>${mtd !== null && mtd !== undefined ? formatByType(key, mtd) : '—'}</b></div>
       <div class="rt-row"><span class="rt-dot" style="background:var(--ink-400);"></span>FCST<b>${fcst !== null && fcst !== undefined ? formatByType(key, fcst) : '—'}</b></div>
-      <div class="rt-delta ${cumpl !== null && cumpl !== undefined && cumpl >= 100 ? 'pos' : 'neg'}">Cumpl. ${cumpl !== null && cumpl !== undefined ? fmtPct1(cumpl) : '—'}</div>
+      <div class="rt-delta ${cumpExpress !== null && cumpExpress !== undefined && cumpExpress >= 100 ? 'pos' : 'neg'}"><span style="color:var(--orange-500);font-weight:800;">Express</span> ${cumpExpress !== null && cumpExpress !== undefined ? fmtPct1(cumpExpress) : '—'}</div>
+      <div class="rt-delta ${cumpEntel !== null && cumpEntel !== undefined && cumpEntel >= 100 ? 'pos' : 'neg'}" style="margin-top:2px;padding-top:2px;border-top:none;"><span style="color:var(--entel-600);font-weight:800;">Entel</span> ${cumpEntel !== null && cumpEntel !== undefined ? fmtPct1(cumpEntel) : '—'}</div>
     `;
     const rect = host.getBoundingClientRect();
     tooltip.style.left = (clientX - rect.left + 14) + 'px';
@@ -2449,19 +2487,39 @@ function networkMatrizHtml(entity){
     const det = tiendaDetalle(entity, state.tiendaYm, key);
     const meta = det ? det.meta : null;
     const fcst = det ? det.fcst : null;
+    const metaEntel = det ? det.metaEntel : null;
+    const cumpExpress = det ? det.cumpExpress : null;
+    const cumpEntel = det ? det.cumpEntel : null;
     return `<tr>
       <td>${info.nombre}</td>
       <td class="num">${val !== null ? formatByType(key, val) : '—'}</td>
-      <td class="num">${meta !== null && meta !== undefined ? formatByType(key, meta) : '—'}</td>
       <td class="num">${fcst !== null && fcst !== undefined ? formatByType(key, fcst) : '—'}</td>
+      <td class="num val-express">${meta !== null && meta !== undefined ? formatByType(key, meta) : '—'}</td>
+      <td class="num val-express">${cumpExpress !== null && cumpExpress !== undefined ? fmtPct1(cumpExpress) : '—'}</td>
+      <td class="num val-entel">${metaEntel !== null && metaEntel !== undefined ? formatByType(key, metaEntel) : '—'}</td>
+      <td class="num val-entel">${cumpEntel !== null && cumpEntel !== undefined ? fmtPct1(cumpEntel) : '—'}</td>
     </tr>`;
   }).join('');
   return `<div class="table-wrap">
     <table class="matrix-table">
-      <thead><tr><th>Indicador</th><th class="num">MTD</th><th class="num">Meta</th><th class="num">FCST</th></tr></thead>
+      <thead>
+        <tr>
+          <th rowspan="2">Indicador</th>
+          <th rowspan="2" class="num">MTD</th>
+          <th rowspan="2" class="num">FCST</th>
+          <th colspan="2" class="num group-express group-label">Express</th>
+          <th colspan="2" class="num group-entel group-label">Entel</th>
+        </tr>
+        <tr>
+          <th class="num sub-express group-express">Meta</th>
+          <th class="num sub-express group-express">Cump.</th>
+          <th class="num sub-entel group-entel">Meta</th>
+          <th class="num sub-entel group-entel">Cump.</th>
+        </tr>
+      </thead>
       <tbody>${rows}</tbody>
     </table>
-    <div class="matrix-note">Total Express agrega el comportamiento de toda la red; no aplica participación por cluster o por total, ya que esta fila corresponde al total mismo.</div>
+    <div class="matrix-note">Total Express agrega el comportamiento de toda la red; no aplica participación por cluster o por total, ya que esta fila corresponde al total mismo. Meta y Cump. se muestran por separado para Express y Entel.</div>
   </div>`;
 }
 function tiendaMatrizHtml(tienda, group){
@@ -2473,7 +2531,10 @@ function tiendaMatrizHtml(tienda, group){
     const det = tiendaDetalle(tienda, state.tiendaYm, key);
     const meta = det ? det.meta : null;
     const fcst = det ? det.fcst : null;
-    // Para indicadores expresados en % (CUMPL, PCT_*, etc.) no corresponde
+    const metaEntel = det ? det.metaEntel : null;
+    const cumpExpress = det ? det.cumpExpress : null;
+    const cumpEntel = det ? det.cumpEntel : null;
+    // Para indicadores expresados en % (PCT_*, etc.) no corresponde
     // mostrar participación sobre el cluster/red — sumar o promediar
     // porcentajes entre tiendas no representa una magnitud válida. Se deja
     // en blanco ('—'), igual criterio que ya se aplica cuando no hay FCST.
@@ -2485,18 +2546,37 @@ function tiendaMatrizHtml(tienda, group){
     return `<tr>
       <td>${info.nombre}</td>
       <td class="num">${val !== null ? formatByType(key, val) : '—'}</td>
-      <td class="num">${meta !== null && meta !== undefined ? formatByType(key, meta) : '—'}</td>
       <td class="num">${fcst !== null && fcst !== undefined ? formatByType(key, fcst) : '—'}</td>
+      <td class="num val-express">${meta !== null && meta !== undefined ? formatByType(key, meta) : '—'}</td>
+      <td class="num val-express">${cumpExpress !== null && cumpExpress !== undefined ? fmtPct1(cumpExpress) : '—'}</td>
+      <td class="num val-entel">${metaEntel !== null && metaEntel !== undefined ? formatByType(key, metaEntel) : '—'}</td>
+      <td class="num val-entel">${cumpEntel !== null && cumpEntel !== undefined ? fmtPct1(cumpEntel) : '—'}</td>
       <td class="num">${isPct ? '—' : (pctCluster !== null ? fmtPct1(pctCluster) : '—')}</td>
       <td class="num">${isPct ? '—' : (pctTotal !== null ? fmtPct1(pctTotal) : '—')}</td>
     </tr>`;
   }).join('');
   return `<div class="table-wrap">
     <table class="matrix-table">
-      <thead><tr><th>Indicador</th><th class="num">MTD</th><th class="num">Meta</th><th class="num">FCST</th><th class="num">% del cluster</th><th class="num">% del total</th></tr></thead>
+      <thead>
+        <tr>
+          <th rowspan="2">Indicador</th>
+          <th rowspan="2" class="num">MTD</th>
+          <th rowspan="2" class="num">FCST</th>
+          <th colspan="2" class="num group-express group-label">Express</th>
+          <th colspan="2" class="num group-entel group-label">Entel</th>
+          <th rowspan="2" class="num">% del cluster</th>
+          <th rowspan="2" class="num">% del total</th>
+        </tr>
+        <tr>
+          <th class="num sub-express group-express">Meta</th>
+          <th class="num sub-express group-express">Cump.</th>
+          <th class="num sub-entel group-entel">Meta</th>
+          <th class="num sub-entel group-entel">Cump.</th>
+        </tr>
+      </thead>
       <tbody>${rows}</tbody>
     </table>
-    <div class="matrix-note">El % es la participación real de esta tienda sobre la suma del cluster ${tienda.cluster} y sobre la suma de la red. En indicadores expresados en % (CUMPL, attach, EPA, etc.) esta participación no aplica y se muestra en blanco.</div>
+    <div class="matrix-note">MTD y FCST son valores de red compartidos. Meta y Cump. se muestran por separado para Express y Entel. El % es la participación real de esta tienda sobre la suma del cluster ${tienda.cluster} y sobre la suma de la red; en indicadores expresados en % (attach, EPA, etc.) esta participación no aplica y se muestra en blanco.</div>
   </div>`;
 }
 
