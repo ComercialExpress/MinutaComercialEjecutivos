@@ -887,13 +887,13 @@
     "OrigenForm": "Integral",
     "FechaRecaudacion": "2026-08-15T04:00:00Z",
     "FechaDeposito": "2026-08-21T04:00:00Z",
-    "MontoDepositado": 25690.0,
+    "MontoDepositado": 25691.0,
     "NumeroDeposito": "4111730",
     "NombreUsuario": "rosa parra",
     "CuentaDestino": "81705638",
     "HojaTransporte": null,
     "BolsaTransporte": null,
-    "ComentarioRevision": null
+    "ComentarioRevision": "Ajuste sencillo $1"
   },
   {
     "Titulo": "1768",
