@@ -44,7 +44,7 @@ SITE_ID = "clcomercialexpress.sharepoint.com,d331a44f-8002-4cab-8db4-061cb13eb49
 # Configuración de la lista (la pantalla que ya capturaste) -> mirar la URL
 # de esa página: .../listedit.aspx?List=%7B<GUID>%7D  — ese <GUID> (sin las
 # llaves ni el %7B/%7D) ES el list-id.
-LIST_ID = "REEMPLAZAR_LIST_ID"
+LIST_ID = "a06c0e6a-b2d8-4d7d-a8a2-21d661ccfa03"
 
 GRAPH_BASE = "https://graph.microsoft.com/v1.0"
 OUT_PATH = "depositos.json"  # raíz del repo, mismo patrón que ejecutivos.json / callback_registros.json
