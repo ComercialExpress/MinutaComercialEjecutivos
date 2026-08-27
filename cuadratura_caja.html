@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cuadratura de Caja · InformeExpress</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy-900:#151936; --navy-800:#1F244A; --navy-700:#272E5C; --navy-600:#333C74; --navy-500:#454F92;
+  --orange-500:#F5821F; --orange-600:#DD6E10; --orange-100:#FDECD9;
+  --bg:#F3F4FA; --card:#FFFFFF;
+  --ink-900:#161A2E; --ink-700:#383D57; --ink-500:#666C8C; --ink-400:#9296AE;
+  --border:#E4E6F1; --border-soft:#EDEEF6;
+  --green-600:#158A4A; --green-100:#E3F7EC;
+  --red-600:#D6394A; --red-100:#FCE7E9;
+  --amber-600:#C97A11; --amber-100:#FCEEDB;
+  --purple-600:#7C4DBF; --purple-100:#EFE6FB;
+  --blue-600:#2A6FC9; --blue-100:#E4EFFC;
+  --radius-lg:18px; --radius-md:12px; --radius-sm:8px;
+  --shadow-card:0 1px 2px rgba(21,25,54,.04), 0 8px 24px -12px rgba(21,25,54,.12);
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--bg); color:var(--ink-900);
+  font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.sora{ font-family:'Sora',sans-serif; }
+.wrap{ max-width:1400px; margin:0 auto; padding:0 24px 60px; }
+
+/* ---------- Header hero ---------- */
+.header-card{
+  position:relative; overflow:hidden;
+  background:linear-gradient(135deg, var(--navy-900), var(--navy-700) 55%, var(--navy-600));
+  color:#fff; padding:22px 28px 20px; margin-bottom:18px;
+}
+.header-card::after{
+  content:""; position:absolute; top:-120px; right:-100px; width:360px; height:360px; border-radius:50%;
+  background:radial-gradient(circle, rgba(245,130,31,.55), rgba(245,130,31,0) 70%);
+  pointer-events:none;
+}
+.header-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; position:relative; z-index:1; flex-wrap:wrap; }
+.brand-block{ display:flex; align-items:center; gap:12px; }
+.brand-mark{ font-family:'Sora',sans-serif; font-weight:800; font-size:18px; letter-spacing:-.02em; }
+.brand-mark span{ color:var(--orange-500); }
+.brand-div{ width:1px; height:26px; background:rgba(255,255,255,.22); }
+.kicker{
+  font-size:10px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:rgba(255,255,255,.62);
+  display:flex; align-items:center; gap:6px; margin-bottom:6px;
+}
+.kicker .dot{ width:6px; height:6px; border-radius:50%; background:var(--orange-500); }
+h1.title{ font-size:20px; font-weight:800; margin:0 0 4px; letter-spacing:-.01em; }
+.subtitle{ font-size:12.5px; color:rgba(255,255,255,.68); max-width:560px; line-height:1.5; margin:0; }
+.header-meta{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+.chip{
+  display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:#fff;
+  background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.16);
+  padding:8px 14px; border-radius:999px; white-space:nowrap;
+}
+.chip .chip-dot{ width:7px; height:7px; border-radius:50%; background:var(--green-600); box-shadow:0 0 0 3px rgba(21,138,74,.25); }
+.chip.period{ background:rgba(255,255,255,.07); font-weight:700; }
+
+/* ---------- Demo badge (dato de ejemplo, no real) ---------- */
+.demo-badge{
+  display:inline-flex; align-items:center; gap:7px; font-size:11.5px; font-weight:800; color:var(--amber-600);
+  background:var(--amber-100); border:1px solid rgba(201,122,17,.25);
+  padding:7px 13px; border-radius:999px; white-space:nowrap; text-transform:uppercase; letter-spacing:.03em;
+}
+.demo-badge .dot{ width:6px; height:6px; border-radius:50%; background:var(--amber-600); }
+
+/* ---------- Tabbar ---------- */
+.tabbar{
+  display:flex; gap:4px; background:var(--card); border:1px solid var(--border); border-radius:var(--radius-md);
+  padding:5px; margin-bottom:20px; overflow-x:auto; box-shadow:var(--shadow-card);
+}
+.tab-btn{
+  flex:1 1 auto; min-width:max-content; border:none; background:transparent; color:var(--ink-500);
+  font-family:'Inter',sans-serif; font-weight:600; font-size:12.5px; padding:10px 16px; border-radius:9px;
+  cursor:pointer; transition:.15s ease; white-space:nowrap;
+}
+.tab-btn:hover{ background:var(--border-soft); color:var(--ink-700); }
+.tab-btn.active{ background:var(--navy-800); color:#fff; }
+
+/* ---------- KPI cards ---------- */
+.kpi-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
+.card{
+  background:var(--card); border:1px solid var(--border); border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-card); padding:18px 20px;
+}
+.kpi-label{ font-size:10px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-400); margin-bottom:8px; }
+.kpi-value{ font-family:'Sora',sans-serif; font-weight:800; font-size:23px; letter-spacing:-.01em; }
+.kpi-bar{ height:3px; border-radius:2px; margin-top:12px; background:var(--orange-500); }
+.kpi-bar.red{ background:var(--red-600); }
+.kpi-bar.green{ background:var(--green-600); }
+.kpi-bar.amber{ background:var(--amber-600); }
+.kpi-value.red{ color:var(--red-600); }
+.kpi-value.amber{ color:var(--amber-600); }
+.kpi-value.green{ color:var(--green-600); }
+.kpi-sub{ font-size:11.5px; color:var(--ink-500); margin-top:4px; }
+
+/* ---------- Vista general: store cards ---------- */
+.section-title{ font-size:13px; font-weight:700; color:var(--ink-700); margin:4px 0 12px; display:flex; justify-content:space-between; align-items:center; }
+.section-title .hint{ font-weight:500; font-size:11.5px; color:var(--ink-400); }
+.store-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.store-card{
+  background:var(--card); border:1px solid var(--border); border-left:3px solid var(--border);
+  border-radius:var(--radius-lg); box-shadow:var(--shadow-card); padding:16px 18px; cursor:pointer;
+  transition:.15s ease; animation:cardIn .35s cubic-bezier(.2,.7,.3,1) both;
+}
+.store-card:hover{ transform:translateY(-2px); box-shadow:0 4px 18px -8px rgba(21,25,54,.22); }
+.store-card.alert{ border-left-color:var(--red-600); }
+.store-card.pending{ border-left-color:var(--amber-600); }
+.store-card.ok{ border-left-color:var(--green-600); }
+.store-card-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:12px; }
+.store-name{ font-family:'Sora',sans-serif; font-weight:700; font-size:13.5px; line-height:1.25; }
+.store-meta{ font-size:10.5px; color:var(--ink-400); margin-top:3px; text-transform:uppercase; letter-spacing:.03em; }
+.badge{ font-size:10px; font-weight:800; padding:4px 9px; border-radius:999px; white-space:nowrap; text-transform:uppercase; letter-spacing:.03em; }
+.badge-alert{ background:var(--red-100); color:var(--red-600); }
+.badge-pending{ background:var(--amber-100); color:var(--amber-600); }
+.badge-ok{ background:var(--green-100); color:var(--green-600); }
+.store-rows{ display:flex; flex-direction:column; gap:7px; }
+.store-row{ display:flex; justify-content:space-between; font-size:12.5px; }
+.store-row .lbl{ color:var(--ink-500); }
+.store-row .val{ font-variant-numeric:tabular-nums; font-weight:600; }
+.store-row .val.red{ color:var(--red-600); }
+.store-row .val.amber{ color:var(--amber-600); }
+.store-card-foot{ margin-top:12px; font-size:11.5px; color:var(--navy-600); font-weight:700; display:flex; align-items:center; gap:4px; }
+
+@keyframes cardIn{ from{ opacity:0; transform:translateY(8px);} to{ opacity:1; transform:translateY(0);} }
+
+/* ---------- Store detail panel ---------- */
+.panel-fade-in{ animation:panelIn .32s cubic-bezier(.2,.7,.3,1) both; }
+@keyframes panelIn{ from{ opacity:0; transform:translateY(10px);} to{ opacity:1; transform:translateY(0);} }
+
+.detail-header{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px; }
+.detail-title-block h2{ font-size:17px; font-weight:800; margin:0 0 4px; }
+.pill{ display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700; padding:5px 12px; border-radius:999px; background:var(--border-soft); color:var(--ink-500); }
+.pill-zona{ background:var(--blue-100); color:var(--blue-600); }
+.pill-cluster{ background:var(--purple-100); color:var(--purple-600); }
+.detail-pills{ display:flex; gap:8px; margin-top:6px; flex-wrap:wrap; }
+
+.btn{
+  border:1px solid var(--border); background:var(--card); color:var(--ink-700); border-radius:10px;
+  padding:10px 16px; font-weight:600; font-size:12.5px; cursor:pointer; font-family:'Inter',sans-serif;
+  transition:.15s ease; display:inline-flex; align-items:center; gap:7px;
+}
+.btn:hover{ border-color:var(--navy-500); color:var(--navy-700); transform:translateY(-1px); }
+.btn-print{ background:var(--orange-500); color:#fff; border-color:var(--orange-500); }
+.btn-print:hover{ background:var(--orange-600); border-color:var(--orange-600); color:#fff; }
+.toolbar-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+
+.table-scroll{ overflow-x:auto; border-radius:var(--radius-lg); }
+table.cuadratura{
+  width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius-lg); box-shadow:var(--shadow-card); table-layout:fixed;
+}
+table.cuadratura th{
+  text-align:left; font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--ink-400); background:var(--bg); padding:12px 14px; border-bottom:1px solid var(--border);
+}
+table.cuadratura td{ padding:8px 14px; min-height:50px; border-bottom:1px solid var(--border-soft); font-size:13px; }
+table.cuadratura tbody tr:hover{ background:var(--bg); }
+table.cuadratura tbody tr.weekend td{ background:#FAFAFD; }
+table.cuadratura th:nth-child(1), table.cuadratura td:nth-child(1){ width:13%; }
+table.cuadratura th:nth-child(2), table.cuadratura td:nth-child(2){ width:17%; }
+table.cuadratura th:nth-child(3), table.cuadratura td:nth-child(3){ width:19%; }
+table.cuadratura th:nth-child(4), table.cuadratura td:nth-child(4){ width:13%; }
+table.cuadratura th:nth-child(5), table.cuadratura td:nth-child(5){ width:38%; }
+.num{ font-variant-numeric:tabular-nums; text-align:right; }
+.day-cell{ font-weight:600; color:var(--ink-700); }
+.day-cell .dow{ font-weight:500; color:var(--ink-400); font-size:10.5px; text-transform:uppercase; margin-left:6px; }
+
+.deposito-cell{ text-align:right; }
+.deposito-value{ font-variant-numeric:tabular-nums; font-weight:700; color:var(--ink-900); }
+.deposito-value.empty{ color:var(--ink-400); font-weight:500; font-style:italic; }
+.deposito-detail{ font-size:10.5px; color:var(--ink-400); margin-top:3px; line-height:1.4; }
+.deposito-detail .sep{ margin:0 4px; }
+
+.input-comment{
+  width:100%; border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-family:'Inter',sans-serif;
+  font-size:12.5px; color:var(--ink-900); background:#fff; transition:.15s ease;
+}
+.input-comment::placeholder{ color:var(--ink-400); }
+.input-comment:focus{ outline:none; border-color:var(--navy-500); box-shadow:0 0 0 3px rgba(69,79,146,.12); }
+.input-comment.needs-comment{ border-color:var(--red-600); background:var(--red-100); }
+
+.diff-tag{ display:inline-flex; align-items:center; gap:5px; font-weight:700; font-size:12.5px; padding:5px 10px; border-radius:999px; }
+.diff-ok{ background:var(--green-100); color:var(--green-600); }
+.diff-bad{ background:var(--red-100); color:var(--red-600); }
+.diff-pending{ background:var(--amber-100); color:var(--amber-600); }
+
+tfoot td{ background:var(--bg); font-weight:800; border-top:2px solid var(--border); height:52px; font-family:'Sora',sans-serif; }
+tfoot td.num{ font-family:'Inter',sans-serif; font-weight:800; }
+
+.legend-row{ display:flex; gap:18px; margin-top:14px; flex-wrap:wrap; font-size:11.5px; color:var(--ink-500); }
+.legend-item{ display:flex; align-items:center; gap:6px; }
+.legend-dot{ width:9px; height:9px; border-radius:3px; }
+
+.empty-hint{ font-size:11.5px; color:var(--ink-400); margin-top:10px; }
+
+@media (max-width:1100px){
+  .kpi-grid{ grid-template-columns:repeat(2,1fr); }
+  .store-grid{ grid-template-columns:repeat(2,1fr); }
+}
+@media (max-width:640px){
+  .kpi-grid{ grid-template-columns:1fr; }
+  .store-grid{ grid-template-columns:1fr; }
+  .wrap{ padding:0 12px 40px; }
+}
+
+@media print{
+  .tabbar, .toolbar-actions, .admin-only{ display:none !important; }
+  body{ background:#fff; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="header-card">
+    <div class="header-top">
+      <div>
+        <div class="brand-block">
+          <span class="brand-mark">e<span>X</span>press</span>
+          <div class="brand-div"></div>
+          <div>
+            <div class="kicker"><span class="dot"></span>INFORMEEXPRESS · RECAUDACIÓN EN EFECTIVO</div>
+          </div>
+        </div>
+        <h1 class="title" style="margin-top:10px;">Cuadratura de Caja</h1>
+        <p class="subtitle">Comparación diaria: recaudación en efectivo (XStore, medio de pago EFE) vs depósitos registrados en la lista SharePoint de sucursales (agrupados por fecha de recaudación).</p>
+      </div>
+      <div class="header-meta">
+        <div class="chip"><span class="chip-dot"></span>Fuente: REPORTE_XSTORE · agosto 2026</div>
+        <div class="chip period">01–23 ago 2026</div>
+        <span id="demoBadge"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabbar" id="tabbar"></div>
+
+  <div id="app"></div>
+
+</div>
+
+<script src="./stores_data.js"></script>
+<script src="./demo_depositos_const.js"></script>
+<script>
+/* =========================================================
+   CONFIG — mismo patrón multi-mirror que usa PanelCallbackEpa.html para
+   callback_registros.json (jsDelivr → statically.io → raw.githubusercontent.com
+   en ese orden), porque raw.githubusercontent.com solo aplica rate limiting
+   agresivo (HTTP 429) bajo recargas repetidas — no pensado para servir
+   tráfico real por sí solo. depositos.json lo genera sync_depositos.py
+   desde la Lista de SharePoint "DepositosSucursalesBCI" (ver
+   infraestructura_automatizacion.md, sección "Flujo de depósitos").
+
+   OJO: verificá que "owner" de abajo coincida EXACTO (mayúsculas incluidas)
+   con lo que aparece en la barra de direcciones al entrar al repo —
+   raw.githubusercontent.com es sensible a mayúsculas/minúsculas ahí.
+
+   A diferencia de PanelCallbackEpa.html (que no tiene fallback y muestra
+   un estado vacío si todas las fuentes fallan), acá SÍ se mantiene el
+   fallback a datos de ejemplo (DEMO_DEPOSITOS) con badge visible, siguiendo
+   el patrón general documentado en metodologia_pipelines_html.md §5 — es
+   una decisión deliberada para este dashboard, no un descuido.
+========================================================= */
+const CONFIG = {
+  repo: {
+    owner: "ComercialExpress",
+    name: "MinutaComercialEjecutivos",
+    branch: "main",
+    path: "depositos.json"
+  },
+  get depositosSources(){
+    const { owner, name, branch, path } = this.repo;
+    return [
+      `https://cdn.jsdelivr.net/gh/${owner}/${name}@${branch}/${path}`,
+      `https://cdn.statically.io/gh/${owner}/${name}/${branch}/${path}`,
+      `https://raw.githubusercontent.com/${owner}/${name}/${branch}/${path}`
+    ];
+  }
+};
+
+/* =========================================================
+   FORMA ASUMIDA DE depositos.json (un item por fila de la lista
+   SharePoint "DepositosSucursalesBCI", ver captura de configuración
+   de columnas del 27-08-2026):
+
+   [{
+     Titulo, NombreSucursal, OrigenForm,
+     FechaRecaudacion, FechaDeposito,   // ISO datetime
+     MontoDepositado,                   // número
+     NumeroDeposito, NombreUsuario, CuentaDestino,
+     HojaTransporte, BolsaTransporte, ComentarioRevision
+   }, ...]
+
+   ⚠️ OJO — pendiente de verificar contra la respuesta real de
+   /sites/{id}/lists/{id}/items?expand=fields antes de generar este
+   JSON en el pipeline real:
+   - Los nombres de columna de arriba son los nombres VISIBLES en
+     SharePoint. Graph expone los "internal names", que pueden diferir
+     (espacios, renombres posteriores de columna, etc.) — no asumir
+     que coinciden, confirmarlo contra el JSON real y ajustar el
+     script de transformación (jq/node) del GitHub Action si hace falta.
+   - FechaRecaudacion es tipo "Fecha y hora": falta confirmar en qué
+     huso horario queda guardada (UTC vs. hora Chile) al llenar el
+     formulario, porque un desfase corre el depósito al día calendario
+     equivocado al hacer el match día a día.
+   - Los valores reales de CuentaDestino (columna "Elección") no están
+     confirmados — no usar los de esta demo como si fueran reales.
+========================================================= */
+
+/* =========================================================
+   MATCH sucursal + fecha (decisión 27-08-2026):
+   - Se cuadra contra FechaRecaudacion (no FechaDeposito).
+   - NombreSucursal se asume texto idéntico al de stores_data.js;
+     se normaliza (trim + mayúsculas + espacios simples) solo como
+     resguardo ante variaciones menores de tipeo del formulario.
+   - Si hay más de un registro para la misma sucursal+fecha (varias
+     bolsas/transportes), se SUMAN los montos y se listan los
+     números de depósito/bolsa de todos los registros.
+========================================================= */
+function normNombre(s){
+  return (s || "").trim().toUpperCase().replace(/\s+/g, " ");
+}
+function soloFecha(iso){
+  // Se asume que los primeros 10 caracteres (YYYY-MM-DD) ya representan
+  // el día calendario correcto en hora Chile. Ver advertencia de huso
+  // horario más arriba antes de conectar el pipeline real.
+  return (iso || "").slice(0, 10);
+}
+
+/* Prueba cada mirror de CONFIG.depositosSources en orden y se queda con el
+   primero que responda 200 OK + JSON parseable (array). Cada intento
+   fallido queda logueado en consola con la URL y el motivo exacto, mismo
+   criterio que loadRegistros() en PanelCallbackEpa.html. Si TODAS las
+   fuentes fallan, cae al fallback demo (ver comentario en CONFIG). */
+async function loadDepositos(){
+  const fallos = [];
+  for(const url of CONFIG.depositosSources){
+    try{
+      const res = await fetch(url, { cache: "no-store" });
+      if(!res.ok){
+        fallos.push(`${url} → HTTP ${res.status}`);
+        console.warn("[depositos] fuente no disponible (HTTP " + res.status + "):", url);
+        continue;
+      }
+      const data = await res.json();
+      if(!Array.isArray(data)){
+        fallos.push(`${url} → respuesta no es un array JSON`);
+        console.warn("[depositos] respuesta inesperada (no es array) desde", url, data);
+        continue;
+      }
+      return { rows: data, isDemo: false };
+    }catch(err){
+      fallos.push(`${url} → ${err.message}`);
+      console.warn("[depositos] error de red/parseo en", url, err);
+    }
+  }
+  console.warn("[depositos] todas las fuentes fallaron, usando datos de ejemplo:\n" + fallos.join("\n"));
+  return { rows: DEMO_DEPOSITOS, isDemo: true };
+}
+
+function buildDepositosMap(rows){
+  const map = {}; // key: `${normNombre(NombreSucursal)}|${fecha}` -> { monto, registros:[] }
+  rows.forEach(r=>{
+    const key = normNombre(r.NombreSucursal) + "|" + soloFecha(r.FechaRecaudacion);
+    if(!map[key]) map[key] = { monto: 0, registros: [] };
+    map[key].monto += Number(r.MontoDepositado) || 0;
+    map[key].registros.push(r);
+  });
+  return map;
+}
+
+/* =========================================================
+   ESTADO
+   - depositado ahora viene de la lista SharePoint (o su fallback demo),
+     no se ingresa a mano. Se recalcula en initState() una vez cargado
+     DEPOSITOS_MAP.
+   - comentario: se prellena con ComentarioRevision si el/los registros
+     de la lista traen uno; sigue siendo editable en pantalla porque
+     todavía no existe un canal de escritura de vuelta hacia SharePoint
+     (arquitectura de solo lectura, ver metodologia_pipelines_html.md).
+========================================================= */
+const STATE = {}; // STATE[codigo][fecha] = { depositado: number|null, comentario: string, registros: [] }
+let DEPOSITOS_MAP = {};
+
+function initState(){
+  STORES.forEach(s=>{
+    STATE[s.codigo] = {};
+    s.dias.forEach(d=>{
+      const key = normNombre(s.nombre) + "|" + d.fecha;
+      const match = DEPOSITOS_MAP[key];
+      STATE[s.codigo][d.fecha] = {
+        depositado: match ? match.monto : null,
+        comentario: match ? match.registros.map(r=>r.ComentarioRevision).filter(Boolean).join(" / ") : "",
+        registros: match ? match.registros : []
+      };
+    });
+  });
+}
+
+let currentTab = "general"; // "general" | codigo de sucursal
+
+const DOW = ["dom","lun","mar","mié","mié","jue","vie","sáb"];
+const DOW_FULL = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+
+function fmtCLP(n){
+  if(n === null || n === undefined) return "—";
+  const sign = n < 0 ? "-" : "";
+  return sign + "$ " + Math.abs(Math.round(n)).toLocaleString("es-CL");
+}
+function fmtDate(iso){
+  const [y,m,d] = iso.split("-").map(Number);
+  const dt = new Date(y, m-1, d);
+  return { day: String(d).padStart(2,"0"), month: m, dow: dt.getDay(), isWeekend: dt.getDay()===0 || dt.getDay()===6 };
+}
+const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+
+/* =========================================================
+   CÁLCULOS
+========================================================= */
+function storeStats(store){
+  let recaudado = 0, depositado = 0, diferenciaAcum = 0, diasIngresados = 0, diasConDiferencia = 0;
+  store.dias.forEach(d=>{
+    recaudado += d.recaudado;
+    const st = STATE[store.codigo][d.fecha];
+    if(st.depositado !== null){
+      diasIngresados++;
+      depositado += st.depositado;
+      const diff = st.depositado - d.recaudado;
+      diferenciaAcum += diff;
+      if(diff !== 0) diasConDiferencia++;
+    }
+  });
+  const diasPendientes = store.dias.length - diasIngresados;
+  let status = "pending";
+  if(diasIngresados === 0) status = "pending";
+  else if(diasConDiferencia > 0) status = "alert";
+  else if(diasPendientes === 0) status = "ok";
+  else status = "pending";
+  return { recaudado, depositado, diferenciaAcum, diasIngresados, diasPendientes, diasConDiferencia, status, totalDias: store.dias.length };
+}
+
+function globalStats(){
+  let recaudado = 0, depositado = 0, diferenciaAcum = 0, storesConAlerta = 0;
+  STORES.forEach(s=>{
+    const st = storeStats(s);
+    recaudado += st.recaudado;
+    depositado += st.depositado;
+    diferenciaAcum += st.diferenciaAcum;
+    if(st.status === "alert" || st.status === "pending") storesConAlerta++;
+  });
+  return { recaudado, depositado, diferenciaAcum, storesConAlerta, totalStores: STORES.length };
+}
+
+/* =========================================================
+   RENDER: TABBAR
+========================================================= */
+function renderTabbar(){
+  const tb = document.getElementById("tabbar");
+  let html = `<button class="tab-btn ${currentTab==='general'?'active':''}" data-tab="general">Vista General</button>`;
+  STORES.forEach(s=>{
+    html += `<button class="tab-btn ${currentTab==s.codigo?'active':''}" data-tab="${s.codigo}">${s.nombre}</button>`;
+  });
+  tb.innerHTML = html;
+  tb.querySelectorAll(".tab-btn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const t = btn.dataset.tab;
+      currentTab = (t === "general") ? "general" : Number(t);
+      render();
+    });
+  });
+}
+
+/* =========================================================
+   RENDER: VISTA GENERAL
+========================================================= */
+function renderGeneral(){
+  const g = globalStats();
+  const diffClass = g.diferenciaAcum === 0 ? "" : (g.diferenciaAcum < 0 ? "red" : "green");
+  const alertClass = g.storesConAlerta === 0 ? "green" : (g.storesConAlerta === g.totalStores ? "amber" : "red");
+
+  let html = `
+  <div class="kpi-grid">
+    <div class="card">
+      <div class="kpi-label">Total recaudado (EFE)</div>
+      <div class="kpi-value">${fmtCLP(g.recaudado)}</div>
+      <div class="kpi-sub">01–23 ago 2026 · 9 sucursales</div>
+      <div class="kpi-bar"></div>
+    </div>
+    <div class="card">
+      <div class="kpi-label">Total depositado (ingresado)</div>
+      <div class="kpi-value">${fmtCLP(g.depositado)}</div>
+      <div class="kpi-sub">Lista SharePoint DepositosSucursalesBCI · FechaRecaudacion + NombreSucursal</div>
+      <div class="kpi-bar"></div>
+    </div>
+    <div class="card">
+      <div class="kpi-label">Diferencia neta</div>
+      <div class="kpi-value ${diffClass}">${fmtCLP(g.diferenciaAcum)}</div>
+      <div class="kpi-sub">Solo sobre días con depósito registrado</div>
+      <div class="kpi-bar ${diffClass || ''}"></div>
+    </div>
+    <div class="card">
+      <div class="kpi-label">Sucursales con alerta / pendientes</div>
+      <div class="kpi-value ${alertClass}">${g.storesConAlerta} / ${g.totalStores}</div>
+      <div class="kpi-sub">Diferencia ≠ 0 o depósito sin registrar</div>
+      <div class="kpi-bar ${alertClass}"></div>
+    </div>
+  </div>
+
+  <div class="section-title">
+    <span>Sucursales — Cuadratura agosto 2026</span>
+    <span class="hint">Click en una tarjeta para ver el detalle diario</span>
+  </div>
+  <div class="store-grid">
+  `;
+
+  STORES.forEach(s=>{
+    const st = storeStats(s);
+    let badge = `<span class="badge badge-pending">Pendiente</span>`;
+    if(st.status === "alert") badge = `<span class="badge badge-alert">Revisar</span>`;
+    else if(st.status === "ok") badge = `<span class="badge badge-ok">Cuadra</span>`;
+
+    html += `
+    <div class="store-card ${st.status}" data-open="${s.codigo}">
+      <div class="store-card-top">
+        <div>
+          <div class="store-name">${s.nombre}</div>
+          <div class="store-meta">${s.cluster} · Agencia ${s.codigo}</div>
+        </div>
+        ${badge}
+      </div>
+      <div class="store-rows">
+        <div class="store-row"><span class="lbl">Recaudado</span><span class="val">${fmtCLP(st.recaudado)}</span></div>
+        <div class="store-row"><span class="lbl">Depositado</span><span class="val">${st.diasIngresados>0 ? fmtCLP(st.depositado) : '—'}</span></div>
+        <div class="store-row"><span class="lbl">Diferencia</span><span class="val ${st.diferenciaAcum<0?'red':(st.diferenciaAcum>0?'amber':'')}">${st.diasIngresados>0 ? fmtCLP(st.diferenciaAcum) : '—'}</span></div>
+        <div class="store-row"><span class="lbl">Días pendientes de depósito</span><span class="val">${st.diasPendientes} / ${st.totalDias}</span></div>
+      </div>
+      <div class="store-card-foot">Ver detalle diario →</div>
+    </div>
+    `;
+  });
+
+  html += `</div>`;
+  document.getElementById("app").innerHTML = html;
+
+  document.querySelectorAll(".store-card").forEach(c=>{
+    c.addEventListener("click", ()=>{
+      currentTab = Number(c.dataset.open);
+      render();
+    });
+  });
+}
+
+/* =========================================================
+   RENDER: DETALLE POR SUCURSAL
+========================================================= */
+function renderDetail(codigo){
+  const store = STORES.find(s=>s.codigo === codigo);
+  const st = storeStats(store);
+  const diffClass = st.diferenciaAcum === 0 && st.diasIngresados>0 ? "green" : (st.diferenciaAcum < 0 ? "red" : (st.diasIngresados===0?"":"amber"));
+
+  let rows = "";
+  store.dias.forEach(d=>{
+    const info = fmtDate(d.fecha);
+    const state = STATE[codigo][d.fecha];
+
+    let depositoCell;
+    if(state.depositado === null){
+      depositoCell = `<div class="deposito-value empty">Sin registrar</div>`;
+    } else {
+      const detalles = state.registros.map(r=>{
+        const partes = [];
+        if(r.NumeroDeposito) partes.push(`N° ${r.NumeroDeposito}`);
+        if(r.BolsaTransporte) partes.push(`Bolsa ${r.BolsaTransporte}`);
+        return partes.join(" · ");
+      }).filter(Boolean);
+      const detalleHtml = detalles.length
+        ? `<div class="deposito-detail">${detalles.join('<span class="sep">+</span>')}</div>`
+        : "";
+      depositoCell = `<div class="deposito-value">${fmtCLP(state.depositado)}</div>${detalleHtml}`;
+    }
+
+    let diffHtml;
+    if(state.depositado === null){
+      diffHtml = `<span class="diff-tag diff-pending">Pendiente</span>`;
+    } else {
+      const diff = state.depositado - d.recaudado;
+      if(diff === 0) diffHtml = `<span class="diff-tag diff-ok">Cuadra</span>`;
+      else diffHtml = `<span class="diff-tag diff-bad">${fmtCLP(diff)}</span>`;
+    }
+    const needsComment = state.depositado !== null && (state.depositado - d.recaudado) !== 0 && !state.comentario;
+
+    rows += `
+    <tr class="${info.isWeekend?'weekend':''}" data-fecha="${d.fecha}">
+      <td class="day-cell">${info.day} ${MESES[d.fecha.split('-')[1]-1]}<span class="dow">${DOW_FULL[info.dow].slice(0,3)}</span></td>
+      <td class="num">${fmtCLP(d.recaudado)}</td>
+      <td class="deposito-cell">${depositoCell}</td>
+      <td class="diff-cell">${diffHtml}</td>
+      <td>
+        <input type="text" class="input-comment ${needsComment?'needs-comment':''}" placeholder="${needsComment?'Justificar diferencia…':'Comentario (opcional)'}" value="${state.comentario}" data-fecha="${d.fecha}" data-codigo="${codigo}">
+      </td>
+    </tr>
+    `;
+  });
+
+  const html = `
+  <div class="panel-fade-in">
+    <div class="detail-header">
+      <div class="detail-title-block">
+        <h2>${store.nombre}</h2>
+        <div class="detail-pills">
+          <span class="pill pill-cluster">Cluster ${store.cluster}</span>
+          <span class="pill pill-zona">${store.zona}</span>
+          <span class="pill">Agencia ${store.codigo}</span>
+        </div>
+      </div>
+      <div class="toolbar-actions">
+        <button class="btn" id="btnVolver">← Vista general</button>
+        <button class="btn btn-print" onclick="window.print()">Imprimir / exportar PDF</button>
+      </div>
+    </div>
+
+    <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);">
+      <div class="card">
+        <div class="kpi-label">Recaudado (EFE)</div>
+        <div class="kpi-value">${fmtCLP(st.recaudado)}</div>
+        <div class="kpi-bar"></div>
+      </div>
+      <div class="card">
+        <div class="kpi-label">Depositado registrado</div>
+        <div class="kpi-value">${st.diasIngresados>0?fmtCLP(st.depositado):'—'}</div>
+        <div class="kpi-sub">${st.diasIngresados} / ${st.totalDias} días con registro en lista</div>
+        <div class="kpi-bar"></div>
+      </div>
+      <div class="card">
+        <div class="kpi-label">Diferencia acumulada</div>
+        <div class="kpi-value ${diffClass}">${st.diasIngresados>0?fmtCLP(st.diferenciaAcum):'—'}</div>
+        <div class="kpi-bar ${diffClass}"></div>
+      </div>
+      <div class="card">
+        <div class="kpi-label">Días con diferencia</div>
+        <div class="kpi-value ${st.diasConDiferencia>0?'red':'green'}">${st.diasConDiferencia} / ${st.totalDias}</div>
+        <div class="kpi-sub">${st.diasPendientes} días con depósito sin registrar</div>
+        <div class="kpi-bar ${st.diasConDiferencia>0?'red':'green'}"></div>
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table class="cuadratura">
+        <thead>
+          <tr>
+            <th>Día</th>
+            <th>Recaudado en efectivo</th>
+            <th>Depositado (lista SharePoint)</th>
+            <th>Diferencia</th>
+            <th>Comentario / justificación</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>Total</td>
+            <td class="num">${fmtCLP(st.recaudado)}</td>
+            <td class="num">${st.diasIngresados>0?fmtCLP(st.depositado):'—'}</td>
+            <td class="num">${st.diasIngresados>0?fmtCLP(st.diferenciaAcum):'—'}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="legend-row">
+      <div class="legend-item"><span class="legend-dot" style="background:var(--green-600)"></span>Cuadra (diferencia = $0)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:var(--red-600)"></span>Con diferencia — requiere comentario</div>
+      <div class="legend-item"><span class="legend-dot" style="background:var(--amber-600)"></span>Depósito aún no registrado en la lista</div>
+    </div>
+    <p class="empty-hint">Recaudado en efectivo = suma de MONTO en REPORTE_XSTORE donde MEDIO DE PAGO = EFE, por día. "Depositado" = suma de MontoDepositado en la lista SharePoint DepositosSucursalesBCI para esa sucursal y FechaRecaudacion (se suman varios registros si hubo más de una bolsa/transporte). Hoy se muestra con datos de ejemplo porque el pipeline real (Graph API → JSON) todavía no está conectado — ver infraestructura_automatizacion.md.</p>
+  </div>
+  `;
+  document.getElementById("app").innerHTML = html;
+
+  document.getElementById("btnVolver").addEventListener("click", ()=>{ currentTab="general"; render(); });
+
+  document.querySelectorAll(".input-comment").forEach(inp=>{
+    inp.addEventListener("input", (e)=>{
+      STATE[codigo][e.target.dataset.fecha].comentario = e.target.value;
+    });
+    inp.addEventListener("blur", ()=>{ renderDetail(codigo); });
+  });
+}
+
+/* =========================================================
+   RENDER PRINCIPAL
+========================================================= */
+function render(){
+  renderTabbar();
+  if(currentTab === "general") renderGeneral();
+  else renderDetail(currentTab);
+}
+
+/* =========================================================
+   INIT — carga depósitos (real o demo), arma el mapa de match,
+   inicializa STATE y recién ahí hace el primer render.
+========================================================= */
+(async function init(){
+  const { rows, isDemo } = await loadDepositos();
+  DEPOSITOS_MAP = buildDepositosMap(rows);
+  initState();
+
+  if(isDemo){
+    document.getElementById("demoBadge").innerHTML =
+      `<span class="demo-badge"><span class="dot"></span>Depósitos: datos de ejemplo</span>`;
+  }
+
+  render();
+})();
+</script>
+
+</body>
+</html>
