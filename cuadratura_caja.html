@@ -123,7 +123,7 @@ h1.title{ font-size:20px; font-weight:800; margin:0 0 4px; letter-spacing:-.01em
 .store-rows{ display:flex; flex-direction:column; gap:7px; }
 .store-row{ display:flex; justify-content:space-between; font-size:12.5px; }
 .store-row .lbl{ color:var(--ink-500); }
-.store-row .val{ font-variant-numeric:tabular-nums; font-weight:600; }
+.store-row .val{ font-variant-numeric:tabular-nums; font-weight:600; min-width:118px; text-align:right; }
 .store-row .val.red{ color:var(--red-600); }
 .store-row .val.amber{ color:var(--amber-600); }
 .store-card-foot{ margin-top:12px; font-size:11.5px; color:var(--navy-600); font-weight:700; display:flex; align-items:center; gap:4px; }
@@ -169,6 +169,19 @@ table.cuadratura th:nth-child(3), table.cuadratura td:nth-child(3){ width:19%; }
 table.cuadratura th:nth-child(4), table.cuadratura td:nth-child(4){ width:13%; }
 table.cuadratura th:nth-child(5), table.cuadratura td:nth-child(5){ width:38%; }
 .num{ font-variant-numeric:tabular-nums; text-align:right; }
+
+/* ---------- Formato contable (símbolo fijo + monto alineado) ----------
+   Igual que el formato "Contabilidad" de Excel: el símbolo $ queda
+   anclado a un costado y el monto (tabular-nums) alineado al otro,
+   ocupando todo el ancho de la celda/columna — así todos los montos de
+   una misma columna quedan alineados entre sí sin importar cuántos
+   dígitos tenga cada uno. */
+.acct{ display:flex; width:100%; align-items:baseline; justify-content:space-between; gap:6px; font-variant-numeric:tabular-nums; }
+.acct-symbol{ opacity:.55; font-weight:600; }
+.acct-amount{ font-variant-numeric:tabular-nums; }
+.acct-negative .acct-symbol, .acct-negative .acct-amount{ color:var(--red-600); }
+.acct-empty{ justify-content:flex-end; }
+.acct-empty .acct-amount{ color:var(--ink-400); }
 .day-cell{ font-weight:600; color:var(--ink-700); }
 .day-cell .dow{ font-weight:500; color:var(--ink-400); font-size:10.5px; text-transform:uppercase; margin-left:6px; }
 
@@ -176,13 +189,15 @@ table.cuadratura th:nth-child(5), table.cuadratura td:nth-child(5){ width:38%; }
 .deposito-value{ font-variant-numeric:tabular-nums; font-weight:700; color:var(--ink-900); }
 .deposito-value.empty{ color:var(--ink-400); font-weight:500; font-style:italic; }
 .deposito-value.zero{ color:var(--ink-400); font-weight:600; }
-.deposito-value[data-tip]{
-  cursor:help; display:inline-block; border-bottom:1.5px dotted var(--orange-500);
-  padding-bottom:1px; transition:.15s ease;
+.deposito-value[data-tip]{ cursor:help; transition:.15s ease; }
+.deposito-value[data-tip] .acct-amount{
+  border-bottom:1.5px dotted var(--orange-500); padding-bottom:1px; transition:.15s ease;
 }
-.deposito-value[data-tip]:hover{ color:var(--navy-700); border-bottom-color:var(--navy-600); }
-.deposito-value.zero[data-tip]{ border-bottom-color:var(--ink-400); }
-.deposito-value.zero[data-tip]:hover{ color:var(--ink-700); border-bottom-color:var(--ink-500); }
+.deposito-value[data-tip]:hover{ color:var(--navy-700); }
+.deposito-value[data-tip]:hover .acct-amount{ border-bottom-color:var(--navy-600); }
+.deposito-value.zero[data-tip] .acct-amount{ border-bottom-color:var(--ink-400); }
+.deposito-value.zero[data-tip]:hover{ color:var(--ink-700); }
+.deposito-value.zero[data-tip]:hover .acct-amount{ border-bottom-color:var(--ink-500); }
 
 .input-comment{
   width:100%; border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-family:'Inter',sans-serif;
@@ -445,6 +460,23 @@ function fmtCLP(n){
   const sign = n < 0 ? "-" : "";
   return sign + "$ " + Math.abs(Math.round(n)).toLocaleString("es-CL");
 }
+/* Formato contable: símbolo fijo a un costado y monto (tabular-nums)
+   alineado al otro, igual que el formato "Contabilidad" de Excel — así
+   todos los montos de una misma columna quedan alineados entre sí sin
+   importar cuántos dígitos tenga cada uno. Se usa en las columnas de la
+   tabla, en el total y en las tarjetas de sucursal; los KPI grandes
+   (un solo número por tarjeta) se dejan con fmtCLP normal. */
+function fmtCLPAcct(n){
+  if(n === null || n === undefined){
+    return `<span class="acct acct-empty"><span class="acct-amount">—</span></span>`;
+  }
+  const neg = n < 0;
+  const amount = Math.abs(Math.round(n)).toLocaleString("es-CL");
+  return `<span class="acct${neg ? ' acct-negative' : ''}">` +
+    `<span class="acct-symbol">${neg ? '−$' : '$'}</span>` +
+    `<span class="acct-amount">${amount}</span>` +
+  `</span>`;
+}
 function escapeAttr(s){
   return String(s)
     .replace(/&/g, "&amp;")
@@ -651,9 +683,9 @@ function renderGeneral(){
         ${badge}
       </div>
       <div class="store-rows">
-        <div class="store-row"><span class="lbl">Recaudado</span><span class="val">${fmtCLP(st.recaudado)}</span></div>
-        <div class="store-row"><span class="lbl">Depositado</span><span class="val">${st.diasIngresados>0 ? fmtCLP(st.depositado) : '—'}</span></div>
-        <div class="store-row"><span class="lbl">Diferencia</span><span class="val ${st.diferenciaAcum<0?'red':(st.diferenciaAcum>0?'amber':'')}">${st.diasIngresados>0 ? fmtCLP(st.diferenciaAcum) : '—'}</span></div>
+        <div class="store-row"><span class="lbl">Recaudado</span><span class="val">${fmtCLPAcct(st.recaudado)}</span></div>
+        <div class="store-row"><span class="lbl">Depositado</span><span class="val">${fmtCLPAcct(st.diasIngresados>0 ? st.depositado : null)}</span></div>
+        <div class="store-row"><span class="lbl">Diferencia</span><span class="val ${st.diferenciaAcum<0?'red':(st.diferenciaAcum>0?'amber':'')}">${fmtCLPAcct(st.diasIngresados>0 ? st.diferenciaAcum : null)}</span></div>
         <div class="store-row"><span class="lbl">Días pendientes de depósito</span><span class="val">${st.diasPendientes} / ${st.totalDias}</span></div>
       </div>
       <div class="store-card-foot">Ver detalle diario →</div>
@@ -691,7 +723,7 @@ function renderDetail(codigo){
       if(tieneRecaudacion){
         depositoCell = `<div class="deposito-value empty">Sin registrar</div>`;
       } else {
-        depositoCell = `<div class="deposito-value zero" tabindex="0" data-tip="Sin recaudación este día — no aplica depósito, se muestra $0">${fmtCLP(0)}</div>`;
+        depositoCell = `<div class="deposito-value zero" tabindex="0" data-tip="Sin recaudación este día — no aplica depósito, se muestra $0">${fmtCLPAcct(0)}</div>`;
       }
     } else {
       const detalles = state.registros.map(r=>{
@@ -702,7 +734,7 @@ function renderDetail(codigo){
       }).filter(Boolean);
       const tooltipText = detalles.join(" + ");
       const tipAttr = tooltipText ? ` tabindex="0" data-tip="${escapeAttr(tooltipText)}"` : "";
-      depositoCell = `<div class="deposito-value"${tipAttr}>${fmtCLP(state.depositado)}</div>`;
+      depositoCell = `<div class="deposito-value"${tipAttr}>${fmtCLPAcct(state.depositado)}</div>`;
     }
 
     let diffHtml;
@@ -720,7 +752,7 @@ function renderDetail(codigo){
     rows += `
     <tr class="${info.isWeekend?'weekend':''}" data-fecha="${d.fecha}">
       <td class="day-cell">${info.day} ${MESES[d.fecha.split('-')[1]-1]}<span class="dow">${DOW_FULL[info.dow].slice(0,3)}</span></td>
-      <td class="num">${fmtCLP(d.recaudado)}</td>
+      <td class="num">${fmtCLPAcct(d.recaudado)}</td>
       <td class="deposito-cell">${depositoCell}</td>
       <td class="diff-cell">${diffHtml}</td>
       <td>
@@ -789,9 +821,9 @@ function renderDetail(codigo){
         <tfoot>
           <tr>
             <td>Total</td>
-            <td class="num">${fmtCLP(st.recaudado)}</td>
-            <td class="num">${st.diasIngresados>0?fmtCLP(st.depositado):'—'}</td>
-            <td class="num">${st.diasIngresados>0?fmtCLP(st.diferenciaAcum):'—'}</td>
+            <td class="num">${fmtCLPAcct(st.recaudado)}</td>
+            <td class="num">${fmtCLPAcct(st.diasIngresados>0 ? st.depositado : null)}</td>
+            <td class="num">${fmtCLPAcct(st.diasIngresados>0 ? st.diferenciaAcum : null)}</td>
             <td></td>
           </tr>
         </tfoot>
