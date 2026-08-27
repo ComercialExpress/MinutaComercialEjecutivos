@@ -47,3 +47,14 @@ jobs:
           git add depositos.json
           git diff --staged --quiet || git commit -m "Actualización automática de datos Depósitos BCI - $(date +'%Y-%m-%d %H:%M')"
           git push
+      - name: Purgar caché de jsDelivr (depositos.json)
+        # jsDelivr es el primer mirror que consulta cuadratura_caja.html
+        # (ver CONFIG.depositosSources) y cachea en el edge independientemente
+        # de la caché del navegador (el fetch() del HTML ya usa cache:no-store,
+        # pero eso no toca la caché del CDN). Sin este purge, un cambio recién
+        # commiteado puede tardar horas en reflejarse en el dashboard aunque
+        # el workflow y el commit hayan sido exitosos. No requiere token ni
+        # secret nuevo — es un GET público a la API de purge de jsDelivr.
+        run: |
+          curl -s -o /dev/null -w "jsDelivr purge depositos.json -> HTTP %{http_code}\n" \
+            "https://purge.jsdelivr.net/gh/ComercialExpress/MinutaComercialEjecutivos@main/depositos.json"
