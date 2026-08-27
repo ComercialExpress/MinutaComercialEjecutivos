@@ -73,11 +73,17 @@ h1.title{ font-size:20px; font-weight:800; margin:0 0 4px; letter-spacing:-.01em
 }
 .demo-badge .dot{ width:6px; height:6px; border-radius:50%; background:var(--amber-600); }
 
-/* ---------- Tabbar ---------- */
+/* ---------- Tabbar / selector de mes ---------- */
+.month-select-label{
+  font-size:10px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-400);
+  margin:0 0 8px 2px; display:flex; align-items:center; gap:6px;
+}
+.month-select-label::before{ content:""; width:3px; height:11px; background:var(--orange-500); border-radius:2px; flex:none; }
 .tabbar{
   display:flex; gap:4px; background:var(--card); border:1px solid var(--border); border-radius:var(--radius-md);
   padding:5px; margin-bottom:20px; overflow-x:auto; box-shadow:var(--shadow-card);
 }
+.monthbar .tab-btn{ flex:0 0 auto; }
 .tab-btn{
   flex:1 1 auto; min-width:max-content; border:none; background:transparent; color:var(--ink-500);
   font-family:'Inter',sans-serif; font-weight:600; font-size:12.5px; padding:10px 16px; border-radius:9px;
@@ -85,6 +91,8 @@ h1.title{ font-size:20px; font-weight:800; margin:0 0 4px; letter-spacing:-.01em
 }
 .tab-btn:hover{ background:var(--border-soft); color:var(--ink-700); }
 .tab-btn.active{ background:var(--navy-800); color:#fff; }
+.tab-btn.has-data::after{ content:""; display:inline-block; width:5px; height:5px; border-radius:50%; background:var(--green-600); margin-left:7px; vertical-align:middle; }
+.tab-btn.active.has-data::after{ background:var(--orange-500); }
 
 /* ---------- KPI cards ---------- */
 .kpi-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
@@ -118,6 +126,8 @@ h1.title{ font-size:20px; font-weight:800; margin:0 0 4px; letter-spacing:-.01em
 .store-card.alert{ border-left-color:var(--red-600); }
 .store-card.pending{ border-left-color:var(--amber-600); }
 .store-card.ok{ border-left-color:var(--green-600); }
+.store-card.nodata{ border-left-color:var(--border); }
+.badge-nodata{ background:var(--border-soft); color:var(--ink-400); }
 .store-card-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:12px; }
 .store-name{ font-family:'Sora',sans-serif; font-weight:700; font-size:13.5px; line-height:1.25; }
 .store-meta{ font-size:10.5px; color:var(--ink-400); margin-top:3px; text-transform:uppercase; letter-spacing:.03em; }
@@ -206,6 +216,14 @@ table.cuadratura th:nth-child(5), table.cuadratura td:nth-child(5){ width:38%; }
 .deposito-value[data-tip]{ cursor:help; transition:.15s ease; }
 .deposito-value[data-tip]:hover{ color:var(--navy-700); }
 .deposito-value.zero[data-tip]:hover{ color:var(--ink-700); }
+
+/* ---------- Días sin datos cargados (aún no llegó información de la fuente) ---------- */
+tr.nodata td{ color:var(--ink-400); }
+tr.nodata .day-cell{ color:var(--ink-400); font-weight:500; }
+tr.nodata .input-comment{ background:var(--bg); }
+tr.nodata:hover td{ background:var(--bg); }
+.diff-nodata{ background:var(--border-soft); color:var(--ink-400); }
+.diff-nodata[data-tip]:hover{ filter:none; }
 
 /* ---------- Info-dot: indicador circular "i" para valores con tooltip ----------
    En vez de un subrayado punteado, un puntito redondo con "i" — más visible
@@ -304,14 +322,15 @@ tfoot td.num{ font-family:'Inter',sans-serif; font-weight:800; }
         <p class="subtitle">Comparación diaria: recaudación en efectivo (XStore, medio de pago EFE) vs depósitos registrados en la lista SharePoint de sucursales (agrupados por fecha de recaudación).</p>
       </div>
       <div class="header-meta">
-        <div class="chip"><span class="chip-dot"></span>Fuente: REPORTE_XSTORE · agosto 2026</div>
-        <div class="chip period">01–23 ago 2026</div>
+        <div class="chip" id="chipFuente"><span class="chip-dot"></span>Fuente: REPORTE_XSTORE · agosto 2026</div>
+        <div class="chip period" id="chipPeriod">01–23 ago 2026</div>
         <span id="demoBadge"></span>
       </div>
     </div>
   </div>
 
-  <div class="tabbar" id="tabbar"></div>
+  <div class="month-select-label">Período — selecciona un mes de 2026</div>
+  <div class="tabbar monthbar" id="monthbar"></div>
 
   <div id="app"></div>
 
@@ -450,29 +469,44 @@ function buildDepositosMap(rows){
 /* =========================================================
    ESTADO
    - depositado ahora viene de la lista SharePoint (o su fallback demo),
-     no se ingresa a mano. Se recalcula en initState() una vez cargado
-     DEPOSITOS_MAP.
+     no se ingresa a mano.
    - comentario: se prellena con ComentarioRevision si el/los registros
      de la lista traen uno; sigue siendo editable en pantalla porque
      todavía no existe un canal de escritura de vuelta hacia SharePoint
      (arquitectura de solo lectura, ver metodologia_pipelines_html.md).
+
+   CAMBIO (27-08-2026): la matriz ahora muestra TODOS los días del
+   calendario del mes seleccionado, no solo los días presentes en
+   stores_data.js — porque el pipeline real irá cargando los días
+   progresivamente. Por eso STATE ya no se pre-arma entero al inicio
+   (initState): se calcula "on demand" por sucursal+fecha vía getState(),
+   y se cachea para no recalcular en cada render.
 ========================================================= */
-const STATE = {}; // STATE[codigo][fecha] = { depositado: number|null, comentario: string, registros: [] }
+const STATE = {}; // STATE[codigo][fecha] = { depositado: number|null, comentario: string, registros: [] } (lazy)
 let DEPOSITOS_MAP = {};
 
-function initState(){
-  STORES.forEach(s=>{
-    STATE[s.codigo] = {};
-    s.dias.forEach(d=>{
-      const key = normNombre(s.nombre) + "|" + d.fecha;
-      const match = DEPOSITOS_MAP[key];
-      STATE[s.codigo][d.fecha] = {
-        depositado: match ? match.monto : null,
-        comentario: match ? match.registros.map(r=>r.ComentarioRevision).filter(Boolean).join(" / ") : "",
-        registros: match ? match.registros : []
-      };
-    });
-  });
+/* Recaudado en efectivo para una sucursal+fecha, o null si esa fecha
+   todavía no tiene ningún dato cargado desde REPORTE_XSTORE (distinto
+   de recaudado === 0, que sí es un dato real: "hubo caja, recaudó $0"). */
+function getDayData(store, fecha){
+  if(!store._diasMap){
+    store._diasMap = {};
+    store.dias.forEach(d=>{ store._diasMap[d.fecha] = d.recaudado; });
+  }
+  return Object.prototype.hasOwnProperty.call(store._diasMap, fecha) ? store._diasMap[fecha] : null;
+}
+function getState(store, fecha){
+  if(!STATE[store.codigo]) STATE[store.codigo] = {};
+  if(!STATE[store.codigo][fecha]){
+    const key = normNombre(store.nombre) + "|" + fecha;
+    const match = DEPOSITOS_MAP[key];
+    STATE[store.codigo][fecha] = {
+      depositado: match ? match.monto : null,
+      comentario: match ? match.registros.map(r=>r.ComentarioRevision).filter(Boolean).join(" / ") : "",
+      registros: match ? match.registros : []
+    };
+  }
+  return STATE[store.codigo][fecha];
 }
 
 let currentTab = "general"; // "general" | codigo de sucursal
@@ -580,6 +614,7 @@ function fmtDate(iso){
   return { day: String(d).padStart(2,"0"), month: m, dow: dt.getDay(), isWeekend: dt.getDay()===0 || dt.getDay()===6 };
 }
 const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const MESES_FULL = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 /* Fecha de hoy en huso horario Chile (independiente del huso del navegador
    de quien mira el dashboard) — se usa para resaltar la fila del día actual
    en la tabla de detalle, cuando cae dentro del período mostrado. */
@@ -593,47 +628,96 @@ function todayISOChile(){
 const TODAY_ISO = todayISOChile();
 
 /* =========================================================
+   SELECTOR DE MES (reemplaza el tabbar por sucursal)
+   La matriz muestra siempre TODOS los días del calendario del mes
+   elegido, tenga o no datos cargados todavía — el pipeline real los
+   irá completando día a día. Por ahora se cubren los 12 meses de 2026;
+   cuando el pipeline soporte más años esto puede volverse un selector
+   año+mes.
+========================================================= */
+const YEAR = 2026;
+let currentMonth = TODAY_ISO.startsWith(String(YEAR)) ? (Number(TODAY_ISO.slice(5,7)) - 1) : 7;
+
+function daysInMonth(year, monthIndex){
+  return new Date(year, monthIndex + 1, 0).getDate();
+}
+function buildMonthDates(year, monthIndex){
+  const n = daysInMonth(year, monthIndex);
+  const dates = [];
+  for(let day = 1; day <= n; day++){
+    dates.push(`${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`);
+  }
+  return dates;
+}
+function periodLabel(monthDates){
+  const first = fmtDate(monthDates[0]);
+  const last = fmtDate(monthDates[monthDates.length - 1]);
+  return `${first.day}–${last.day} ${MESES[currentMonth]} ${YEAR}`;
+}
+function cap(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
+/* ¿Algún día de este mes tiene datos cargados en alguna sucursal? Se usa
+   solo como indicador visual (puntito verde) en el selector de mes. */
+function monthHasData(monthIndex){
+  const dates = buildMonthDates(YEAR, monthIndex);
+  return STORES.some(s => dates.some(fecha => getDayData(s, fecha) !== null));
+}
+
+/* =========================================================
    CÁLCULOS
 
    IMPORTANTE (corrección 27-08-2026): un día sin recaudación en efectivo
-   (d.recaudado === 0) nunca genera un depósito en la lista SharePoint —
+   (recaudado === 0) nunca genera un depósito en la lista SharePoint —
    no hay nada que depositar ese día. Por eso esos días NO deben contar
    como "pendientes de depósito" ni mostrarse como "Sin registrar": eso
    se reserva para días que sí tuvieron recaudación pero todavía no
    tienen un registro de depósito asociado.
+
+   CAMBIO (27-08-2026): storeStats ahora recibe la lista completa de
+   fechas del mes (monthDates), no solo los días presentes en
+   store.dias — así la matriz siempre muestra el calendario completo.
+   Se agrega un tercer estado, "sin datos" (diasSinDatos): días para
+   los que todavía no llegó ningún dato de recaudación desde la fuente,
+   distinto de "sin recaudación" (sí llegó el dato, y fue $0).
 ========================================================= */
-function storeStats(store){
+function storeStats(store, monthDates){
   let recaudado = 0, depositado = 0, diferenciaAcum = 0;
-  let diasIngresados = 0, diasConDiferencia = 0, diasPendientes = 0, diasSinRecaudacion = 0;
-  store.dias.forEach(d=>{
-    recaudado += d.recaudado;
-    const st = STATE[store.codigo][d.fecha];
-    const tieneRecaudacion = d.recaudado !== 0;
+  let diasIngresados = 0, diasConDiferencia = 0, diasPendientes = 0, diasSinRecaudacion = 0, diasSinDatos = 0;
+  monthDates.forEach(fecha=>{
+    const recaudadoRaw = getDayData(store, fecha); // null = sin datos cargados este día
+    const tieneDatos = recaudadoRaw !== null;
+    const rec = tieneDatos ? recaudadoRaw : 0;
+    recaudado += rec;
+    const st = getState(store, fecha);
+    const tieneRecaudacion = tieneDatos && recaudadoRaw !== 0;
     if(st.depositado !== null){
       diasIngresados++;
       depositado += st.depositado;
-      const diff = st.depositado - d.recaudado;
+      const diff = st.depositado - rec;
       diferenciaAcum += diff;
       if(diff !== 0) diasConDiferencia++;
     } else if(tieneRecaudacion){
       // Hubo recaudación ese día pero todavía no aparece el depósito en la lista.
       diasPendientes++;
-    } else {
-      // Sin recaudación ese día: no aplica depósito, no es un pendiente real.
+    } else if(tieneDatos){
+      // Sin recaudación ese día (dato real $0): no aplica depósito, no es un pendiente real.
       diasSinRecaudacion++;
+    } else {
+      // Todavía no hay ningún dato de recaudación cargado para este día.
+      diasSinDatos++;
     }
   });
   let status;
-  if(diasConDiferencia > 0) status = "alert";
+  if(diasSinDatos === monthDates.length) status = "nodata"; // todavía no llegó ningún dato este mes
+  else if(diasConDiferencia > 0) status = "alert";
   else if(diasPendientes > 0) status = "pending";
   else status = "ok";
-  return { recaudado, depositado, diferenciaAcum, diasIngresados, diasPendientes, diasSinRecaudacion, diasConDiferencia, status, totalDias: store.dias.length };
+  return { recaudado, depositado, diferenciaAcum, diasIngresados, diasPendientes, diasSinRecaudacion, diasSinDatos, diasConDiferencia, status, totalDias: monthDates.length };
 }
 
-function globalStats(){
+function globalStats(monthDates){
   let recaudado = 0, depositado = 0, diferenciaAcum = 0, storesConAlerta = 0;
   STORES.forEach(s=>{
-    const st = storeStats(s);
+    const st = storeStats(s, monthDates);
     recaudado += st.recaudado;
     depositado += st.depositado;
     diferenciaAcum += st.diferenciaAcum;
@@ -643,19 +727,23 @@ function globalStats(){
 }
 
 /* =========================================================
-   RENDER: TABBAR
+   RENDER: SELECTOR DE MES
+   Reemplaza el tabbar por sucursal. La navegación entre "Vista general"
+   y el detalle de una sucursal sigue funcionando igual que antes (click
+   en una tarjeta / botón "← Vista general"), independiente del mes
+   elegido acá.
 ========================================================= */
-function renderTabbar(){
-  const tb = document.getElementById("tabbar");
-  let html = `<button class="tab-btn ${currentTab==='general'?'active':''}" data-tab="general">Vista General</button>`;
-  STORES.forEach(s=>{
-    html += `<button class="tab-btn ${currentTab==s.codigo?'active':''}" data-tab="${s.codigo}">${s.nombre}</button>`;
+function renderMonthbar(){
+  const tb = document.getElementById("monthbar");
+  let html = "";
+  MESES_FULL.forEach((m, idx)=>{
+    const hasData = monthHasData(idx);
+    html += `<button class="tab-btn ${currentMonth===idx?'active':''}${hasData?' has-data':''}" data-month="${idx}"${hasData?` tabindex="0" data-tip="${cap(m)} ${YEAR} tiene datos cargados"`:""}>${cap(m)}</button>`;
   });
   tb.innerHTML = html;
   tb.querySelectorAll(".tab-btn").forEach(btn=>{
     btn.addEventListener("click", ()=>{
-      const t = btn.dataset.tab;
-      currentTab = (t === "general") ? "general" : Number(t);
+      currentMonth = Number(btn.dataset.month);
       render();
     });
   });
@@ -664,52 +752,55 @@ function renderTabbar(){
 /* =========================================================
    RENDER: VISTA GENERAL
 ========================================================= */
-function renderGeneral(){
-  const g = globalStats();
-  const diffClass = g.diferenciaAcum === 0 ? "" : (g.diferenciaAcum < 0 ? "red" : "green");
-  const alertClass = g.storesConAlerta === 0 ? "green" : (g.storesConAlerta === g.totalStores ? "amber" : "red");
+function renderGeneral(monthDates){
+  const g = globalStats(monthDates);
+  const mesTieneDatos = monthHasData(currentMonth);
+  const diffClass = !mesTieneDatos ? "" : (g.diferenciaAcum === 0 ? "" : (g.diferenciaAcum < 0 ? "red" : "green"));
+  const alertClass = !mesTieneDatos ? "" : (g.storesConAlerta === 0 ? "green" : (g.storesConAlerta === g.totalStores ? "amber" : "red"));
 
   let html = `
   <div class="kpi-grid">
     <div class="card">
       <div class="kpi-label">Total recaudado (EFE)</div>
-      <div class="kpi-value">${fmtCLP(g.recaudado)}</div>
-      <div class="kpi-sub">01–23 ago 2026 · 9 sucursales</div>
+      <div class="kpi-value">${mesTieneDatos ? fmtCLP(g.recaudado) : '—'}</div>
+      <div class="kpi-sub">${periodLabel(monthDates)} · ${g.totalStores} sucursales</div>
       <div class="kpi-bar"></div>
     </div>
     <div class="card">
       <div class="kpi-label">Total depositado (ingresado)</div>
-      <div class="kpi-value">${fmtCLP(g.depositado)}</div>
+      <div class="kpi-value">${mesTieneDatos ? fmtCLP(g.depositado) : '—'}</div>
       <div class="kpi-sub">Lista SharePoint DepositosSucursalesBCI · FechaRecaudacion + NombreSucursal</div>
       <div class="kpi-bar"></div>
     </div>
     <div class="card">
       <div class="kpi-label">Diferencia neta</div>
-      <div class="kpi-value ${diffClass}">${fmtCLP(g.diferenciaAcum)}</div>
+      <div class="kpi-value ${diffClass}">${mesTieneDatos ? fmtCLP(g.diferenciaAcum) : '—'}</div>
       <div class="kpi-sub">Solo sobre días con depósito registrado</div>
       <div class="kpi-bar ${diffClass || ''}"></div>
     </div>
     <div class="card">
       <div class="kpi-label">Sucursales con alerta / pendientes</div>
-      <div class="kpi-value ${alertClass}">${g.storesConAlerta} / ${g.totalStores}</div>
-      <div class="kpi-sub">Diferencia ≠ 0 o depósito sin registrar (con recaudación)</div>
+      <div class="kpi-value ${alertClass}">${mesTieneDatos ? `${g.storesConAlerta} / ${g.totalStores}` : '—'}</div>
+      <div class="kpi-sub">${mesTieneDatos ? 'Diferencia ≠ 0 o depósito sin registrar (con recaudación)' : 'Aún no hay datos cargados para este mes'}</div>
       <div class="kpi-bar ${alertClass}"></div>
     </div>
   </div>
 
   <div class="section-title">
-    <span class="label">Sucursales — Cuadratura agosto 2026</span>
+    <span class="label">Sucursales — Cuadratura ${MESES_FULL[currentMonth]} ${YEAR}</span>
     <span class="hint">Click en una tarjeta para ver el detalle diario</span>
   </div>
   <div class="store-grid">
   `;
 
   STORES.forEach(s=>{
-    const st = storeStats(s);
+    const st = storeStats(s, monthDates);
     let badge = `<span class="badge badge-pending"><span class="dot"></span>Pendiente</span>`;
     if(st.status === "alert") badge = `<span class="badge badge-alert"><span class="dot"></span>Revisar</span>`;
+    else if(st.status === "nodata") badge = `<span class="badge badge-nodata"><span class="dot"></span>Sin datos</span>`;
     else if(st.status === "ok") badge = `<span class="badge badge-ok"><span class="dot"></span>Cuadra</span>`;
 
+    const sinDatos = st.status === "nodata";
     html += `
     <div class="store-card ${st.status}" data-open="${s.codigo}">
       <div class="store-card-top">
@@ -720,7 +811,7 @@ function renderGeneral(){
         ${badge}
       </div>
       <div class="store-rows">
-        <div class="store-row"><span class="lbl">Recaudado</span><span class="val">${fmtCLPAcct(st.recaudado)}</span></div>
+        <div class="store-row"><span class="lbl">Recaudado</span><span class="val">${fmtCLPAcct(sinDatos ? null : st.recaudado)}</span></div>
         <div class="store-row"><span class="lbl">Depositado</span><span class="val">${fmtCLPAcct(st.diasIngresados>0 ? st.depositado : null)}</span></div>
         <div class="store-row"><span class="lbl">Diferencia</span><span class="val ${st.diferenciaAcum<0?'red':(st.diferenciaAcum>0?'amber':'')}">${fmtCLPAcct(st.diasIngresados>0 ? st.diferenciaAcum : null)}</span></div>
         <div class="store-row"><span class="lbl">Días pendientes de depósito</span><span class="val">${st.diasPendientes} / ${st.totalDias}</span></div>
@@ -744,57 +835,67 @@ function renderGeneral(){
 /* =========================================================
    RENDER: DETALLE POR SUCURSAL
 ========================================================= */
-function renderDetail(codigo){
+function renderDetail(codigo, monthDates){
   const store = STORES.find(s=>s.codigo === codigo);
-  const st = storeStats(store);
+  const st = storeStats(store, monthDates);
   const diffClass = st.diferenciaAcum === 0 && st.diasIngresados>0 ? "green" : (st.diferenciaAcum < 0 ? "red" : (st.diasIngresados===0?"":"amber"));
 
   let rows = "";
-  store.dias.forEach(d=>{
-    const info = fmtDate(d.fecha);
-    const state = STATE[codigo][d.fecha];
-    const tieneRecaudacion = d.recaudado !== 0;
+  monthDates.forEach(fecha=>{
+    const info = fmtDate(fecha);
+    const recaudadoRaw = getDayData(store, fecha); // null = sin datos cargados este día
+    const tieneDatos = recaudadoRaw !== null;
+    const rec = tieneDatos ? recaudadoRaw : 0;
+    const state = getState(store, fecha);
+    const tieneRecaudacion = tieneDatos && recaudadoRaw !== 0;
+    const esHoy = fecha === TODAY_ISO;
 
-    let depositoCell;
-    if(state.depositado === null){
-      if(tieneRecaudacion){
-        depositoCell = `<div class="deposito-value empty">Sin registrar</div>`;
+    let recaudadoCell, depositoCell, diffHtml, needsComment = false;
+
+    if(!tieneDatos){
+      recaudadoCell = `<span class="acct acct-empty"><span class="acct-amount">—</span></span>`;
+      depositoCell = `<div class="deposito-value empty" tabindex="0" data-tip="Aún no se cargó información de recaudación para este día — se completará automáticamente cuando la fuente lo incluya">Sin datos</div>`;
+      diffHtml = `<span class="diff-tag diff-nodata" tabindex="0" data-tip="Día sin datos cargados todavía"><span class="dot"></span>Sin datos</span>`;
+    } else {
+      recaudadoCell = fmtCLPAcct(rec);
+      if(state.depositado === null){
+        if(tieneRecaudacion){
+          depositoCell = `<div class="deposito-value empty">Sin registrar</div>`;
+        } else {
+          depositoCell = `<div class="deposito-value zero" tabindex="0" data-tip="Sin recaudación este día — no aplica depósito, se muestra $0">${fmtCLPAcct(0, INFO_DOT)}</div>`;
+        }
       } else {
-        depositoCell = `<div class="deposito-value zero" tabindex="0" data-tip="Sin recaudación este día — no aplica depósito, se muestra $0">${fmtCLPAcct(0, INFO_DOT)}</div>`;
+        const detalles = state.registros.map(r=>{
+          const partes = [];
+          if(r.NumeroDeposito) partes.push(`N° ${r.NumeroDeposito}`);
+          if(r.BolsaTransporte) partes.push(`Bolsa ${r.BolsaTransporte}`);
+          return partes.join(" · ");
+        }).filter(Boolean);
+        const tooltipText = detalles.join(" + ");
+        const tipAttr = tooltipText ? ` tabindex="0" data-tip="${escapeAttr(tooltipText)}"` : "";
+        depositoCell = `<div class="deposito-value"${tipAttr}>${fmtCLPAcct(state.depositado, tooltipText ? INFO_DOT : "")}</div>`;
       }
-    } else {
-      const detalles = state.registros.map(r=>{
-        const partes = [];
-        if(r.NumeroDeposito) partes.push(`N° ${r.NumeroDeposito}`);
-        if(r.BolsaTransporte) partes.push(`Bolsa ${r.BolsaTransporte}`);
-        return partes.join(" · ");
-      }).filter(Boolean);
-      const tooltipText = detalles.join(" + ");
-      const tipAttr = tooltipText ? ` tabindex="0" data-tip="${escapeAttr(tooltipText)}"` : "";
-      depositoCell = `<div class="deposito-value"${tipAttr}>${fmtCLPAcct(state.depositado, tooltipText ? INFO_DOT : "")}</div>`;
+
+      if(state.depositado === null){
+        diffHtml = tieneRecaudacion
+          ? `<span class="diff-tag diff-pending"><span class="dot"></span>Pendiente</span>`
+          : `<span class="diff-tag diff-ok" tabindex="0" data-tip="Sin recaudación este día — no aplica depósito"><span class="dot"></span>Cuadra${INFO_DOT}</span>`;
+      } else {
+        const diff = state.depositado - rec;
+        if(diff === 0) diffHtml = `<span class="diff-tag diff-ok"><span class="dot"></span>Cuadra</span>`;
+        else diffHtml = `<span class="diff-tag diff-bad"><span class="dot"></span>${fmtCLP(diff)}</span>`;
+      }
+      needsComment = state.depositado !== null && (state.depositado - rec) !== 0 && !state.comentario;
     }
 
-    let diffHtml;
-    if(state.depositado === null){
-      diffHtml = tieneRecaudacion
-        ? `<span class="diff-tag diff-pending"><span class="dot"></span>Pendiente</span>`
-        : `<span class="diff-tag diff-ok" tabindex="0" data-tip="Sin recaudación este día — no aplica depósito"><span class="dot"></span>Cuadra${INFO_DOT}</span>`;
-    } else {
-      const diff = state.depositado - d.recaudado;
-      if(diff === 0) diffHtml = `<span class="diff-tag diff-ok"><span class="dot"></span>Cuadra</span>`;
-      else diffHtml = `<span class="diff-tag diff-bad"><span class="dot"></span>${fmtCLP(diff)}</span>`;
-    }
-    const needsComment = state.depositado !== null && (state.depositado - d.recaudado) !== 0 && !state.comentario;
-
-    const esHoy = d.fecha === TODAY_ISO;
     rows += `
-    <tr class="${info.isWeekend?'weekend':''}${esHoy?' today':''}" data-fecha="${d.fecha}">
-      <td class="day-cell">${info.day} ${MESES[d.fecha.split('-')[1]-1]}<span class="dow">${DOW_FULL[info.dow].slice(0,3)}</span>${esHoy?'<span class="hoy-chip">Hoy</span>':''}</td>
-      <td class="num">${fmtCLPAcct(d.recaudado)}</td>
+    <tr class="${info.isWeekend?'weekend':''}${esHoy?' today':''}${!tieneDatos?' nodata':''}" data-fecha="${fecha}">
+      <td class="day-cell">${info.day} ${MESES[fecha.split('-')[1]-1]}<span class="dow">${DOW_FULL[info.dow].slice(0,3)}</span>${esHoy?'<span class="hoy-chip">Hoy</span>':''}</td>
+      <td class="num">${recaudadoCell}</td>
       <td class="deposito-cell">${depositoCell}</td>
       <td class="diff-cell">${diffHtml}</td>
       <td>
-        <input type="text" class="input-comment ${needsComment?'needs-comment':''}" placeholder="${needsComment?'Justificar diferencia…':'Comentario (opcional)'}" value="${state.comentario}" data-fecha="${d.fecha}" data-codigo="${codigo}">
+        <input type="text" class="input-comment ${needsComment?'needs-comment':''}" placeholder="${!tieneDatos?'Sin datos disponibles aún':(needsComment?'Justificar diferencia…':'Comentario (opcional)')}" value="${state.comentario}" data-fecha="${fecha}" data-codigo="${codigo}"${!tieneDatos?' disabled':''}>
       </td>
     </tr>
     `;
@@ -820,7 +921,7 @@ function renderDetail(codigo){
     <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);">
       <div class="card">
         <div class="kpi-label">Recaudado (EFE)</div>
-        <div class="kpi-value">${fmtCLP(st.recaudado)}</div>
+        <div class="kpi-value">${st.diasSinDatos===st.totalDias?'—':fmtCLP(st.recaudado)}</div>
         <div class="kpi-bar"></div>
       </div>
       <div class="card">
@@ -872,8 +973,9 @@ function renderDetail(codigo){
       <div class="legend-item"><span class="legend-dot" style="background:var(--green-600)"></span>Cuadra (diferencia = $0, o sin recaudación ese día)</div>
       <div class="legend-item"><span class="legend-dot" style="background:var(--red-600)"></span>Con diferencia — requiere comentario</div>
       <div class="legend-item"><span class="legend-dot" style="background:var(--amber-600)"></span>Depósito aún no registrado en la lista (hubo recaudación)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:var(--ink-400)"></span>Sin datos cargados todavía para ese día</div>
     </div>
-    <p class="empty-hint">Recaudado en efectivo = suma de MONTO en REPORTE_XSTORE donde MEDIO DE PAGO = EFE, por día. "Depositado" = suma de MontoDepositado en la lista SharePoint DepositosSucursalesBCI para esa sucursal y FechaRecaudacion (se suman varios registros si hubo más de una bolsa/transporte). Los montos con línea punteada tienen detalle al pasar el mouse: en un depósito registrado, el/los números de depósito y bolsa de transporte; en un día sin recaudación en efectivo, la aclaración de que no aplica depósito (se muestra $0 y cuadra). Los días con recaudación pero sin depósito en la lista se muestran como "Sin registrar" y sí cuentan como pendientes. Hoy se muestra con datos de ejemplo porque el pipeline real (Graph API → JSON) todavía no está conectado — ver infraestructura_automatizacion.md.</p>
+    <p class="empty-hint">Recaudado en efectivo = suma de MONTO en REPORTE_XSTORE donde MEDIO DE PAGO = EFE, por día. "Depositado" = suma de MontoDepositado en la lista SharePoint DepositosSucursalesBCI para esa sucursal y FechaRecaudacion (se suman varios registros si hubo más de una bolsa/transporte). La matriz muestra siempre todos los días del mes elegido: los días marcados "Sin datos" todavía no tienen ninguna información cargada desde la fuente (se irán completando automáticamente), y son distintos de los días "sin recaudación" (sí hay dato, y fue $0). Los montos con línea punteada tienen detalle al pasar el mouse: en un depósito registrado, el/los números de depósito y bolsa de transporte; en un día sin recaudación en efectivo, la aclaración de que no aplica depósito (se muestra $0 y cuadra). Los días con recaudación pero sin depósito en la lista se muestran como "Sin registrar" y sí cuentan como pendientes. Hoy se muestra con datos de ejemplo porque el pipeline real (Graph API → JSON) todavía no está conectado — ver infraestructura_automatizacion.md.</p>
   </div>
   `;
   document.getElementById("app").innerHTML = html;
@@ -884,7 +986,7 @@ function renderDetail(codigo){
     inp.addEventListener("input", (e)=>{
       STATE[codigo][e.target.dataset.fecha].comentario = e.target.value;
     });
-    inp.addEventListener("blur", ()=>{ renderDetail(codigo); });
+    inp.addEventListener("blur", ()=>{ renderDetail(codigo, monthDates); });
   });
 }
 
@@ -892,19 +994,26 @@ function renderDetail(codigo){
    RENDER PRINCIPAL
 ========================================================= */
 function render(){
-  renderTabbar();
-  if(currentTab === "general") renderGeneral();
-  else renderDetail(currentTab);
+  renderMonthbar();
+  const monthDates = buildMonthDates(YEAR, currentMonth);
+
+  document.getElementById("chipFuente").innerHTML =
+    `<span class="chip-dot"></span>Fuente: REPORTE_XSTORE · ${cap(MESES_FULL[currentMonth])} ${YEAR}`;
+  document.getElementById("chipPeriod").textContent = periodLabel(monthDates);
+
+  if(currentTab === "general") renderGeneral(monthDates);
+  else renderDetail(currentTab, monthDates);
 }
 
 /* =========================================================
-   INIT — carga depósitos (real o demo), arma el mapa de match,
-   inicializa STATE y recién ahí hace el primer render.
+   INIT — carga depósitos (real o demo), arma el mapa de match y
+   recién ahí hace el primer render. STATE se completa "on demand"
+   por sucursal+fecha (ver getState) a medida que se renderiza cada
+   mes, así que no hace falta inicializarlo entero acá.
 ========================================================= */
 (async function init(){
   const { rows, isDemo } = await loadDepositos();
   DEPOSITOS_MAP = buildDepositosMap(rows);
-  initState();
 
   if(isDemo){
     document.getElementById("demoBadge").innerHTML =
