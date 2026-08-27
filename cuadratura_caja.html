@@ -157,7 +157,7 @@ table.cuadratura{
   border-radius:var(--radius-lg); box-shadow:var(--shadow-card); table-layout:fixed;
 }
 table.cuadratura th{
-  text-align:left; font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
+  text-align:center; font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
   color:var(--ink-400); background:var(--bg); padding:12px 14px; border-bottom:1px solid var(--border);
 }
 table.cuadratura td{ padding:8px 14px; min-height:50px; border-bottom:1px solid var(--border-soft); font-size:13px; }
@@ -176,7 +176,13 @@ table.cuadratura th:nth-child(5), table.cuadratura td:nth-child(5){ width:38%; }
 .deposito-value{ font-variant-numeric:tabular-nums; font-weight:700; color:var(--ink-900); }
 .deposito-value.empty{ color:var(--ink-400); font-weight:500; font-style:italic; }
 .deposito-value.zero{ color:var(--ink-400); font-weight:600; }
-.deposito-value[title]{ cursor:help; border-bottom:1px dotted var(--ink-400); }
+.deposito-value[data-tip]{
+  cursor:help; display:inline-block; border-bottom:1.5px dotted var(--orange-500);
+  padding-bottom:1px; transition:.15s ease;
+}
+.deposito-value[data-tip]:hover{ color:var(--navy-700); border-bottom-color:var(--navy-600); }
+.deposito-value.zero[data-tip]{ border-bottom-color:var(--ink-400); }
+.deposito-value.zero[data-tip]:hover{ color:var(--ink-700); border-bottom-color:var(--ink-500); }
 
 .input-comment{
   width:100%; border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-family:'Inter',sans-serif;
@@ -186,11 +192,34 @@ table.cuadratura th:nth-child(5), table.cuadratura td:nth-child(5){ width:38%; }
 .input-comment:focus{ outline:none; border-color:var(--navy-500); box-shadow:0 0 0 3px rgba(69,79,146,.12); }
 .input-comment.needs-comment{ border-color:var(--red-600); background:var(--red-100); }
 
-.diff-tag{ display:inline-flex; align-items:center; gap:5px; font-weight:700; font-size:12.5px; padding:5px 10px; border-radius:999px; }
+.diff-tag{ display:inline-flex; align-items:center; gap:5px; font-weight:700; font-size:12.5px; padding:5px 10px; border-radius:999px; transition:.15s ease; }
 .diff-ok{ background:var(--green-100); color:var(--green-600); }
 .diff-bad{ background:var(--red-100); color:var(--red-600); }
 .diff-pending{ background:var(--amber-100); color:var(--amber-600); }
-.diff-tag[title]{ cursor:help; }
+.diff-tag[data-tip]{ cursor:help; }
+.diff-tag[data-tip]:hover{ filter:brightness(0.95); transform:translateY(-1px); }
+
+/* ---------- Tooltip global (reemplaza el title nativo) ---------- */
+.gtooltip{
+  position:fixed; z-index:999; max-width:260px; left:0; top:0;
+  background:var(--navy-900); color:#fff; font-family:'Inter',sans-serif;
+  font-size:12px; font-weight:600; line-height:1.45; padding:9px 13px; border-radius:10px;
+  box-shadow:0 14px 34px -10px rgba(21,25,54,.5), 0 3px 10px rgba(21,25,54,.22);
+  opacity:0; transform:translateY(4px) scale(.97); pointer-events:none;
+  transition:opacity .13s ease, transform .13s ease; white-space:normal;
+}
+.gtooltip::before{
+  content:"";
+  display:inline-block; width:5px; height:5px; border-radius:50%;
+  background:var(--orange-500); margin-right:6px; vertical-align:middle;
+}
+.gtooltip.visible{ opacity:1; transform:translateY(0) scale(1); }
+.gtooltip::after{
+  content:""; position:absolute; left:var(--tip-arrow, 20px); bottom:-5px;
+  width:10px; height:10px; background:var(--navy-900); transform:translateX(-50%) rotate(45deg);
+  border-radius:2px;
+}
+.gtooltip.below::after{ bottom:auto; top:-5px; }
 
 tfoot td{ background:var(--bg); font-weight:800; border-top:2px solid var(--border); height:52px; font-family:'Sora',sans-serif; }
 tfoot td.num{ font-family:'Inter',sans-serif; font-weight:800; }
@@ -423,6 +452,70 @@ function escapeAttr(s){
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 }
+
+/* =========================================================
+   TOOLTIP GLOBAL
+   Reemplaza el title nativo del navegador (lento, sin estilo) por un
+   tooltip propio con la identidad visual del dashboard. Cualquier
+   elemento con data-tip="..." lo dispara — se usa delegación de eventos
+   sobre document para que funcione después de cada re-render (render()
+   reemplaza el innerHTML de #app, así que listeners puestos elemento
+   por elemento se perderían).
+========================================================= */
+let gtooltipEl = null;
+function ensureTooltip(){
+  if(gtooltipEl) return gtooltipEl;
+  gtooltipEl = document.createElement("div");
+  gtooltipEl.className = "gtooltip";
+  gtooltipEl.setAttribute("role", "tooltip");
+  document.body.appendChild(gtooltipEl);
+  return gtooltipEl;
+}
+function positionTooltip(target){
+  const el = gtooltipEl;
+  const r = target.getBoundingClientRect();
+  const tw = el.offsetWidth, th = el.offsetHeight;
+  const margin = 8;
+  let below = false;
+  let top = r.top - th - 10;
+  if(top < margin){ top = r.bottom + 10; below = true; }
+  let left = r.left + r.width/2 - tw/2;
+  left = Math.max(margin, Math.min(left, window.innerWidth - tw - margin));
+  const arrowLeft = Math.max(12, Math.min(r.left + r.width/2 - left, tw - 12));
+  el.style.left = left + "px";
+  el.style.top = top + "px";
+  el.style.setProperty("--tip-arrow", arrowLeft + "px");
+  el.classList.toggle("below", below);
+}
+function showTooltip(target){
+  const text = target.getAttribute("data-tip");
+  if(!text) return;
+  const el = ensureTooltip();
+  el.textContent = text;
+  el.classList.add("visible");
+  positionTooltip(target);
+}
+function hideTooltip(){
+  if(gtooltipEl) gtooltipEl.classList.remove("visible");
+}
+document.addEventListener("mouseover", (e)=>{
+  const t = e.target.closest("[data-tip]");
+  if(t) showTooltip(t);
+});
+document.addEventListener("mouseout", (e)=>{
+  const t = e.target.closest("[data-tip]");
+  if(t && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest("[data-tip]") === t)) hideTooltip();
+});
+document.addEventListener("focusin", (e)=>{
+  const t = e.target.closest("[data-tip]");
+  if(t) showTooltip(t);
+});
+document.addEventListener("focusout", (e)=>{
+  const t = e.target.closest("[data-tip]");
+  if(t) hideTooltip();
+});
+document.addEventListener("scroll", hideTooltip, true);
+window.addEventListener("resize", hideTooltip);
 function fmtDate(iso){
   const [y,m,d] = iso.split("-").map(Number);
   const dt = new Date(y, m-1, d);
@@ -598,7 +691,7 @@ function renderDetail(codigo){
       if(tieneRecaudacion){
         depositoCell = `<div class="deposito-value empty">Sin registrar</div>`;
       } else {
-        depositoCell = `<div class="deposito-value zero" title="Sin recaudación este día — no aplica depósito, se muestra $0">${fmtCLP(0)}</div>`;
+        depositoCell = `<div class="deposito-value zero" tabindex="0" data-tip="Sin recaudación este día — no aplica depósito, se muestra $0">${fmtCLP(0)}</div>`;
       }
     } else {
       const detalles = state.registros.map(r=>{
@@ -608,15 +701,15 @@ function renderDetail(codigo){
         return partes.join(" · ");
       }).filter(Boolean);
       const tooltipText = detalles.join(" + ");
-      const titleAttr = tooltipText ? ` title="${escapeAttr(tooltipText)}"` : "";
-      depositoCell = `<div class="deposito-value"${titleAttr}>${fmtCLP(state.depositado)}</div>`;
+      const tipAttr = tooltipText ? ` tabindex="0" data-tip="${escapeAttr(tooltipText)}"` : "";
+      depositoCell = `<div class="deposito-value"${tipAttr}>${fmtCLP(state.depositado)}</div>`;
     }
 
     let diffHtml;
     if(state.depositado === null){
       diffHtml = tieneRecaudacion
         ? `<span class="diff-tag diff-pending">Pendiente</span>`
-        : `<span class="diff-tag diff-ok" title="Sin recaudación este día — no aplica depósito">Cuadra</span>`;
+        : `<span class="diff-tag diff-ok" tabindex="0" data-tip="Sin recaudación este día — no aplica depósito">Cuadra</span>`;
     } else {
       const diff = state.depositado - d.recaudado;
       if(diff === 0) diffHtml = `<span class="diff-tag diff-ok">Cuadra</span>`;
@@ -685,7 +778,7 @@ function renderDetail(codigo){
           <tr>
             <th>Día</th>
             <th>Recaudado en efectivo</th>
-            <th>Depositado (lista SharePoint)</th>
+            <th>Depositado</th>
             <th>Diferencia</th>
             <th>Comentario / justificación</th>
           </tr>
