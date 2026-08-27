@@ -5,13 +5,13 @@
     "OrigenForm": "Integral",
     "FechaRecaudacion": "2026-08-01T04:00:00Z",
     "FechaDeposito": "2026-08-03T04:00:00Z",
-    "MontoDepositado": 79990.0,
+    "MontoDepositado": 79980.0,
     "NumeroDeposito": "4111865",
     "NombreUsuario": "rosa parra",
     "CuentaDestino": "81705638",
     "HojaTransporte": null,
     "BolsaTransporte": null,
-    "ComentarioRevision": null
+    "ComentarioRevision": "ajuste sensillo -$10"
   },
   {
     "Titulo": "1702",
