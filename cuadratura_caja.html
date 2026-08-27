@@ -37,9 +37,10 @@ h1,h2,h3,.sora{ font-family:'Sora',sans-serif; }
   color:#fff; padding:22px 28px 20px; margin-bottom:18px;
 }
 .header-card::after{
-  content:""; position:absolute; top:-120px; right:-100px; width:360px; height:360px; border-radius:50%;
-  background:radial-gradient(circle, rgba(245,130,31,.55), rgba(245,130,31,0) 70%);
-  pointer-events:none;
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:
+    radial-gradient(560px 320px at 96% -12%, rgba(245,130,31,.30), transparent 60%),
+    radial-gradient(420px 260px at 108% 66%, rgba(255,255,255,.07), transparent 60%);
 }
 .header-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; position:relative; z-index:1; flex-wrap:wrap; }
 .brand-block{ display:flex; align-items:center; gap:12px; }
@@ -56,11 +57,13 @@ h1.title{ font-size:20px; font-weight:800; margin:0 0 4px; letter-spacing:-.01em
 .header-meta{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
 .chip{
   display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:#fff;
-  background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.16);
+  background:linear-gradient(180deg, rgba(255,255,255,.11), rgba(255,255,255,.04));
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 1px 2px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.07);
   padding:8px 14px; border-radius:999px; white-space:nowrap;
 }
 .chip .chip-dot{ width:7px; height:7px; border-radius:50%; background:var(--green-600); box-shadow:0 0 0 3px rgba(21,138,74,.25); }
-.chip.period{ background:rgba(255,255,255,.07); font-weight:700; }
+.chip.period{ background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.03)); font-weight:700; }
 
 /* ---------- Demo badge (dato de ejemplo, no real) ---------- */
 .demo-badge{
@@ -102,6 +105,8 @@ h1.title{ font-size:20px; font-weight:800; margin:0 0 4px; letter-spacing:-.01em
 
 /* ---------- Vista general: store cards ---------- */
 .section-title{ font-size:13px; font-weight:700; color:var(--ink-700); margin:4px 0 12px; display:flex; justify-content:space-between; align-items:center; }
+.section-title .label{ display:inline-flex; align-items:center; gap:9px; }
+.section-title .label::before{ content:""; width:3px; height:14px; background:var(--orange-500); border-radius:2px; flex:none; }
 .section-title .hint{ font-weight:500; font-size:11.5px; color:var(--ink-400); }
 .store-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
 .store-card{
@@ -116,7 +121,8 @@ h1.title{ font-size:20px; font-weight:800; margin:0 0 4px; letter-spacing:-.01em
 .store-card-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:12px; }
 .store-name{ font-family:'Sora',sans-serif; font-weight:700; font-size:13.5px; line-height:1.25; }
 .store-meta{ font-size:10.5px; color:var(--ink-400); margin-top:3px; text-transform:uppercase; letter-spacing:.03em; }
-.badge{ font-size:10px; font-weight:800; padding:4px 9px; border-radius:999px; white-space:nowrap; text-transform:uppercase; letter-spacing:.03em; }
+.badge{ display:inline-flex; align-items:center; gap:5px; font-size:10px; font-weight:800; padding:4px 9px; border-radius:999px; white-space:nowrap; text-transform:uppercase; letter-spacing:.03em; }
+.badge .dot{ width:6px; height:6px; border-radius:50%; background:currentColor; flex:none; }
 .badge-alert{ background:var(--red-100); color:var(--red-600); }
 .badge-pending{ background:var(--amber-100); color:var(--amber-600); }
 .badge-ok{ background:var(--green-100); color:var(--green-600); }
@@ -126,7 +132,8 @@ h1.title{ font-size:20px; font-weight:800; margin:0 0 4px; letter-spacing:-.01em
 .store-row .val{ font-variant-numeric:tabular-nums; font-weight:600; min-width:118px; text-align:right; }
 .store-row .val.red{ color:var(--red-600); }
 .store-row .val.amber{ color:var(--amber-600); }
-.store-card-foot{ margin-top:12px; font-size:11.5px; color:var(--navy-600); font-weight:700; display:flex; align-items:center; gap:4px; }
+.store-card-foot{ margin-top:12px; font-size:11.5px; color:var(--navy-600); font-weight:700; display:inline-flex; align-items:center; gap:4px; transition:gap .15s ease; }
+.store-card:hover .store-card-foot{ gap:8px; color:var(--orange-600); }
 
 @keyframes cardIn{ from{ opacity:0; transform:translateY(8px);} to{ opacity:1; transform:translateY(0);} }
 
@@ -163,6 +170,13 @@ table.cuadratura th{
 table.cuadratura td{ padding:8px 14px; min-height:50px; border-bottom:1px solid var(--border-soft); font-size:13px; }
 table.cuadratura tbody tr:hover{ background:var(--bg); }
 table.cuadratura tbody tr.weekend td{ background:#FAFAFD; }
+table.cuadratura tbody tr.today td{ background:var(--orange-100); }
+table.cuadratura tbody tr.today:hover td{ background:#FBE2C4; }
+.hoy-chip{
+  display:inline-flex; align-items:center; margin-left:6px; padding:2px 7px; border-radius:999px;
+  background:var(--orange-500); color:#fff; font-size:9px; font-weight:800; text-transform:uppercase;
+  letter-spacing:.04em; vertical-align:middle;
+}
 table.cuadratura th:nth-child(1), table.cuadratura td:nth-child(1){ width:13%; }
 table.cuadratura th:nth-child(2), table.cuadratura td:nth-child(2){ width:17%; }
 table.cuadratura th:nth-child(3), table.cuadratura td:nth-child(3){ width:19%; }
@@ -190,14 +204,24 @@ table.cuadratura th:nth-child(5), table.cuadratura td:nth-child(5){ width:38%; }
 .deposito-value.empty{ color:var(--ink-400); font-weight:500; font-style:italic; }
 .deposito-value.zero{ color:var(--ink-400); font-weight:600; }
 .deposito-value[data-tip]{ cursor:help; transition:.15s ease; }
-.deposito-value[data-tip] .acct-amount{
-  border-bottom:1.5px dotted var(--orange-500); padding-bottom:1px; transition:.15s ease;
-}
 .deposito-value[data-tip]:hover{ color:var(--navy-700); }
-.deposito-value[data-tip]:hover .acct-amount{ border-bottom-color:var(--navy-600); }
-.deposito-value.zero[data-tip] .acct-amount{ border-bottom-color:var(--ink-400); }
 .deposito-value.zero[data-tip]:hover{ color:var(--ink-700); }
-.deposito-value.zero[data-tip]:hover .acct-amount{ border-bottom-color:var(--ink-500); }
+
+/* ---------- Info-dot: indicador circular "i" para valores con tooltip ----------
+   En vez de un subrayado punteado, un puntito redondo con "i" — más visible
+   y reconocible como "hay más info al pasar el mouse". Se enciende en
+   naranjo cuando se hace hover/foco sobre el elemento que lo contiene. */
+.info-dot{
+  display:inline-flex; align-items:center; justify-content:center; flex:none;
+  width:14px; height:14px; margin-left:2px; border-radius:50%; font-size:9px; font-weight:800;
+  font-style:normal; line-height:1; background:var(--border-soft); color:var(--ink-400);
+  transition:.15s ease;
+}
+.deposito-value[data-tip]:hover .info-dot, .deposito-value[data-tip]:focus .info-dot{
+  background:var(--orange-100); color:var(--orange-600);
+}
+.diff-tag .info-dot{ background:rgba(255,255,255,.55); color:inherit; opacity:.75; }
+.diff-tag[data-tip]:hover .info-dot, .diff-tag[data-tip]:focus .info-dot{ opacity:1; background:#fff; }
 
 .input-comment{
   width:100%; border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-family:'Inter',sans-serif;
@@ -208,6 +232,7 @@ table.cuadratura th:nth-child(5), table.cuadratura td:nth-child(5){ width:38%; }
 .input-comment.needs-comment{ border-color:var(--red-600); background:var(--red-100); }
 
 .diff-tag{ display:inline-flex; align-items:center; gap:5px; font-weight:700; font-size:12.5px; padding:5px 10px; border-radius:999px; transition:.15s ease; }
+.diff-tag .dot{ width:6px; height:6px; border-radius:50%; background:currentColor; flex:none; }
 .diff-ok{ background:var(--green-100); color:var(--green-600); }
 .diff-bad{ background:var(--red-100); color:var(--red-600); }
 .diff-pending{ background:var(--amber-100); color:var(--amber-600); }
@@ -466,7 +491,7 @@ function fmtCLP(n){
    importar cuántos dígitos tenga cada uno. Se usa en las columnas de la
    tabla, en el total y en las tarjetas de sucursal; los KPI grandes
    (un solo número por tarjeta) se dejan con fmtCLP normal. */
-function fmtCLPAcct(n){
+function fmtCLPAcct(n, extraHtml){
   if(n === null || n === undefined){
     return `<span class="acct acct-empty"><span class="acct-amount">—</span></span>`;
   }
@@ -474,9 +499,10 @@ function fmtCLPAcct(n){
   const amount = Math.abs(Math.round(n)).toLocaleString("es-CL");
   return `<span class="acct${neg ? ' acct-negative' : ''}">` +
     `<span class="acct-symbol">${neg ? '−$' : '$'}</span>` +
-    `<span class="acct-amount">${amount}</span>` +
+    `<span class="acct-amount">${amount}${extraHtml || ''}</span>` +
   `</span>`;
 }
+const INFO_DOT = `<span class="info-dot">i</span>`;
 function escapeAttr(s){
   return String(s)
     .replace(/&/g, "&amp;")
@@ -554,6 +580,17 @@ function fmtDate(iso){
   return { day: String(d).padStart(2,"0"), month: m, dow: dt.getDay(), isWeekend: dt.getDay()===0 || dt.getDay()===6 };
 }
 const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+/* Fecha de hoy en huso horario Chile (independiente del huso del navegador
+   de quien mira el dashboard) — se usa para resaltar la fila del día actual
+   en la tabla de detalle, cuando cae dentro del período mostrado. */
+function todayISOChile(){
+  try{
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago" }).format(new Date());
+  }catch(e){
+    return new Date().toISOString().slice(0, 10);
+  }
+}
+const TODAY_ISO = todayISOChile();
 
 /* =========================================================
    CÁLCULOS
@@ -661,7 +698,7 @@ function renderGeneral(){
   </div>
 
   <div class="section-title">
-    <span>Sucursales — Cuadratura agosto 2026</span>
+    <span class="label">Sucursales — Cuadratura agosto 2026</span>
     <span class="hint">Click en una tarjeta para ver el detalle diario</span>
   </div>
   <div class="store-grid">
@@ -669,9 +706,9 @@ function renderGeneral(){
 
   STORES.forEach(s=>{
     const st = storeStats(s);
-    let badge = `<span class="badge badge-pending">Pendiente</span>`;
-    if(st.status === "alert") badge = `<span class="badge badge-alert">Revisar</span>`;
-    else if(st.status === "ok") badge = `<span class="badge badge-ok">Cuadra</span>`;
+    let badge = `<span class="badge badge-pending"><span class="dot"></span>Pendiente</span>`;
+    if(st.status === "alert") badge = `<span class="badge badge-alert"><span class="dot"></span>Revisar</span>`;
+    else if(st.status === "ok") badge = `<span class="badge badge-ok"><span class="dot"></span>Cuadra</span>`;
 
     html += `
     <div class="store-card ${st.status}" data-open="${s.codigo}">
@@ -723,7 +760,7 @@ function renderDetail(codigo){
       if(tieneRecaudacion){
         depositoCell = `<div class="deposito-value empty">Sin registrar</div>`;
       } else {
-        depositoCell = `<div class="deposito-value zero" tabindex="0" data-tip="Sin recaudación este día — no aplica depósito, se muestra $0">${fmtCLPAcct(0)}</div>`;
+        depositoCell = `<div class="deposito-value zero" tabindex="0" data-tip="Sin recaudación este día — no aplica depósito, se muestra $0">${fmtCLPAcct(0, INFO_DOT)}</div>`;
       }
     } else {
       const detalles = state.registros.map(r=>{
@@ -734,24 +771,25 @@ function renderDetail(codigo){
       }).filter(Boolean);
       const tooltipText = detalles.join(" + ");
       const tipAttr = tooltipText ? ` tabindex="0" data-tip="${escapeAttr(tooltipText)}"` : "";
-      depositoCell = `<div class="deposito-value"${tipAttr}>${fmtCLPAcct(state.depositado)}</div>`;
+      depositoCell = `<div class="deposito-value"${tipAttr}>${fmtCLPAcct(state.depositado, tooltipText ? INFO_DOT : "")}</div>`;
     }
 
     let diffHtml;
     if(state.depositado === null){
       diffHtml = tieneRecaudacion
-        ? `<span class="diff-tag diff-pending">Pendiente</span>`
-        : `<span class="diff-tag diff-ok" tabindex="0" data-tip="Sin recaudación este día — no aplica depósito">Cuadra</span>`;
+        ? `<span class="diff-tag diff-pending"><span class="dot"></span>Pendiente</span>`
+        : `<span class="diff-tag diff-ok" tabindex="0" data-tip="Sin recaudación este día — no aplica depósito"><span class="dot"></span>Cuadra${INFO_DOT}</span>`;
     } else {
       const diff = state.depositado - d.recaudado;
-      if(diff === 0) diffHtml = `<span class="diff-tag diff-ok">Cuadra</span>`;
-      else diffHtml = `<span class="diff-tag diff-bad">${fmtCLP(diff)}</span>`;
+      if(diff === 0) diffHtml = `<span class="diff-tag diff-ok"><span class="dot"></span>Cuadra</span>`;
+      else diffHtml = `<span class="diff-tag diff-bad"><span class="dot"></span>${fmtCLP(diff)}</span>`;
     }
     const needsComment = state.depositado !== null && (state.depositado - d.recaudado) !== 0 && !state.comentario;
 
+    const esHoy = d.fecha === TODAY_ISO;
     rows += `
-    <tr class="${info.isWeekend?'weekend':''}" data-fecha="${d.fecha}">
-      <td class="day-cell">${info.day} ${MESES[d.fecha.split('-')[1]-1]}<span class="dow">${DOW_FULL[info.dow].slice(0,3)}</span></td>
+    <tr class="${info.isWeekend?'weekend':''}${esHoy?' today':''}" data-fecha="${d.fecha}">
+      <td class="day-cell">${info.day} ${MESES[d.fecha.split('-')[1]-1]}<span class="dow">${DOW_FULL[info.dow].slice(0,3)}</span>${esHoy?'<span class="hoy-chip">Hoy</span>':''}</td>
       <td class="num">${fmtCLPAcct(d.recaudado)}</td>
       <td class="deposito-cell">${depositoCell}</td>
       <td class="diff-cell">${diffHtml}</td>
