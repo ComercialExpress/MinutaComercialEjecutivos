@@ -1,0 +1,49 @@
+name: Sync DepositosSucursalesBCI
+on:
+  schedule:
+    - cron: "*/30 * * * *"   # cada 30 min, igual que sync-data.yml y sync-callback.yml
+  workflow_dispatch: {}       # permite correrlo a mano desde la pestaña Actions
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install requests
+      - name: Debug - check secret lengths (no expone valores)
+        env:
+          TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        run: |
+          echo "TENANT_ID length: ${#TENANT_ID}"
+          echo "CLIENT_ID length: ${#CLIENT_ID}"
+          echo "CLIENT_SECRET length: ${#CLIENT_SECRET}"
+      - name: Run sync script
+        env:
+          TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        run: python sync_depositos.py
+      - name: Subir muestra cruda como artifact (para verificar mapeo de columnas)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: depositos-raw-sample
+          path: depositos-raw-sample.json
+          retention-days: 5
+          if-no-files-found: ignore
+      - name: Commit updated JSON
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add depositos.json
+          git diff --staged --quiet || git commit -m "Actualización automática de datos Depósitos BCI - $(date +'%Y-%m-%d %H:%M')"
+          git push
