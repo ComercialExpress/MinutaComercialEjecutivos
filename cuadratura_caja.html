@@ -190,6 +190,7 @@ table.cuadratura th:nth-child(5), table.cuadratura td:nth-child(5){ width:38%; }
 .diff-ok{ background:var(--green-100); color:var(--green-600); }
 .diff-bad{ background:var(--red-100); color:var(--red-600); }
 .diff-pending{ background:var(--amber-100); color:var(--amber-600); }
+.diff-neutral{ background:var(--border-soft); color:var(--ink-500); }
 
 tfoot td{ background:var(--bg); font-weight:800; border-top:2px solid var(--border); height:52px; font-family:'Sora',sans-serif; }
 tfoot td.num{ font-family:'Inter',sans-serif; font-weight:800; }
@@ -424,27 +425,40 @@ const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov"
 
 /* =========================================================
    CÁLCULOS
+
+   IMPORTANTE (corrección 27-08-2026): un día sin recaudación en efectivo
+   (d.recaudado === 0) nunca genera un depósito en la lista SharePoint —
+   no hay nada que depositar ese día. Por eso esos días NO deben contar
+   como "pendientes de depósito" ni mostrarse como "Sin registrar": eso
+   se reserva para días que sí tuvieron recaudación pero todavía no
+   tienen un registro de depósito asociado.
 ========================================================= */
 function storeStats(store){
-  let recaudado = 0, depositado = 0, diferenciaAcum = 0, diasIngresados = 0, diasConDiferencia = 0;
+  let recaudado = 0, depositado = 0, diferenciaAcum = 0;
+  let diasIngresados = 0, diasConDiferencia = 0, diasPendientes = 0, diasSinRecaudacion = 0;
   store.dias.forEach(d=>{
     recaudado += d.recaudado;
     const st = STATE[store.codigo][d.fecha];
+    const tieneRecaudacion = d.recaudado !== 0;
     if(st.depositado !== null){
       diasIngresados++;
       depositado += st.depositado;
       const diff = st.depositado - d.recaudado;
       diferenciaAcum += diff;
       if(diff !== 0) diasConDiferencia++;
+    } else if(tieneRecaudacion){
+      // Hubo recaudación ese día pero todavía no aparece el depósito en la lista.
+      diasPendientes++;
+    } else {
+      // Sin recaudación ese día: no aplica depósito, no es un pendiente real.
+      diasSinRecaudacion++;
     }
   });
-  const diasPendientes = store.dias.length - diasIngresados;
-  let status = "pending";
-  if(diasIngresados === 0) status = "pending";
-  else if(diasConDiferencia > 0) status = "alert";
-  else if(diasPendientes === 0) status = "ok";
-  else status = "pending";
-  return { recaudado, depositado, diferenciaAcum, diasIngresados, diasPendientes, diasConDiferencia, status, totalDias: store.dias.length };
+  let status;
+  if(diasConDiferencia > 0) status = "alert";
+  else if(diasPendientes > 0) status = "pending";
+  else status = "ok";
+  return { recaudado, depositado, diferenciaAcum, diasIngresados, diasPendientes, diasSinRecaudacion, diasConDiferencia, status, totalDias: store.dias.length };
 }
 
 function globalStats(){
@@ -509,7 +523,7 @@ function renderGeneral(){
     <div class="card">
       <div class="kpi-label">Sucursales con alerta / pendientes</div>
       <div class="kpi-value ${alertClass}">${g.storesConAlerta} / ${g.totalStores}</div>
-      <div class="kpi-sub">Diferencia ≠ 0 o depósito sin registrar</div>
+      <div class="kpi-sub">Diferencia ≠ 0 o depósito sin registrar (con recaudación)</div>
       <div class="kpi-bar ${alertClass}"></div>
     </div>
   </div>
@@ -570,10 +584,13 @@ function renderDetail(codigo){
   store.dias.forEach(d=>{
     const info = fmtDate(d.fecha);
     const state = STATE[codigo][d.fecha];
+    const tieneRecaudacion = d.recaudado !== 0;
 
     let depositoCell;
     if(state.depositado === null){
-      depositoCell = `<div class="deposito-value empty">Sin registrar</div>`;
+      depositoCell = tieneRecaudacion
+        ? `<div class="deposito-value empty">Sin registrar</div>`
+        : `<div class="deposito-value empty">Sin recaudación</div>`;
     } else {
       const detalles = state.registros.map(r=>{
         const partes = [];
@@ -589,7 +606,9 @@ function renderDetail(codigo){
 
     let diffHtml;
     if(state.depositado === null){
-      diffHtml = `<span class="diff-tag diff-pending">Pendiente</span>`;
+      diffHtml = tieneRecaudacion
+        ? `<span class="diff-tag diff-pending">Pendiente</span>`
+        : `<span class="diff-tag diff-neutral">Sin recaudación</span>`;
     } else {
       const diff = state.depositado - d.recaudado;
       if(diff === 0) diffHtml = `<span class="diff-tag diff-ok">Cuadra</span>`;
@@ -647,7 +666,7 @@ function renderDetail(codigo){
       <div class="card">
         <div class="kpi-label">Días con diferencia</div>
         <div class="kpi-value ${st.diasConDiferencia>0?'red':'green'}">${st.diasConDiferencia} / ${st.totalDias}</div>
-        <div class="kpi-sub">${st.diasPendientes} días con depósito sin registrar</div>
+        <div class="kpi-sub">${st.diasPendientes} días con depósito sin registrar (con recaudación)</div>
         <div class="kpi-bar ${st.diasConDiferencia>0?'red':'green'}"></div>
       </div>
     </div>
@@ -681,9 +700,10 @@ function renderDetail(codigo){
     <div class="legend-row">
       <div class="legend-item"><span class="legend-dot" style="background:var(--green-600)"></span>Cuadra (diferencia = $0)</div>
       <div class="legend-item"><span class="legend-dot" style="background:var(--red-600)"></span>Con diferencia — requiere comentario</div>
-      <div class="legend-item"><span class="legend-dot" style="background:var(--amber-600)"></span>Depósito aún no registrado en la lista</div>
+      <div class="legend-item"><span class="legend-dot" style="background:var(--amber-600)"></span>Depósito aún no registrado en la lista (hubo recaudación)</div>
+      <div class="legend-item"><span class="legend-dot" style="background:var(--ink-400)"></span>Sin recaudación ese día — no aplica depósito</div>
     </div>
-    <p class="empty-hint">Recaudado en efectivo = suma de MONTO en REPORTE_XSTORE donde MEDIO DE PAGO = EFE, por día. "Depositado" = suma de MontoDepositado en la lista SharePoint DepositosSucursalesBCI para esa sucursal y FechaRecaudacion (se suman varios registros si hubo más de una bolsa/transporte). Hoy se muestra con datos de ejemplo porque el pipeline real (Graph API → JSON) todavía no está conectado — ver infraestructura_automatizacion.md.</p>
+    <p class="empty-hint">Recaudado en efectivo = suma de MONTO en REPORTE_XSTORE donde MEDIO DE PAGO = EFE, por día. "Depositado" = suma de MontoDepositado en la lista SharePoint DepositosSucursalesBCI para esa sucursal y FechaRecaudacion (se suman varios registros si hubo más de una bolsa/transporte). Los días sin recaudación en efectivo no requieren depósito y se muestran como "Sin recaudación", no como pendientes. Hoy se muestra con datos de ejemplo porque el pipeline real (Graph API → JSON) todavía no está conectado — ver infraestructura_automatizacion.md.</p>
   </div>
   `;
   document.getElementById("app").innerHTML = html;
