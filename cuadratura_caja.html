@@ -187,11 +187,12 @@ table.cuadratura tbody tr.today:hover td{ background:#FBE2C4; }
   background:var(--orange-500); color:#fff; font-size:9px; font-weight:800; text-transform:uppercase;
   letter-spacing:.04em; vertical-align:middle;
 }
-table.cuadratura th:nth-child(1), table.cuadratura td:nth-child(1){ width:13%; }
-table.cuadratura th:nth-child(2), table.cuadratura td:nth-child(2){ width:17%; }
-table.cuadratura th:nth-child(3), table.cuadratura td:nth-child(3){ width:19%; }
-table.cuadratura th:nth-child(4), table.cuadratura td:nth-child(4){ width:13%; }
-table.cuadratura th:nth-child(5), table.cuadratura td:nth-child(5){ width:38%; }
+table.cuadratura th:nth-child(1), table.cuadratura td:nth-child(1){ width:12%; }
+table.cuadratura th:nth-child(2), table.cuadratura td:nth-child(2){ width:15%; }
+table.cuadratura th:nth-child(3), table.cuadratura td:nth-child(3){ width:15%; }
+table.cuadratura th:nth-child(4), table.cuadratura td:nth-child(4){ width:14%; }
+table.cuadratura th:nth-child(5), table.cuadratura td:nth-child(5){ width:12%; }
+table.cuadratura th:nth-child(6), table.cuadratura td:nth-child(6){ width:32%; }
 .num{ font-variant-numeric:tabular-nums; text-align:right; }
 
 /* ---------- Formato contable (símbolo fijo + monto alineado) ----------
@@ -240,6 +241,9 @@ tr.nodata:hover td{ background:var(--bg); }
 }
 .diff-tag .info-dot{ background:rgba(255,255,255,.55); color:inherit; opacity:.75; }
 .diff-tag[data-tip]:hover .info-dot, .diff-tag[data-tip]:focus .info-dot{ opacity:1; background:#fff; }
+th.th-tip{ cursor:help; }
+th.th-tip .info-dot{ margin-left:5px; }
+th.th-tip:hover .info-dot, th.th-tip:focus .info-dot{ background:var(--orange-100); color:var(--orange-600); }
 
 .input-comment{
   width:100%; border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-family:'Inter',sans-serif;
@@ -357,6 +361,16 @@ tfoot td.num{ font-family:'Inter',sans-serif; font-weight:800; }
    fallback a datos de ejemplo (DEMO_DEPOSITOS) con badge visible, siguiendo
    el patrón general documentado en metodologia_pipelines_html.md §5 — es
    una decisión deliberada para este dashboard, no un descuido.
+
+   DEPÓSITOS FICTICIOS (agregado 27-08-2026, ver infraestructura_automatizacion.md
+   sección "Flujo de depósitos ficticios"): columna que complementa el monto
+   depositado — Recaudado = Depositado (bancario) + Depósito ficticio, una vez
+   conectada la lista de origen. Sigue el MISMO patrón de mirrors que
+   depositos.json, apuntando a depositos_ficticios.json — que todavía NO existe
+   en el repo. A diferencia de depositos.json, acá NO hay fallback a datos de
+   ejemplo: si las 3 fuentes fallan (404 esperable mientras no se conecte la
+   lista real), cada día simplemente queda en $0 — es el comportamiento por
+   defecto pedido, no un error a mostrarle al usuario.
 ========================================================= */
 const CONFIG = {
   repo: {
@@ -367,6 +381,22 @@ const CONFIG = {
   },
   get depositosSources(){
     const { owner, name, branch, path } = this.repo;
+    return [
+      `https://cdn.jsdelivr.net/gh/${owner}/${name}@${branch}/${path}`,
+      `https://cdn.statically.io/gh/${owner}/${name}/${branch}/${path}`,
+      `https://raw.githubusercontent.com/${owner}/${name}/${branch}/${path}`
+    ];
+  },
+  // Mismo repo/branch que "repo" de arriba — solo cambia el archivo. Cuando el
+  // pipeline real de depósitos ficticios exista, debería escribir su JSON acá.
+  repoFicticios: {
+    owner: "ComercialExpress",
+    name: "MinutaComercialEjecutivos",
+    branch: "main",
+    path: "depositos_ficticios.json"
+  },
+  get depositosFicticiosSources(){
+    const { owner, name, branch, path } = this.repoFicticios;
     return [
       `https://cdn.jsdelivr.net/gh/${owner}/${name}@${branch}/${path}`,
       `https://cdn.statically.io/gh/${owner}/${name}/${branch}/${path}`,
@@ -402,6 +432,18 @@ const CONFIG = {
      equivocado al hacer el match día a día.
    - Los valores reales de CuentaDestino (columna "Elección") no están
      confirmados — no usar los de esta demo como si fueran reales.
+
+   FORMA ASUMIDA DE depositos_ficticios.json (pendiente de definir la lista de
+   origen real — ver infraestructura_automatizacion.md). Se asume el mismo
+   criterio de match que depositos.json (sucursal + FechaRecaudacion, se suman
+   varios registros del mismo día) para no introducir un segundo patrón:
+
+   [{
+     NombreSucursal,
+     FechaRecaudacion,      // ISO datetime, mismo criterio que depositos.json
+     MontoFicticio           // número — NOMBRE DE CAMPO ASUMIDO, ajustar cuando
+                              // se defina la lista/columna real de origen
+   }, ...]
 ========================================================= */
 
 /* =========================================================
@@ -413,6 +455,9 @@ const CONFIG = {
    - Si hay más de un registro para la misma sucursal+fecha (varias
      bolsas/transportes), se SUMAN los montos y se listan los
      números de depósito/bolsa de todos los registros.
+   - El mismo criterio de match (sucursal + FechaRecaudacion, sumando si hay
+     varios registros) se reutiliza para depósitos ficticios — ver
+     buildDepositosFicticiosMap() más abajo.
 ========================================================= */
 function normNombre(s){
   return (s || "").trim().toUpperCase().replace(/\s+/g, " ");
@@ -455,6 +500,39 @@ async function loadDepositos(){
   return { rows: DEMO_DEPOSITOS, isDemo: true };
 }
 
+/* Mismo mecanismo que loadDepositos(), pero para depositos_ficticios.json.
+   Diferencia clave: NO hay fallback a datos de ejemplo. Mientras el archivo
+   no exista en el repo (pipeline todavía no conectado), las 3 fuentes van a
+   fallar con 404 — eso es esperado, se loguea en consola nada más, y el
+   dashboard sigue funcionando con depósito ficticio = $0 en todos los días
+   (ver getState()). No hay badge de "datos de ejemplo" para esta columna
+   porque nunca se fabrica un monto: o viene de la lista real, o es $0. */
+async function loadDepositosFicticios(){
+  const fallos = [];
+  for(const url of CONFIG.depositosFicticiosSources){
+    try{
+      const res = await fetch(url, { cache: "no-store" });
+      if(!res.ok){
+        fallos.push(`${url} → HTTP ${res.status}`);
+        console.info("[depositos-ficticios] fuente no disponible (HTTP " + res.status + "):", url);
+        continue;
+      }
+      const data = await res.json();
+      if(!Array.isArray(data)){
+        fallos.push(`${url} → respuesta no es un array JSON`);
+        console.warn("[depositos-ficticios] respuesta inesperada (no es array) desde", url, data);
+        continue;
+      }
+      return { rows: data };
+    }catch(err){
+      fallos.push(`${url} → ${err.message}`);
+      console.info("[depositos-ficticios] error de red/parseo en", url, err);
+    }
+  }
+  console.info("[depositos-ficticios] todavía no hay fuente conectada (esperado hasta definir el pipeline real), se usa $0:\n" + fallos.join("\n"));
+  return { rows: [] };
+}
+
 function buildDepositosMap(rows){
   const map = {}; // key: `${normNombre(NombreSucursal)}|${fecha}` -> { monto, registros:[] }
   rows.forEach(r=>{
@@ -466,10 +544,26 @@ function buildDepositosMap(rows){
   return map;
 }
 
+/* Igual que buildDepositosMap(), pero leyendo MontoFicticio (ver "FORMA
+   ASUMIDA DE depositos_ficticios.json" arriba) en vez de MontoDepositado. */
+function buildDepositosFicticiosMap(rows){
+  const map = {}; // key: `${normNombre(NombreSucursal)}|${fecha}` -> { monto }
+  rows.forEach(r=>{
+    const key = normNombre(r.NombreSucursal) + "|" + soloFecha(r.FechaRecaudacion);
+    if(!map[key]) map[key] = { monto: 0 };
+    map[key].monto += Number(r.MontoFicticio) || 0;
+  });
+  return map;
+}
+
 /* =========================================================
    ESTADO
    - depositado ahora viene de la lista SharePoint (o su fallback demo),
      no se ingresa a mano.
+   - depositoFicticio complementa a depositado — ver bloque CONFIG de arriba.
+     Por defecto es 0 para todos los días; solo deja de ser 0 cuando
+     depositos_ficticios.json exista y tenga un registro para esa
+     sucursal+fecha.
    - comentario: se prellena con ComentarioRevision si el/los registros
      de la lista traen uno; sigue siendo editable en pantalla porque
      todavía no existe un canal de escritura de vuelta hacia SharePoint
@@ -482,8 +576,9 @@ function buildDepositosMap(rows){
    (initState): se calcula "on demand" por sucursal+fecha vía getState(),
    y se cachea para no recalcular en cada render.
 ========================================================= */
-const STATE = {}; // STATE[codigo][fecha] = { depositado: number|null, comentario: string, registros: [] } (lazy)
+const STATE = {}; // STATE[codigo][fecha] = { depositado: number|null, depositoFicticio: number, comentario: string, registros: [] } (lazy)
 let DEPOSITOS_MAP = {};
+let DEPOSITOS_FICTICIOS_MAP = {};
 
 /* Recaudado en efectivo para una sucursal+fecha, o null si esa fecha
    todavía no tiene ningún dato cargado desde REPORTE_XSTORE (distinto
@@ -500,8 +595,10 @@ function getState(store, fecha){
   if(!STATE[store.codigo][fecha]){
     const key = normNombre(store.nombre) + "|" + fecha;
     const match = DEPOSITOS_MAP[key];
+    const matchFicticio = DEPOSITOS_FICTICIOS_MAP[key];
     STATE[store.codigo][fecha] = {
       depositado: match ? match.monto : null,
+      depositoFicticio: matchFicticio ? matchFicticio.monto : 0,
       comentario: match ? match.registros.map(r=>r.ComentarioRevision).filter(Boolean).join(" / ") : "",
       registros: match ? match.registros : []
     };
@@ -670,7 +767,7 @@ function monthHasData(monthIndex){
    no hay nada que depositar ese día. Por eso esos días NO deben contar
    como "pendientes de depósito" ni mostrarse como "Sin registrar": eso
    se reserva para días que sí tuvieron recaudación pero todavía no
-   tienen un registro de depósito asociado.
+   tienen un registro de depósito asociado (bancario NI ficticio).
 
    CAMBIO (27-08-2026): storeStats ahora recibe la lista completa de
    fechas del mes (monthDates), no solo los días presentes en
@@ -678,9 +775,18 @@ function monthHasData(monthIndex){
    Se agrega un tercer estado, "sin datos" (diasSinDatos): días para
    los que todavía no llegó ningún dato de recaudación desde la fuente,
    distinto de "sin recaudación" (sí llegó el dato, y fue $0).
+
+   CAMBIO (27-08-2026, columna Depósito ficticio): la diferencia y el
+   estado Cuadra/Pendiente/Revisar de cada día ahora se calculan sobre
+   (Depositado bancario + Depósito ficticio) vs Recaudado — no solo sobre
+   Depositado. Un día cuenta como "con registro" (diasIngresados) si tiene
+   depósito bancario registrado O un depósito ficticio distinto de $0.
+   Mientras depositos_ficticios.json no esté conectado, depositoFicticio
+   es siempre 0 y este cambio es transparente: el comportamiento previo
+   (solo Depositado bancario) queda intacto.
 ========================================================= */
 function storeStats(store, monthDates){
-  let recaudado = 0, depositado = 0, diferenciaAcum = 0;
+  let recaudado = 0, depositado = 0, depositoFicticio = 0, diferenciaAcum = 0;
   let diasIngresados = 0, diasConDiferencia = 0, diasPendientes = 0, diasSinRecaudacion = 0, diasSinDatos = 0;
   monthDates.forEach(fecha=>{
     const recaudadoRaw = getDayData(store, fecha); // null = sin datos cargados este día
@@ -689,14 +795,17 @@ function storeStats(store, monthDates){
     recaudado += rec;
     const st = getState(store, fecha);
     const tieneRecaudacion = tieneDatos && recaudadoRaw !== 0;
-    if(st.depositado !== null){
+    const tieneRegistro = st.depositado !== null || st.depositoFicticio !== 0;
+    if(tieneRegistro){
       diasIngresados++;
-      depositado += st.depositado;
-      const diff = st.depositado - rec;
+      const combinado = (st.depositado !== null ? st.depositado : 0) + st.depositoFicticio;
+      depositado += (st.depositado !== null ? st.depositado : 0);
+      depositoFicticio += st.depositoFicticio;
+      const diff = combinado - rec;
       diferenciaAcum += diff;
       if(diff !== 0) diasConDiferencia++;
     } else if(tieneRecaudacion){
-      // Hubo recaudación ese día pero todavía no aparece el depósito en la lista.
+      // Hubo recaudación ese día pero todavía no aparece depósito (bancario ni ficticio) en la lista.
       diasPendientes++;
     } else if(tieneDatos){
       // Sin recaudación ese día (dato real $0): no aplica depósito, no es un pendiente real.
@@ -711,19 +820,20 @@ function storeStats(store, monthDates){
   else if(diasConDiferencia > 0) status = "alert";
   else if(diasPendientes > 0) status = "pending";
   else status = "ok";
-  return { recaudado, depositado, diferenciaAcum, diasIngresados, diasPendientes, diasSinRecaudacion, diasSinDatos, diasConDiferencia, status, totalDias: monthDates.length };
+  return { recaudado, depositado, depositoFicticio, diferenciaAcum, diasIngresados, diasPendientes, diasSinRecaudacion, diasSinDatos, diasConDiferencia, status, totalDias: monthDates.length };
 }
 
 function globalStats(monthDates){
-  let recaudado = 0, depositado = 0, diferenciaAcum = 0, storesConAlerta = 0;
+  let recaudado = 0, depositado = 0, depositoFicticio = 0, diferenciaAcum = 0, storesConAlerta = 0;
   STORES.forEach(s=>{
     const st = storeStats(s, monthDates);
     recaudado += st.recaudado;
     depositado += st.depositado;
+    depositoFicticio += st.depositoFicticio;
     diferenciaAcum += st.diferenciaAcum;
     if(st.status === "alert" || st.status === "pending") storesConAlerta++;
   });
-  return { recaudado, depositado, diferenciaAcum, storesConAlerta, totalStores: STORES.length };
+  return { recaudado, depositado, depositoFicticio, diferenciaAcum, storesConAlerta, totalStores: STORES.length };
 }
 
 /* =========================================================
@@ -767,15 +877,15 @@ function renderGeneral(monthDates){
       <div class="kpi-bar"></div>
     </div>
     <div class="card">
-      <div class="kpi-label">Total depositado (ingresado)</div>
-      <div class="kpi-value">${mesTieneDatos ? fmtCLP(g.depositado) : '—'}</div>
-      <div class="kpi-sub">Lista SharePoint DepositosSucursalesBCI · FechaRecaudacion + NombreSucursal</div>
+      <div class="kpi-label">Total depositado (bancario + ficticio)</div>
+      <div class="kpi-value">${mesTieneDatos ? fmtCLP(g.depositado + g.depositoFicticio) : '—'}</div>
+      <div class="kpi-sub">${mesTieneDatos ? `${fmtCLP(g.depositado)} bancario + ${fmtCLP(g.depositoFicticio)} ficticio` : 'Lista SharePoint DepositosSucursalesBCI · FechaRecaudacion + NombreSucursal'}</div>
       <div class="kpi-bar"></div>
     </div>
     <div class="card">
       <div class="kpi-label">Diferencia neta</div>
       <div class="kpi-value ${diffClass}">${mesTieneDatos ? fmtCLP(g.diferenciaAcum) : '—'}</div>
-      <div class="kpi-sub">Solo sobre días con depósito registrado</div>
+      <div class="kpi-sub">Solo sobre días con depósito registrado (bancario y/o ficticio)</div>
       <div class="kpi-bar ${diffClass || ''}"></div>
     </div>
     <div class="card">
@@ -813,6 +923,7 @@ function renderGeneral(monthDates){
       <div class="store-rows">
         <div class="store-row"><span class="lbl">Recaudado</span><span class="val">${fmtCLPAcct(sinDatos ? null : st.recaudado)}</span></div>
         <div class="store-row"><span class="lbl">Depositado</span><span class="val">${fmtCLPAcct(st.diasIngresados>0 ? st.depositado : null)}</span></div>
+        <div class="store-row"><span class="lbl">Depósito ficticio</span><span class="val">${fmtCLPAcct(st.diasIngresados>0 ? st.depositoFicticio : null)}</span></div>
         <div class="store-row"><span class="lbl">Diferencia</span><span class="val ${st.diferenciaAcum<0?'red':(st.diferenciaAcum>0?'amber':'')}">${fmtCLPAcct(st.diasIngresados>0 ? st.diferenciaAcum : null)}</span></div>
         <div class="store-row"><span class="lbl">Días pendientes de depósito</span><span class="val">${st.diasPendientes} / ${st.totalDias}</span></div>
       </div>
@@ -850,11 +961,12 @@ function renderDetail(codigo, monthDates){
     const tieneRecaudacion = tieneDatos && recaudadoRaw !== 0;
     const esHoy = fecha === TODAY_ISO;
 
-    let recaudadoCell, depositoCell, diffHtml, needsComment = false;
+    let recaudadoCell, depositoCell, depositoFicticioCell, diffHtml, needsComment = false;
 
     if(!tieneDatos){
       recaudadoCell = `<span class="acct acct-empty"><span class="acct-amount">—</span></span>`;
       depositoCell = `<div class="deposito-value empty" tabindex="0" data-tip="Aún no se cargó información de recaudación para este día — se completará automáticamente cuando la fuente lo incluya">Sin datos</div>`;
+      depositoFicticioCell = `<span class="acct acct-empty"><span class="acct-amount">—</span></span>`;
       diffHtml = `<span class="diff-tag diff-nodata" tabindex="0" data-tip="Día sin datos cargados todavía"><span class="dot"></span>Sin datos</span>`;
     } else {
       recaudadoCell = fmtCLPAcct(rec);
@@ -876,16 +988,23 @@ function renderDetail(codigo, monthDates){
         depositoCell = `<div class="deposito-value"${tipAttr}>${fmtCLPAcct(state.depositado, tooltipText ? INFO_DOT : "")}</div>`;
       }
 
-      if(state.depositado === null){
+      // Depósito ficticio: siempre un número (nunca "sin registrar"), por
+      // defecto $0 hasta que se conecte depositos_ficticios.json.
+      depositoFicticioCell = `<div class="deposito-value${state.depositoFicticio===0?' zero':''}" tabindex="0" data-tip="${state.depositoFicticio===0?'Sin depósito ficticio registrado para este día':'Complementa el depósito bancario para esta fecha'}">${fmtCLPAcct(state.depositoFicticio, INFO_DOT)}</div>`;
+
+      const tieneRegistro = state.depositado !== null || state.depositoFicticio !== 0;
+      const combinado = (state.depositado !== null ? state.depositado : 0) + state.depositoFicticio;
+
+      if(!tieneRegistro){
         diffHtml = tieneRecaudacion
           ? `<span class="diff-tag diff-pending"><span class="dot"></span>Pendiente</span>`
           : `<span class="diff-tag diff-ok" tabindex="0" data-tip="Sin recaudación este día — no aplica depósito"><span class="dot"></span>Cuadra${INFO_DOT}</span>`;
       } else {
-        const diff = state.depositado - rec;
+        const diff = combinado - rec;
         if(diff === 0) diffHtml = `<span class="diff-tag diff-ok"><span class="dot"></span>Cuadra</span>`;
         else diffHtml = `<span class="diff-tag diff-bad"><span class="dot"></span>${fmtCLP(diff)}</span>`;
       }
-      needsComment = state.depositado !== null && (state.depositado - rec) !== 0 && !state.comentario;
+      needsComment = tieneRegistro && (combinado - rec) !== 0 && !state.comentario;
     }
 
     rows += `
@@ -893,6 +1012,7 @@ function renderDetail(codigo, monthDates){
       <td class="day-cell">${info.day} ${MESES[fecha.split('-')[1]-1]}<span class="dow">${DOW_FULL[info.dow].slice(0,3)}</span>${esHoy?'<span class="hoy-chip">Hoy</span>':''}</td>
       <td class="num">${recaudadoCell}</td>
       <td class="deposito-cell">${depositoCell}</td>
+      <td class="deposito-cell">${depositoFicticioCell}</td>
       <td class="diff-cell">${diffHtml}</td>
       <td>
         <input type="text" class="input-comment ${needsComment?'needs-comment':''}" placeholder="${!tieneDatos?'Sin datos disponibles aún':(needsComment?'Justificar diferencia…':'Comentario (opcional)')}" value="${state.comentario}" data-fecha="${fecha}" data-codigo="${codigo}"${!tieneDatos?' disabled':''}>
@@ -926,8 +1046,8 @@ function renderDetail(codigo, monthDates){
       </div>
       <div class="card">
         <div class="kpi-label">Depositado registrado</div>
-        <div class="kpi-value">${st.diasIngresados>0?fmtCLP(st.depositado):'—'}</div>
-        <div class="kpi-sub">${st.diasIngresados} / ${st.totalDias} días con registro en lista</div>
+        <div class="kpi-value">${st.diasIngresados>0?fmtCLP(st.depositado + st.depositoFicticio):'—'}</div>
+        <div class="kpi-sub">${st.diasIngresados>0 ? `${fmtCLP(st.depositado)} bancario + ${fmtCLP(st.depositoFicticio)} ficticio` : `${st.diasIngresados} / ${st.totalDias} días con registro en lista`}</div>
         <div class="kpi-bar"></div>
       </div>
       <div class="card">
@@ -950,6 +1070,7 @@ function renderDetail(codigo, monthDates){
             <th>Día</th>
             <th>Recaudado en efectivo</th>
             <th>Depositado</th>
+            <th class="th-tip" tabindex="0" data-tip="Complementa el depósito bancario — por defecto $0 hasta que se conecte la lista de origen (ver infraestructura_automatizacion.md)">Depósito ficticio${INFO_DOT}</th>
             <th>Diferencia</th>
             <th>Comentario / justificación</th>
           </tr>
@@ -962,6 +1083,7 @@ function renderDetail(codigo, monthDates){
             <td>Total</td>
             <td class="num">${fmtCLPAcct(st.recaudado)}</td>
             <td class="num">${fmtCLPAcct(st.diasIngresados>0 ? st.depositado : null)}</td>
+            <td class="num">${fmtCLPAcct(st.diasIngresados>0 ? st.depositoFicticio : null)}</td>
             <td class="num">${fmtCLPAcct(st.diasIngresados>0 ? st.diferenciaAcum : null)}</td>
             <td></td>
           </tr>
@@ -975,7 +1097,7 @@ function renderDetail(codigo, monthDates){
       <div class="legend-item"><span class="legend-dot" style="background:var(--amber-600)"></span>Depósito aún no registrado en la lista (hubo recaudación)</div>
       <div class="legend-item"><span class="legend-dot" style="background:var(--ink-400)"></span>Sin datos cargados todavía para ese día</div>
     </div>
-    <p class="empty-hint">Recaudado en efectivo = suma de MONTO en REPORTE_XSTORE donde MEDIO DE PAGO = EFE, por día. "Depositado" = suma de MontoDepositado en la lista SharePoint DepositosSucursalesBCI para esa sucursal y FechaRecaudacion (se suman varios registros si hubo más de una bolsa/transporte). La matriz muestra siempre todos los días del mes elegido: los días marcados "Sin datos" todavía no tienen ninguna información cargada desde la fuente (se irán completando automáticamente), y son distintos de los días "sin recaudación" (sí hay dato, y fue $0). Los montos con línea punteada tienen detalle al pasar el mouse: en un depósito registrado, el/los números de depósito y bolsa de transporte; en un día sin recaudación en efectivo, la aclaración de que no aplica depósito (se muestra $0 y cuadra). Los días con recaudación pero sin depósito en la lista se muestran como "Sin registrar" y sí cuentan como pendientes. Hoy se muestra con datos de ejemplo porque el pipeline real (Graph API → JSON) todavía no está conectado — ver infraestructura_automatizacion.md.</p>
+    <p class="empty-hint">Recaudado en efectivo = suma de MONTO en REPORTE_XSTORE donde MEDIO DE PAGO = EFE, por día. "Depositado" = suma de MontoDepositado en la lista SharePoint DepositosSucursalesBCI para esa sucursal y FechaRecaudacion (se suman varios registros si hubo más de una bolsa/transporte). "Depósito ficticio" complementa al depositado bancario cuando parte de la recaudación se cuadra por otra vía — por defecto es $0 y se completará automáticamente cuando se conecte su lista de origen (ver infraestructura_automatizacion.md). La Diferencia de cada día se calcula como (Depositado + Depósito ficticio) − Recaudado. La matriz muestra siempre todos los días del mes elegido: los días marcados "Sin datos" todavía no tienen ninguna información cargada desde la fuente (se irán completando automáticamente), y son distintos de los días "sin recaudación" (sí hay dato, y fue $0). Los montos con línea punteada tienen detalle al pasar el mouse: en un depósito registrado, el/los números de depósito y bolsa de transporte; en un día sin recaudación en efectivo, la aclaración de que no aplica depósito (se muestra $0 y cuadra). Los días con recaudación pero sin depósito en la lista se muestran como "Sin registrar" y sí cuentan como pendientes. Hoy se muestra con datos de ejemplo porque el pipeline real (Graph API → JSON) todavía no está conectado — ver infraestructura_automatizacion.md.</p>
   </div>
   `;
   document.getElementById("app").innerHTML = html;
@@ -1006,14 +1128,19 @@ function render(){
 }
 
 /* =========================================================
-   INIT — carga depósitos (real o demo), arma el mapa de match y
-   recién ahí hace el primer render. STATE se completa "on demand"
-   por sucursal+fecha (ver getState) a medida que se renderiza cada
-   mes, así que no hace falta inicializarlo entero acá.
+   INIT — carga depósitos (real o demo) y depósitos ficticios (real o $0
+   por defecto), arma los mapas de match y recién ahí hace el primer
+   render. STATE se completa "on demand" por sucursal+fecha (ver
+   getState) a medida que se renderiza cada mes, así que no hace falta
+   inicializarlo entero acá.
 ========================================================= */
 (async function init(){
-  const { rows, isDemo } = await loadDepositos();
+  const [{ rows, isDemo }, { rows: rowsFicticios }] = await Promise.all([
+    loadDepositos(),
+    loadDepositosFicticios()
+  ]);
   DEPOSITOS_MAP = buildDepositosMap(rows);
+  DEPOSITOS_FICTICIOS_MAP = buildDepositosFicticiosMap(rowsFicticios);
 
   if(isDemo){
     document.getElementById("demoBadge").innerHTML =
