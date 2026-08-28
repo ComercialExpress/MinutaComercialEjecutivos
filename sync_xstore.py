@@ -135,56 +135,40 @@ def workbook_path(nombre_archivo):
     return f"{GRAPH_BASE}/sites/{SITE_ID}/drive/root:/{ruta}:/workbook"
 
 
-def fetch_table_rows(token, nombre_archivo):
-    """Trae todas las filas de la Tabla TABLE_NAME del libro `nombre_archivo`.
+def fetch_table_range(token, nombre_archivo):
+    """Trae la Tabla TABLE_NAME COMPLETA (encabezado + todas las filas) del
+    libro `nombre_archivo` en una sola llamada, vía el endpoint de rango de
+    la Tabla (`/tables/{tabla}/range`) en vez de paginar `/rows`.
 
-    BUG CORREGIDO (28-08-2026, sesión 11): la versión anterior paginaba
-    confiando en que Graph devolviera "@odata.nextLink" en la respuesta del
-    endpoint /workbook/tables/{tabla}/rows — ese endpoint NO lo entrega de
-    forma confiable, a diferencia de otras colecciones de Graph. Con
-    $top=200 y sin nextLink, el script se quedaba solo con la PRIMERA
-    página (200 filas) y nunca pedía el resto. Confirmado con datos reales:
-    las filas quedan en el archivo en el mismo orden en que Guillermo las
-    pega cada día (el primer día pegado queda primero), y un solo día
-    (01-08-2026) ya tenía 272 filas — más que el $top=200 — por eso
-    recaudacion.json terminaba con un único registro por mes (el del
-    primer día), en vez de uno por cada día real.
+    BUG CORREGIDO (28-08-2026, sesión 11): la primera versión paginaba
+    `/rows` confiando en que Graph devolviera "@odata.nextLink" — ese
+    endpoint no lo entrega de forma confiable, así que la versión con
+    $top=200 se quedaba solo con la primera página.
 
-    Fix: paginar con $skip explícito, parando cuando una página vuelve con
-    MENOS filas de las pedidas (señal estándar de "última página") — no
-    depende de que el servidor arme nextLink."""
+    BUG CORREGIDO (28-08-2026, sesión 13): la siguiente versión paginaba
+    `/rows` con `$top`/`$skip` explícitos en vez de depender de nextLink —
+    funcionó para julio (14.021 filas), pero agosto empezó a devolver
+    504 "MaxRequestDurationExceeded" justo en $skip=2000. El endpoint
+    `/rows` de Graph no pagina de forma barata: cada página con `$skip`
+    grande obliga al servicio a reprocesar el rango completo desde el
+    principio, así que el costo por página crece con el propio `$skip` en
+    vez de mantenerse constante — con miles de filas, las páginas del final
+    se vuelven cada vez más lentas hasta que superan el timeout del gateway.
+
+    Fix: leer la Tabla entera de una sola vez con `/tables/{tabla}/range`,
+    que devuelve el rango completo (encabezado en la fila 0 + todas las
+    filas de datos) en un único array 2D `values` — sin paginación, sin el
+    problema de escalamiento de `$skip`."""
     headers = {"Authorization": f"Bearer {token}"}
-    base_url = f"{workbook_path(nombre_archivo)}/tables/{TABLE_NAME}/rows"
-    top = 200
-    skip = 0
-    filas = []
-    while True:
-        url = f"{base_url}?$top={top}&$skip={skip}"
-        resp = requests.get(url, headers=headers, timeout=60)
-        if resp.status_code == 404:
-            print(f"'{nombre_archivo}' o la tabla '{TABLE_NAME}' no existe todavía — se omite.", file=sys.stderr)
-            return []
-        if not resp.ok:
-            print(f"Graph respondió {resp.status_code} leyendo {nombre_archivo}: {resp.text[:500]}", file=sys.stderr)
-            resp.raise_for_status()
-        payload = resp.json()
-        pagina = payload.get("value", [])
-        filas.extend(pagina)
-        if len(pagina) < top:
-            break  # última página: vino incompleta, no hace falta pedir más
-        skip += top
-    return filas
-
-
-def fetch_headers(token, nombre_archivo):
-    """Encabezados reales de la tabla (fila 1), para mapear cada fila
-    (que Graph devuelve como lista de valores posicionales, no como dict)
-    a las columnas por nombre en vez de por índice fijo."""
-    headers = {"Authorization": f"Bearer {token}"}
-    url = f"{workbook_path(nombre_archivo)}/tables/{TABLE_NAME}/headerRowRange"
-    resp = requests.get(url, headers=headers, timeout=30)
-    resp.raise_for_status()
-    return resp.json()["values"][0]
+    url = f"{workbook_path(nombre_archivo)}/tables/{TABLE_NAME}/range"
+    resp = requests.get(url, headers=headers, timeout=180)
+    if resp.status_code == 404:
+        print(f"'{nombre_archivo}' o la tabla '{TABLE_NAME}' no existe todavía — se omite.", file=sys.stderr)
+        return None
+    if not resp.ok:
+        print(f"Graph respondió {resp.status_code} leyendo {nombre_archivo}: {resp.text[:500]}", file=sys.stderr)
+        resp.raise_for_status()
+    return resp.json().get("values", [])
 
 
 def solo_fecha(valor_fecha):
@@ -209,7 +193,12 @@ def solo_fecha(valor_fecha):
 
 
 def aggregate_mes(token, nombre_archivo, muestra_cruda):
-    encabezados = fetch_headers(token, nombre_archivo)
+    valores_tabla = fetch_table_range(token, nombre_archivo)
+    if not valores_tabla:
+        return {}  # archivo/tabla inexistente (404) o tabla vacía
+
+    encabezados = valores_tabla[0]
+    filas = valores_tabla[1:]  # el rango incluye la fila de encabezado en el índice 0
     try:
         idx_agencia = encabezados.index(COL_AGENCIA)
         idx_fecha = encabezados.index(COL_FECHA)
@@ -219,16 +208,14 @@ def aggregate_mes(token, nombre_archivo, muestra_cruda):
         print(f"⚠️  Encabezados de '{nombre_archivo}' no coinciden con lo esperado: {encabezados}", file=sys.stderr)
         return {}
 
-    filas = fetch_table_rows(token, nombre_archivo)
     print(f"{nombre_archivo}: {len(filas)} filas leídas", file=sys.stderr)
-    muestra_cruda.extend([f["values"][0] for f in filas[:5]])
+    muestra_cruda.extend(filas[:5])
 
     acumulado = {}
     agencias_vistas = set()
     fechas_vistas = set()  # todas las fechas que cubre el archivo, sin importar agencia/medio de pago
 
-    for fila in filas:
-        valores = fila["values"][0]
+    for valores in filas:
         agencia_raw = valores[idx_agencia]
         fecha = solo_fecha(valores[idx_fecha])
         if agencia_raw is None or fecha is None:
