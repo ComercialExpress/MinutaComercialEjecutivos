@@ -136,14 +136,30 @@ def workbook_path(nombre_archivo):
 
 
 def fetch_table_rows(token, nombre_archivo):
-    """Trae todas las filas de la Tabla TABLE_NAME del libro `nombre_archivo`,
-    paginando con @odata.nextLink. Si el archivo no existe todavía (mes
-    futuro, o el nombre no calza), devuelve [] en vez de fallar — el mes
-    en curso puede no tener libro creado los primeros días."""
+    """Trae todas las filas de la Tabla TABLE_NAME del libro `nombre_archivo`.
+
+    BUG CORREGIDO (28-08-2026, sesión 11): la versión anterior paginaba
+    confiando en que Graph devolviera "@odata.nextLink" en la respuesta del
+    endpoint /workbook/tables/{tabla}/rows — ese endpoint NO lo entrega de
+    forma confiable, a diferencia de otras colecciones de Graph. Con
+    $top=200 y sin nextLink, el script se quedaba solo con la PRIMERA
+    página (200 filas) y nunca pedía el resto. Confirmado con datos reales:
+    las filas quedan en el archivo en el mismo orden en que Guillermo las
+    pega cada día (el primer día pegado queda primero), y un solo día
+    (01-08-2026) ya tenía 272 filas — más que el $top=200 — por eso
+    recaudacion.json terminaba con un único registro por mes (el del
+    primer día), en vez de uno por cada día real.
+
+    Fix: paginar con $skip explícito, parando cuando una página vuelve con
+    MENOS filas de las pedidas (señal estándar de "última página") — no
+    depende de que el servidor arme nextLink."""
     headers = {"Authorization": f"Bearer {token}"}
-    url = f"{workbook_path(nombre_archivo)}/tables/{TABLE_NAME}/rows?$top=200"
+    base_url = f"{workbook_path(nombre_archivo)}/tables/{TABLE_NAME}/rows"
+    top = 200
+    skip = 0
     filas = []
-    while url:
+    while True:
+        url = f"{base_url}?$top={top}&$skip={skip}"
         resp = requests.get(url, headers=headers, timeout=60)
         if resp.status_code == 404:
             print(f"'{nombre_archivo}' o la tabla '{TABLE_NAME}' no existe todavía — se omite.", file=sys.stderr)
@@ -152,8 +168,11 @@ def fetch_table_rows(token, nombre_archivo):
             print(f"Graph respondió {resp.status_code} leyendo {nombre_archivo}: {resp.text[:500]}", file=sys.stderr)
             resp.raise_for_status()
         payload = resp.json()
-        filas.extend(payload.get("value", []))
-        url = payload.get("@odata.nextLink")
+        pagina = payload.get("value", [])
+        filas.extend(pagina)
+        if len(pagina) < top:
+            break  # última página: vino incompleta, no hace falta pedir más
+        skip += top
     return filas
 
 
