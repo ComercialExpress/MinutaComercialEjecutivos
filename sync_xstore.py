@@ -224,18 +224,38 @@ def aggregate_mes(token, nombre_archivo, muestra_cruda):
     muestra_cruda.extend([f["values"][0] for f in filas[:5]])
 
     acumulado = {}
+    agencias_vistas = set()
+    fechas_vistas = set()  # todas las fechas que cubre el archivo, sin importar agencia/medio de pago
+
     for fila in filas:
         valores = fila["values"][0]
-        if (valores[idx_medio] or "").strip().upper() != MEDIO_PAGO_EFECTIVO:
-            continue
-        agencia = valores[idx_agencia]
+        agencia_raw = valores[idx_agencia]
         fecha = solo_fecha(valores[idx_fecha])
-        if agencia is None or fecha is None:
+        if agencia_raw is None or fecha is None:
             continue
-        agencia = int(agencia)
+        agencia = int(agencia_raw)
+        agencias_vistas.add(agencia)
+        fechas_vistas.add(fecha)
+        acumulado.setdefault(agencia, {})
+        if (valores[idx_medio] or "").strip().upper() != MEDIO_PAGO_EFECTIVO:
+            continue  # cuenta para "el archivo cubre este día", pero no suma al monto EFE
         monto = float(valores[idx_monto] or 0)
-        acumulado.setdefault(agencia, {}).setdefault(fecha, 0)
+        acumulado[agencia].setdefault(fecha, 0)
         acumulado[agencia][fecha] += monto
+
+    # Recaudación real $0 en efectivo (28-08-2026, sesión 12): si el archivo
+    # cubre una fecha (hubo transacciones de CUALQUIER medio de pago, de
+    # CUALQUIER sucursal) pero esta agencia no tuvo ninguna transacción en
+    # EFE ese día, se completa igual con $0 explícito — en vez de dejar la
+    # fecha ausente. cuadratura_caja.html distingue "recaudado === 0" (dato
+    # real, no aplica depósito, se muestra "Cuadra") de "sin dato" (todavía
+    # no llegó información, se muestra "Sin datos") — sin este completado,
+    # cualquier día sin efectivo quedaba indistinguible de un día que el
+    # pipeline simplemente no había cargado todavía.
+    for agencia in agencias_vistas:
+        for fecha in fechas_vistas:
+            acumulado[agencia].setdefault(fecha, 0)
+
     return acumulado
 
 
