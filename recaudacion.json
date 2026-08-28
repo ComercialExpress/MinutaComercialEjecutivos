@@ -4,11 +4,195 @@
     "dias": [
       {
         "fecha": "2026-07-01",
-        "recaudado": 523400
+        "recaudado": 996220
+      },
+      {
+        "fecha": "2026-07-02",
+        "recaudado": 1005070
+      },
+      {
+        "fecha": "2026-07-03",
+        "recaudado": 1078860
+      },
+      {
+        "fecha": "2026-07-04",
+        "recaudado": 77040
+      },
+      {
+        "fecha": "2026-07-06",
+        "recaudado": 1276260
+      },
+      {
+        "fecha": "2026-07-07",
+        "recaudado": 2284320
+      },
+      {
+        "fecha": "2026-07-08",
+        "recaudado": 693440
+      },
+      {
+        "fecha": "2026-07-09",
+        "recaudado": 1384943
+      },
+      {
+        "fecha": "2026-07-10",
+        "recaudado": 1155426
+      },
+      {
+        "fecha": "2026-07-11",
+        "recaudado": 611960
+      },
+      {
+        "fecha": "2026-07-13",
+        "recaudado": 3591376
+      },
+      {
+        "fecha": "2026-07-14",
+        "recaudado": 1853505
+      },
+      {
+        "fecha": "2026-07-15",
+        "recaudado": 1285070
+      },
+      {
+        "fecha": "2026-07-17",
+        "recaudado": 1529320
+      },
+      {
+        "fecha": "2026-07-18",
+        "recaudado": 316940
+      },
+      {
+        "fecha": "2026-07-20",
+        "recaudado": 2013350
+      },
+      {
+        "fecha": "2026-07-21",
+        "recaudado": 2302060
+      },
+      {
+        "fecha": "2026-07-22",
+        "recaudado": 1611950
+      },
+      {
+        "fecha": "2026-07-23",
+        "recaudado": 1930562
+      },
+      {
+        "fecha": "2026-07-24",
+        "recaudado": 2215010
+      },
+      {
+        "fecha": "2026-07-25",
+        "recaudado": 49910
+      },
+      {
+        "fecha": "2026-07-27",
+        "recaudado": 1110860
+      },
+      {
+        "fecha": "2026-07-28",
+        "recaudado": 460730
+      },
+      {
+        "fecha": "2026-07-29",
+        "recaudado": 1063468
+      },
+      {
+        "fecha": "2026-07-30",
+        "recaudado": 1264590
+      },
+      {
+        "fecha": "2026-07-31",
+        "recaudado": 1324150
       },
       {
         "fecha": "2026-08-01",
         "recaudado": 475940
+      },
+      {
+        "fecha": "2026-08-03",
+        "recaudado": 1684270
+      },
+      {
+        "fecha": "2026-08-04",
+        "recaudado": 1140840
+      },
+      {
+        "fecha": "2026-08-05",
+        "recaudado": 854440
+      },
+      {
+        "fecha": "2026-08-06",
+        "recaudado": 2836052
+      },
+      {
+        "fecha": "2026-08-07",
+        "recaudado": 937530
+      },
+      {
+        "fecha": "2026-08-08",
+        "recaudado": 36970
+      },
+      {
+        "fecha": "2026-08-10",
+        "recaudado": 2191840
+      },
+      {
+        "fecha": "2026-08-11",
+        "recaudado": 1300010
+      },
+      {
+        "fecha": "2026-08-12",
+        "recaudado": 1163016
+      },
+      {
+        "fecha": "2026-08-13",
+        "recaudado": 1735236
+      },
+      {
+        "fecha": "2026-08-14",
+        "recaudado": 1752310
+      },
+      {
+        "fecha": "2026-08-17",
+        "recaudado": 1810950
+      },
+      {
+        "fecha": "2026-08-18",
+        "recaudado": 2666910
+      },
+      {
+        "fecha": "2026-08-19",
+        "recaudado": 1583490
+      },
+      {
+        "fecha": "2026-08-20",
+        "recaudado": 1692471
+      },
+      {
+        "fecha": "2026-08-21",
+        "recaudado": 954540
+      },
+      {
+        "fecha": "2026-08-22",
+        "recaudado": 466940
+      },
+      {
+        "fecha": "2026-08-24",
+        "recaudado": 850450
+      },
+      {
+        "fecha": "2026-08-25",
+        "recaudado": 1786460
+      },
+      {
+        "fecha": "2026-08-26",
+        "recaudado": 1421010
+      },
+      {
+        "fecha": "2026-08-27",
+        "recaudado": 2169836
       }
     ]
   },
@@ -17,11 +201,195 @@
     "dias": [
       {
         "fecha": "2026-07-01",
-        "recaudado": 853960
+        "recaudado": 2040760
+      },
+      {
+        "fecha": "2026-07-02",
+        "recaudado": 855430
+      },
+      {
+        "fecha": "2026-07-03",
+        "recaudado": 822390
+      },
+      {
+        "fecha": "2026-07-04",
+        "recaudado": 625340
+      },
+      {
+        "fecha": "2026-07-06",
+        "recaudado": 1835470
+      },
+      {
+        "fecha": "2026-07-07",
+        "recaudado": 1086810
+      },
+      {
+        "fecha": "2026-07-08",
+        "recaudado": 489010
+      },
+      {
+        "fecha": "2026-07-09",
+        "recaudado": 1140880
+      },
+      {
+        "fecha": "2026-07-10",
+        "recaudado": 987690
+      },
+      {
+        "fecha": "2026-07-11",
+        "recaudado": 1088680
+      },
+      {
+        "fecha": "2026-07-13",
+        "recaudado": 2280760
+      },
+      {
+        "fecha": "2026-07-14",
+        "recaudado": 1753230
+      },
+      {
+        "fecha": "2026-07-15",
+        "recaudado": 1528940
+      },
+      {
+        "fecha": "2026-07-17",
+        "recaudado": 2094190
+      },
+      {
+        "fecha": "2026-07-18",
+        "recaudado": 1181920
+      },
+      {
+        "fecha": "2026-07-20",
+        "recaudado": 2878770
+      },
+      {
+        "fecha": "2026-07-21",
+        "recaudado": 1577160
+      },
+      {
+        "fecha": "2026-07-22",
+        "recaudado": 990160
+      },
+      {
+        "fecha": "2026-07-23",
+        "recaudado": 2321070
+      },
+      {
+        "fecha": "2026-07-24",
+        "recaudado": 2856900
+      },
+      {
+        "fecha": "2026-07-25",
+        "recaudado": 270880
+      },
+      {
+        "fecha": "2026-07-27",
+        "recaudado": 1216200
+      },
+      {
+        "fecha": "2026-07-28",
+        "recaudado": 1222960
+      },
+      {
+        "fecha": "2026-07-29",
+        "recaudado": 1474580
+      },
+      {
+        "fecha": "2026-07-30",
+        "recaudado": 2114360
+      },
+      {
+        "fecha": "2026-07-31",
+        "recaudado": 1656360
       },
       {
         "fecha": "2026-08-01",
         "recaudado": 984940
+      },
+      {
+        "fecha": "2026-08-03",
+        "recaudado": 2368940
+      },
+      {
+        "fecha": "2026-08-04",
+        "recaudado": 2159540
+      },
+      {
+        "fecha": "2026-08-05",
+        "recaudado": 887870
+      },
+      {
+        "fecha": "2026-08-06",
+        "recaudado": 3130845
+      },
+      {
+        "fecha": "2026-08-07",
+        "recaudado": 1572570
+      },
+      {
+        "fecha": "2026-08-08",
+        "recaudado": 816960
+      },
+      {
+        "fecha": "2026-08-10",
+        "recaudado": 772940
+      },
+      {
+        "fecha": "2026-08-11",
+        "recaudado": 1867760
+      },
+      {
+        "fecha": "2026-08-12",
+        "recaudado": 1262370
+      },
+      {
+        "fecha": "2026-08-13",
+        "recaudado": 1187220
+      },
+      {
+        "fecha": "2026-08-14",
+        "recaudado": 2063610
+      },
+      {
+        "fecha": "2026-08-17",
+        "recaudado": 1654580
+      },
+      {
+        "fecha": "2026-08-18",
+        "recaudado": 2495730
+      },
+      {
+        "fecha": "2026-08-19",
+        "recaudado": 1741640
+      },
+      {
+        "fecha": "2026-08-20",
+        "recaudado": 2197460
+      },
+      {
+        "fecha": "2026-08-21",
+        "recaudado": 1851850
+      },
+      {
+        "fecha": "2026-08-22",
+        "recaudado": 724760
+      },
+      {
+        "fecha": "2026-08-24",
+        "recaudado": 1895230
+      },
+      {
+        "fecha": "2026-08-25",
+        "recaudado": 1276570
+      },
+      {
+        "fecha": "2026-08-26",
+        "recaudado": 2728900
+      },
+      {
+        "fecha": "2026-08-27",
+        "recaudado": 1713430
       }
     ]
   },
@@ -30,11 +398,199 @@
     "dias": [
       {
         "fecha": "2026-07-01",
-        "recaudado": 411390
+        "recaudado": 2173450
+      },
+      {
+        "fecha": "2026-07-02",
+        "recaudado": 2438330
+      },
+      {
+        "fecha": "2026-07-03",
+        "recaudado": 2076120
+      },
+      {
+        "fecha": "2026-07-04",
+        "recaudado": 405190
+      },
+      {
+        "fecha": "2026-07-06",
+        "recaudado": 1785100
+      },
+      {
+        "fecha": "2026-07-07",
+        "recaudado": 1543990
+      },
+      {
+        "fecha": "2026-07-08",
+        "recaudado": 1618610
+      },
+      {
+        "fecha": "2026-07-09",
+        "recaudado": 1876650
+      },
+      {
+        "fecha": "2026-07-10",
+        "recaudado": 1976740
+      },
+      {
+        "fecha": "2026-07-11",
+        "recaudado": 763860
+      },
+      {
+        "fecha": "2026-07-13",
+        "recaudado": 2349840
+      },
+      {
+        "fecha": "2026-07-14",
+        "recaudado": 1982800
+      },
+      {
+        "fecha": "2026-07-15",
+        "recaudado": 1853800
+      },
+      {
+        "fecha": "2026-07-17",
+        "recaudado": 1113318
+      },
+      {
+        "fecha": "2026-07-18",
+        "recaudado": 760830
+      },
+      {
+        "fecha": "2026-07-20",
+        "recaudado": 1830882
+      },
+      {
+        "fecha": "2026-07-21",
+        "recaudado": 3045190
+      },
+      {
+        "fecha": "2026-07-22",
+        "recaudado": 1967050
+      },
+      {
+        "fecha": "2026-07-23",
+        "recaudado": 1338450
+      },
+      {
+        "fecha": "2026-07-24",
+        "recaudado": 2087220
+      },
+      {
+        "fecha": "2026-07-25",
+        "recaudado": 1567870
+      },
+      {
+        "fecha": "2026-07-27",
+        "recaudado": 3712740
+      },
+      {
+        "fecha": "2026-07-28",
+        "recaudado": 1294079
+      },
+      {
+        "fecha": "2026-07-29",
+        "recaudado": 2912910
+      },
+      {
+        "fecha": "2026-07-30",
+        "recaudado": 1183370
+      },
+      {
+        "fecha": "2026-07-31",
+        "recaudado": 1589760
       },
       {
         "fecha": "2026-08-01",
-        "recaudado": 536940
+        "recaudado": 547930
+      },
+      {
+        "fecha": "2026-08-03",
+        "recaudado": 1702500
+      },
+      {
+        "fecha": "2026-08-04",
+        "recaudado": 3968840
+      },
+      {
+        "fecha": "2026-08-05",
+        "recaudado": 923430
+      },
+      {
+        "fecha": "2026-08-06",
+        "recaudado": 1928650
+      },
+      {
+        "fecha": "2026-08-07",
+        "recaudado": 1908510
+      },
+      {
+        "fecha": "2026-08-08",
+        "recaudado": 506990
+      },
+      {
+        "fecha": "2026-08-10",
+        "recaudado": 2922278
+      },
+      {
+        "fecha": "2026-08-11",
+        "recaudado": 1448750
+      },
+      {
+        "fecha": "2026-08-12",
+        "recaudado": 1795792
+      },
+      {
+        "fecha": "2026-08-13",
+        "recaudado": 1291983
+      },
+      {
+        "fecha": "2026-08-14",
+        "recaudado": 1467850
+      },
+      {
+        "fecha": "2026-08-15",
+        "recaudado": 155960
+      },
+      {
+        "fecha": "2026-08-17",
+        "recaudado": 2111760
+      },
+      {
+        "fecha": "2026-08-18",
+        "recaudado": 1761570
+      },
+      {
+        "fecha": "2026-08-19",
+        "recaudado": 1270540
+      },
+      {
+        "fecha": "2026-08-20",
+        "recaudado": 316870
+      },
+      {
+        "fecha": "2026-08-21",
+        "recaudado": 2781550
+      },
+      {
+        "fecha": "2026-08-22",
+        "recaudado": 1950040
+      },
+      {
+        "fecha": "2026-08-24",
+        "recaudado": 2085930
+      },
+      {
+        "fecha": "2026-08-25",
+        "recaudado": 2094650
+      },
+      {
+        "fecha": "2026-08-26",
+        "recaudado": 1270000
+      },
+      {
+        "fecha": "2026-08-27",
+        "recaudado": 2698901
       }
     ]
   },
@@ -42,8 +598,317 @@
     "codigo": 4172,
     "dias": [
       {
+        "fecha": "2026-07-01",
+        "recaudado": 638970
+      },
+      {
+        "fecha": "2026-07-02",
+        "recaudado": 546990
+      },
+      {
+        "fecha": "2026-07-03",
+        "recaudado": 649990
+      },
+      {
+        "fecha": "2026-07-04",
+        "recaudado": 15960
+      },
+      {
+        "fecha": "2026-07-06",
+        "recaudado": 1990
+      },
+      {
+        "fecha": "2026-07-07",
+        "recaudado": 162970
+      },
+      {
+        "fecha": "2026-07-08",
+        "recaudado": 269990
+      },
+      {
+        "fecha": "2026-07-09",
+        "recaudado": 121970
+      },
+      {
+        "fecha": "2026-07-10",
+        "recaudado": 122960
+      },
+      {
+        "fecha": "2026-07-11",
+        "recaudado": 1109940
+      },
+      {
+        "fecha": "2026-07-13",
+        "recaudado": 120980
+      },
+      {
+        "fecha": "2026-07-14",
+        "recaudado": 108373
+      },
+      {
+        "fecha": "2026-07-15",
+        "recaudado": 339980
+      },
+      {
+        "fecha": "2026-07-16",
+        "recaudado": 1121960
+      },
+      {
+        "fecha": "2026-07-17",
+        "recaudado": 500000
+      },
+      {
+        "fecha": "2026-07-18",
+        "recaudado": 327457
+      },
+      {
+        "fecha": "2026-07-20",
+        "recaudado": 63950
+      },
+      {
+        "fecha": "2026-07-21",
+        "recaudado": 31970
+      },
+      {
+        "fecha": "2026-07-22",
+        "recaudado": 477970
+      },
+      {
+        "fecha": "2026-07-23",
+        "recaudado": 38970
+      },
+      {
+        "fecha": "2026-07-24",
+        "recaudado": 299990
+      },
+      {
+        "fecha": "2026-07-25",
+        "recaudado": 858970
+      },
+      {
+        "fecha": "2026-07-27",
+        "recaudado": 193950
+      },
+      {
+        "fecha": "2026-07-28",
+        "recaudado": 629960
+      },
+      {
+        "fecha": "2026-07-29",
+        "recaudado": 771950
+      },
+      {
+        "fecha": "2026-07-30",
+        "recaudado": 378980
+      },
+      {
+        "fecha": "2026-07-31",
+        "recaudado": 623970
+      },
+      {
         "fecha": "2026-08-01",
+        "recaudado": 167980
+      },
+      {
+        "fecha": "2026-08-03",
+        "recaudado": 331960
+      },
+      {
+        "fecha": "2026-08-05",
+        "recaudado": 175989
+      },
+      {
+        "fecha": "2026-08-06",
+        "recaudado": 1933840
+      },
+      {
+        "fecha": "2026-08-07",
+        "recaudado": 131970
+      },
+      {
+        "fecha": "2026-08-08",
+        "recaudado": 1155940
+      },
+      {
+        "fecha": "2026-08-10",
+        "recaudado": 45960
+      },
+      {
+        "fecha": "2026-08-11",
+        "recaudado": 772970
+      },
+      {
+        "fecha": "2026-08-12",
+        "recaudado": 189545
+      },
+      {
+        "fecha": "2026-08-13",
+        "recaudado": 128940
+      },
+      {
+        "fecha": "2026-08-14",
+        "recaudado": 63980
+      },
+      {
+        "fecha": "2026-08-15",
+        "recaudado": 203980
+      },
+      {
+        "fecha": "2026-08-17",
+        "recaudado": 161950
+      },
+      {
+        "fecha": "2026-08-18",
+        "recaudado": 622960
+      },
+      {
+        "fecha": "2026-08-19",
+        "recaudado": 109981
+      },
+      {
+        "fecha": "2026-08-20",
+        "recaudado": 74940
+      },
+      {
+        "fecha": "2026-08-21",
+        "recaudado": 601990
+      },
+      {
+        "fecha": "2026-08-22",
+        "recaudado": 41980
+      },
+      {
+        "fecha": "2026-08-25",
+        "recaudado": 14990
+      },
+      {
+        "fecha": "2026-08-26",
+        "recaudado": 199990
+      },
+      {
+        "fecha": "2026-08-27",
+        "recaudado": 32980
+      }
+    ]
+  },
+  {
+    "codigo": 4579,
+    "dias": [
+      {
+        "fecha": "2026-07-01",
+        "recaudado": 10990
+      },
+      {
+        "fecha": "2026-07-02",
+        "recaudado": 183210
+      },
+      {
+        "fecha": "2026-07-04",
+        "recaudado": 191970
+      },
+      {
+        "fecha": "2026-07-05",
+        "recaudado": 23000
+      },
+      {
+        "fecha": "2026-07-06",
+        "recaudado": 89990
+      },
+      {
+        "fecha": "2026-07-08",
+        "recaudado": 299990
+      },
+      {
+        "fecha": "2026-07-09",
+        "recaudado": 6990
+      },
+      {
+        "fecha": "2026-07-10",
+        "recaudado": 45990
+      },
+      {
+        "fecha": "2026-07-11",
+        "recaudado": 149990
+      },
+      {
+        "fecha": "2026-07-12",
+        "recaudado": 60000
+      },
+      {
+        "fecha": "2026-07-13",
+        "recaudado": 189970
+      },
+      {
+        "fecha": "2026-07-16",
+        "recaudado": 48990
+      },
+      {
+        "fecha": "2026-07-17",
+        "recaudado": 149990
+      },
+      {
+        "fecha": "2026-07-18",
+        "recaudado": 66990
+      },
+      {
+        "fecha": "2026-07-19",
+        "recaudado": 189990
+      },
+      {
+        "fecha": "2026-07-24",
+        "recaudado": 146980
+      },
+      {
+        "fecha": "2026-07-25",
+        "recaudado": 200000
+      },
+      {
+        "fecha": "2026-07-31",
+        "recaudado": 966970
+      },
+      {
+        "fecha": "2026-08-04",
+        "recaudado": 49990
+      },
+      {
+        "fecha": "2026-08-06",
+        "recaudado": 108980
+      },
+      {
+        "fecha": "2026-08-08",
+        "recaudado": 241970
+      },
+      {
+        "fecha": "2026-08-10",
+        "recaudado": 378940
+      },
+      {
+        "fecha": "2026-08-12",
+        "recaudado": 79990
+      },
+      {
+        "fecha": "2026-08-14",
+        "recaudado": 376080
+      },
+      {
+        "fecha": "2026-08-15",
+        "recaudado": 109990
+      },
+      {
+        "fecha": "2026-08-16",
+        "recaudado": 357990
+      },
+      {
+        "fecha": "2026-08-18",
         "recaudado": 27990
+      },
+      {
+        "fecha": "2026-08-22",
+        "recaudado": 22990
+      },
+      {
+        "fecha": "2026-08-24",
+        "recaudado": 18990
       }
     ]
   },
@@ -52,11 +917,195 @@
     "dias": [
       {
         "fecha": "2026-07-01",
-        "recaudado": 156990
+        "recaudado": 744190
+      },
+      {
+        "fecha": "2026-07-02",
+        "recaudado": 816310
+      },
+      {
+        "fecha": "2026-07-03",
+        "recaudado": 429130
+      },
+      {
+        "fecha": "2026-07-04",
+        "recaudado": 568350
+      },
+      {
+        "fecha": "2026-07-06",
+        "recaudado": 1080070
+      },
+      {
+        "fecha": "2026-07-07",
+        "recaudado": 1205380
+      },
+      {
+        "fecha": "2026-07-08",
+        "recaudado": 725213
+      },
+      {
+        "fecha": "2026-07-09",
+        "recaudado": 1283380
+      },
+      {
+        "fecha": "2026-07-10",
+        "recaudado": 1393510
+      },
+      {
+        "fecha": "2026-07-11",
+        "recaudado": 21980
+      },
+      {
+        "fecha": "2026-07-13",
+        "recaudado": 1339760
+      },
+      {
+        "fecha": "2026-07-14",
+        "recaudado": 933030
+      },
+      {
+        "fecha": "2026-07-15",
+        "recaudado": 463050
+      },
+      {
+        "fecha": "2026-07-17",
+        "recaudado": 1232270
+      },
+      {
+        "fecha": "2026-07-18",
+        "recaudado": 302940
+      },
+      {
+        "fecha": "2026-07-20",
+        "recaudado": 1248110
+      },
+      {
+        "fecha": "2026-07-21",
+        "recaudado": 1739260
+      },
+      {
+        "fecha": "2026-07-22",
+        "recaudado": 962320
+      },
+      {
+        "fecha": "2026-07-23",
+        "recaudado": 655130
+      },
+      {
+        "fecha": "2026-07-24",
+        "recaudado": 1512710
+      },
+      {
+        "fecha": "2026-07-25",
+        "recaudado": 149570
+      },
+      {
+        "fecha": "2026-07-27",
+        "recaudado": 990100
+      },
+      {
+        "fecha": "2026-07-28",
+        "recaudado": 1122650
+      },
+      {
+        "fecha": "2026-07-29",
+        "recaudado": 1209760
+      },
+      {
+        "fecha": "2026-07-30",
+        "recaudado": 384780
+      },
+      {
+        "fecha": "2026-07-31",
+        "recaudado": 1432020
       },
       {
         "fecha": "2026-08-01",
         "recaudado": 111980
+      },
+      {
+        "fecha": "2026-08-03",
+        "recaudado": 1774150
+      },
+      {
+        "fecha": "2026-08-04",
+        "recaudado": 1722819
+      },
+      {
+        "fecha": "2026-08-05",
+        "recaudado": 906580
+      },
+      {
+        "fecha": "2026-08-06",
+        "recaudado": 1654620
+      },
+      {
+        "fecha": "2026-08-07",
+        "recaudado": 1783640
+      },
+      {
+        "fecha": "2026-08-08",
+        "recaudado": 1347000
+      },
+      {
+        "fecha": "2026-08-10",
+        "recaudado": 1256570
+      },
+      {
+        "fecha": "2026-08-11",
+        "recaudado": 1486550
+      },
+      {
+        "fecha": "2026-08-12",
+        "recaudado": 862040
+      },
+      {
+        "fecha": "2026-08-13",
+        "recaudado": 1423050
+      },
+      {
+        "fecha": "2026-08-14",
+        "recaudado": 2209250
+      },
+      {
+        "fecha": "2026-08-17",
+        "recaudado": 1047600
+      },
+      {
+        "fecha": "2026-08-18",
+        "recaudado": 668200
+      },
+      {
+        "fecha": "2026-08-19",
+        "recaudado": 851390
+      },
+      {
+        "fecha": "2026-08-20",
+        "recaudado": 1624750
+      },
+      {
+        "fecha": "2026-08-21",
+        "recaudado": 1243550
+      },
+      {
+        "fecha": "2026-08-22",
+        "recaudado": 725490
+      },
+      {
+        "fecha": "2026-08-24",
+        "recaudado": 1186440
+      },
+      {
+        "fecha": "2026-08-25",
+        "recaudado": 410480
+      },
+      {
+        "fecha": "2026-08-26",
+        "recaudado": 844570
+      },
+      {
+        "fecha": "2026-08-27",
+        "recaudado": 721230
       }
     ]
   },
@@ -64,8 +1113,176 @@
     "codigo": 4628,
     "dias": [
       {
-        "fecha": "2026-08-01",
+        "fecha": "2026-07-01",
+        "recaudado": 354980
+      },
+      {
+        "fecha": "2026-07-02",
+        "recaudado": 22000
+      },
+      {
+        "fecha": "2026-07-04",
         "recaudado": 1990
+      },
+      {
+        "fecha": "2026-07-05",
+        "recaudado": 101990
+      },
+      {
+        "fecha": "2026-07-06",
+        "recaudado": 1990
+      },
+      {
+        "fecha": "2026-07-07",
+        "recaudado": 1990
+      },
+      {
+        "fecha": "2026-07-09",
+        "recaudado": 421720
+      },
+      {
+        "fecha": "2026-07-10",
+        "recaudado": 505970
+      },
+      {
+        "fecha": "2026-07-11",
+        "recaudado": 331836
+      },
+      {
+        "fecha": "2026-07-12",
+        "recaudado": 102980
+      },
+      {
+        "fecha": "2026-07-15",
+        "recaudado": 11990
+      },
+      {
+        "fecha": "2026-07-16",
+        "recaudado": 796264
+      },
+      {
+        "fecha": "2026-07-17",
+        "recaudado": 51980
+      },
+      {
+        "fecha": "2026-07-18",
+        "recaudado": 403980
+      },
+      {
+        "fecha": "2026-07-19",
+        "recaudado": 200000
+      },
+      {
+        "fecha": "2026-07-20",
+        "recaudado": 201960
+      },
+      {
+        "fecha": "2026-07-21",
+        "recaudado": 219990
+      },
+      {
+        "fecha": "2026-07-23",
+        "recaudado": 3980
+      },
+      {
+        "fecha": "2026-07-25",
+        "recaudado": 89990
+      },
+      {
+        "fecha": "2026-07-26",
+        "recaudado": 1990
+      },
+      {
+        "fecha": "2026-07-27",
+        "recaudado": 21990
+      },
+      {
+        "fecha": "2026-07-28",
+        "recaudado": 3980
+      },
+      {
+        "fecha": "2026-07-30",
+        "recaudado": 25990
+      },
+      {
+        "fecha": "2026-07-31",
+        "recaudado": 74990
+      },
+      {
+        "fecha": "2026-08-01",
+        "recaudado": 103980
+      },
+      {
+        "fecha": "2026-08-02",
+        "recaudado": 3980
+      },
+      {
+        "fecha": "2026-08-04",
+        "recaudado": 520970
+      },
+      {
+        "fecha": "2026-08-06",
+        "recaudado": 13990
+      },
+      {
+        "fecha": "2026-08-07",
+        "recaudado": 289511
+      },
+      {
+        "fecha": "2026-08-08",
+        "recaudado": 1990
+      },
+      {
+        "fecha": "2026-08-11",
+        "recaudado": 1990
+      },
+      {
+        "fecha": "2026-08-13",
+        "recaudado": 1990
+      },
+      {
+        "fecha": "2026-08-14",
+        "recaudado": 155900
+      },
+      {
+        "fecha": "2026-08-16",
+        "recaudado": 304960
+      },
+      {
+        "fecha": "2026-08-17",
+        "recaudado": 149990
+      },
+      {
+        "fecha": "2026-08-18",
+        "recaudado": 1990
+      },
+      {
+        "fecha": "2026-08-19",
+        "recaudado": 100000
+      },
+      {
+        "fecha": "2026-08-20",
+        "recaudado": 182980
+      },
+      {
+        "fecha": "2026-08-21",
+        "recaudado": 3980
+      },
+      {
+        "fecha": "2026-08-22",
+        "recaudado": 162970
+      },
+      {
+        "fecha": "2026-08-23",
+        "recaudado": 291980
+      },
+      {
+        "fecha": "2026-08-24",
+        "recaudado": 802960
+      },
+      {
+        "fecha": "2026-08-26",
+        "recaudado": 221990
       }
     ]
   },
@@ -74,11 +1291,195 @@
     "dias": [
       {
         "fecha": "2026-07-01",
-        "recaudado": 127230
+        "recaudado": 1557600
+      },
+      {
+        "fecha": "2026-07-02",
+        "recaudado": 2707770
+      },
+      {
+        "fecha": "2026-07-03",
+        "recaudado": 2117780
+      },
+      {
+        "fecha": "2026-07-04",
+        "recaudado": 61110
+      },
+      {
+        "fecha": "2026-07-06",
+        "recaudado": 1901540
+      },
+      {
+        "fecha": "2026-07-07",
+        "recaudado": 1161048
+      },
+      {
+        "fecha": "2026-07-08",
+        "recaudado": 703720
+      },
+      {
+        "fecha": "2026-07-09",
+        "recaudado": 402930
+      },
+      {
+        "fecha": "2026-07-10",
+        "recaudado": 1492970
+      },
+      {
+        "fecha": "2026-07-11",
+        "recaudado": 281970
+      },
+      {
+        "fecha": "2026-07-13",
+        "recaudado": 2044630
+      },
+      {
+        "fecha": "2026-07-14",
+        "recaudado": 1641440
+      },
+      {
+        "fecha": "2026-07-15",
+        "recaudado": 1544360
+      },
+      {
+        "fecha": "2026-07-17",
+        "recaudado": 1060610
+      },
+      {
+        "fecha": "2026-07-18",
+        "recaudado": 125070
+      },
+      {
+        "fecha": "2026-07-20",
+        "recaudado": 892700
+      },
+      {
+        "fecha": "2026-07-21",
+        "recaudado": 2287860
+      },
+      {
+        "fecha": "2026-07-22",
+        "recaudado": 1247570
+      },
+      {
+        "fecha": "2026-07-23",
+        "recaudado": 749740
+      },
+      {
+        "fecha": "2026-07-24",
+        "recaudado": 3828153
+      },
+      {
+        "fecha": "2026-07-25",
+        "recaudado": 955940
+      },
+      {
+        "fecha": "2026-07-27",
+        "recaudado": 958636
+      },
+      {
+        "fecha": "2026-07-28",
+        "recaudado": 1188660
+      },
+      {
+        "fecha": "2026-07-29",
+        "recaudado": 1406850
+      },
+      {
+        "fecha": "2026-07-30",
+        "recaudado": 464950
+      },
+      {
+        "fecha": "2026-07-31",
+        "recaudado": 860050
       },
       {
         "fecha": "2026-08-01",
         "recaudado": 1283920
+      },
+      {
+        "fecha": "2026-08-03",
+        "recaudado": 1565847
+      },
+      {
+        "fecha": "2026-08-04",
+        "recaudado": 1727780
+      },
+      {
+        "fecha": "2026-08-05",
+        "recaudado": 962290
+      },
+      {
+        "fecha": "2026-08-06",
+        "recaudado": 996150
+      },
+      {
+        "fecha": "2026-08-07",
+        "recaudado": 2434920
+      },
+      {
+        "fecha": "2026-08-08",
+        "recaudado": 196950
+      },
+      {
+        "fecha": "2026-08-10",
+        "recaudado": 1080288
+      },
+      {
+        "fecha": "2026-08-11",
+        "recaudado": 1609810
+      },
+      {
+        "fecha": "2026-08-12",
+        "recaudado": 1129110
+      },
+      {
+        "fecha": "2026-08-13",
+        "recaudado": 2068540
+      },
+      {
+        "fecha": "2026-08-14",
+        "recaudado": 1123460
+      },
+      {
+        "fecha": "2026-08-17",
+        "recaudado": 2768580
+      },
+      {
+        "fecha": "2026-08-18",
+        "recaudado": 1721100
+      },
+      {
+        "fecha": "2026-08-19",
+        "recaudado": 1874820
+      },
+      {
+        "fecha": "2026-08-20",
+        "recaudado": 864480
+      },
+      {
+        "fecha": "2026-08-21",
+        "recaudado": 883060
+      },
+      {
+        "fecha": "2026-08-22",
+        "recaudado": 840930
+      },
+      {
+        "fecha": "2026-08-24",
+        "recaudado": 978610
+      },
+      {
+        "fecha": "2026-08-25",
+        "recaudado": 626690
+      },
+      {
+        "fecha": "2026-08-26",
+        "recaudado": 592960
+      },
+      {
+        "fecha": "2026-08-27",
+        "recaudado": 2686520
       }
     ]
   },
@@ -87,11 +1488,179 @@
     "dias": [
       {
         "fecha": "2026-07-01",
-        "recaudado": 34990
+        "recaudado": 36980
+      },
+      {
+        "fecha": "2026-07-02",
+        "recaudado": 122950
+      },
+      {
+        "fecha": "2026-07-03",
+        "recaudado": 41980
+      },
+      {
+        "fecha": "2026-07-04",
+        "recaudado": 487370
+      },
+      {
+        "fecha": "2026-07-05",
+        "recaudado": 596980
+      },
+      {
+        "fecha": "2026-07-07",
+        "recaudado": 119330
+      },
+      {
+        "fecha": "2026-07-09",
+        "recaudado": 43980
+      },
+      {
+        "fecha": "2026-07-10",
+        "recaudado": 32970
+      },
+      {
+        "fecha": "2026-07-11",
+        "recaudado": 801990
+      },
+      {
+        "fecha": "2026-07-12",
+        "recaudado": 10990
+      },
+      {
+        "fecha": "2026-07-14",
+        "recaudado": 65592
+      },
+      {
+        "fecha": "2026-07-16",
+        "recaudado": 99990
+      },
+      {
+        "fecha": "2026-07-17",
+        "recaudado": 152314
+      },
+      {
+        "fecha": "2026-07-18",
+        "recaudado": 17970
+      },
+      {
+        "fecha": "2026-07-19",
+        "recaudado": 372960
+      },
+      {
+        "fecha": "2026-07-20",
+        "recaudado": 38990
+      },
+      {
+        "fecha": "2026-07-21",
+        "recaudado": 503980
+      },
+      {
+        "fecha": "2026-07-22",
+        "recaudado": 1990
+      },
+      {
+        "fecha": "2026-07-23",
+        "recaudado": 14000
+      },
+      {
+        "fecha": "2026-07-24",
+        "recaudado": 279990
+      },
+      {
+        "fecha": "2026-07-25",
+        "recaudado": 3980
+      },
+      {
+        "fecha": "2026-07-26",
+        "recaudado": 1990
+      },
+      {
+        "fecha": "2026-07-27",
+        "recaudado": 327990
+      },
+      {
+        "fecha": "2026-07-28",
+        "recaudado": 147990
+      },
+      {
+        "fecha": "2026-07-30",
+        "recaudado": 71990
+      },
+      {
+        "fecha": "2026-07-31",
+        "recaudado": 31980
       },
       {
         "fecha": "2026-08-01",
-        "recaudado": 77990
+        "recaudado": 79980
+      },
+      {
+        "fecha": "2026-08-02",
+        "recaudado": 250980
+      },
+      {
+        "fecha": "2026-08-04",
+        "recaudado": 399970
+      },
+      {
+        "fecha": "2026-08-05",
+        "recaudado": 599990
+      },
+      {
+        "fecha": "2026-08-06",
+        "recaudado": 1990
+      },
+      {
+        "fecha": "2026-08-08",
+        "recaudado": 122950
+      },
+      {
+        "fecha": "2026-08-09",
+        "recaudado": 21990
+      },
+      {
+        "fecha": "2026-08-10",
+        "recaudado": 29980
+      },
+      {
+        "fecha": "2026-08-11",
+        "recaudado": 83970
+      },
+      {
+        "fecha": "2026-08-13",
+        "recaudado": 53970
+      },
+      {
+        "fecha": "2026-08-15",
+        "recaudado": 25691
+      },
+      {
+        "fecha": "2026-08-18",
+        "recaudado": 29980
+      },
+      {
+        "fecha": "2026-08-19",
+        "recaudado": 582940
+      },
+      {
+        "fecha": "2026-08-21",
+        "recaudado": 463970
+      },
+      {
+        "fecha": "2026-08-22",
+        "recaudado": 1288920
+      },
+      {
+        "fecha": "2026-08-23",
+        "recaudado": 335940
+      },
+      {
+        "fecha": "2026-08-26",
+        "recaudado": 29950
+      },
+      {
+        "fecha": "2026-08-27",
+        "recaudado": 1990
       }
     ]
   }
