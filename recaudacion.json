@@ -1,0 +1,98 @@
+[
+  {
+    "codigo": 4165,
+    "dias": [
+      {
+        "fecha": "2026-07-01",
+        "recaudado": 523400
+      },
+      {
+        "fecha": "2026-08-01",
+        "recaudado": 475940
+      }
+    ]
+  },
+  {
+    "codigo": 4167,
+    "dias": [
+      {
+        "fecha": "2026-07-01",
+        "recaudado": 853960
+      },
+      {
+        "fecha": "2026-08-01",
+        "recaudado": 984940
+      }
+    ]
+  },
+  {
+    "codigo": 4169,
+    "dias": [
+      {
+        "fecha": "2026-07-01",
+        "recaudado": 411390
+      },
+      {
+        "fecha": "2026-08-01",
+        "recaudado": 536940
+      }
+    ]
+  },
+  {
+    "codigo": 4172,
+    "dias": [
+      {
+        "fecha": "2026-08-01",
+        "recaudado": 27990
+      }
+    ]
+  },
+  {
+    "codigo": 4620,
+    "dias": [
+      {
+        "fecha": "2026-07-01",
+        "recaudado": 156990
+      },
+      {
+        "fecha": "2026-08-01",
+        "recaudado": 111980
+      }
+    ]
+  },
+  {
+    "codigo": 4628,
+    "dias": [
+      {
+        "fecha": "2026-08-01",
+        "recaudado": 1990
+      }
+    ]
+  },
+  {
+    "codigo": 4939,
+    "dias": [
+      {
+        "fecha": "2026-07-01",
+        "recaudado": 127230
+      },
+      {
+        "fecha": "2026-08-01",
+        "recaudado": 1283920
+      }
+    ]
+  },
+  {
+    "codigo": 5053,
+    "dias": [
+      {
+        "fecha": "2026-07-01",
+        "recaudado": 34990
+      },
+      {
+        "fecha": "2026-08-01",
+        "recaudado": 77990
+      }
+    ]
+  }
+]
