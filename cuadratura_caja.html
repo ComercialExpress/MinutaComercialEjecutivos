@@ -375,6 +375,16 @@ tfoot td.num{ font-family:'Inter',sans-serif; font-weight:800; }
    ejemplo: si las 3 fuentes fallan (404 esperable mientras no se conecte la
    lista real), cada día simplemente queda en $0 — es el comportamiento por
    defecto pedido, no un error a mostrarle al usuario.
+
+   RECAUDACIÓN XSTORE (conectado 28-08-2026, ver infraestructura_automatizacion.md
+   sección "Flujo de recaudación XStore"): reemplaza el snapshot estático de
+   stores_data.js por recaudacion.json, generado por sync_xstore.py vía Graph
+   Workbook API. MISMO patrón de mirrors que depositos.json. A diferencia de
+   depositos.json, si las 3 fuentes fallan (o el archivo aún no existe en el
+   repo) el fallback NO es un dato inventado: es el snapshot ya embebido en
+   stores_data.js (STORES[].dias), que queda congelado en la última carga
+   manual — con un badge visible avisando que es un snapshot y no el dato
+   vivo. Ver loadRecaudacion() / getDayData() más abajo.
 ========================================================= */
 const CONFIG = {
   repo: {
@@ -401,6 +411,22 @@ const CONFIG = {
   },
   get depositosFicticiosSources(){
     const { owner, name, branch, path } = this.repoFicticios;
+    return [
+      `https://cdn.jsdelivr.net/gh/${owner}/${name}@${branch}/${path}`,
+      `https://cdn.statically.io/gh/${owner}/${name}/${branch}/${path}`,
+      `https://raw.githubusercontent.com/${owner}/${name}/${branch}/${path}`
+    ];
+  },
+  // Mismo repo/branch — recaudacion.json lo genera sync_xstore.py (Graph
+  // Workbook API sobre los libros mensuales de XStore).
+  repoRecaudacion: {
+    owner: "ComercialExpress",
+    name: "MinutaComercialEjecutivos",
+    branch: "main",
+    path: "recaudacion.json"
+  },
+  get recaudacionSources(){
+    const { owner, name, branch, path } = this.repoRecaudacion;
     return [
       `https://cdn.jsdelivr.net/gh/${owner}/${name}@${branch}/${path}`,
       `https://cdn.statically.io/gh/${owner}/${name}/${branch}/${path}`,
@@ -447,6 +473,15 @@ const CONFIG = {
      FechaRecaudacion,      // ISO datetime, mismo criterio que depositos.json
      MontoFicticio           // número — NOMBRE DE CAMPO ASUMIDO, ajustar cuando
                               // se defina la lista/columna real de origen
+   }, ...]
+
+   FORMA REAL DE recaudacion.json (la genera sync_xstore.py, ver
+   README_XSTORE.md — no es un supuesto, coincide con el shape que ya
+   usaba stores_data.js para que el HTML no tuviera que cambiar):
+
+   [{
+     codigo,          // número, debe calzar con STORES[].codigo
+     dias: [{ fecha, recaudado }, ...]   // fecha ISO "YYYY-MM-DD", recaudado número
    }, ...]
 ========================================================= */
 
@@ -537,6 +572,38 @@ async function loadDepositosFicticios(){
   return { rows: [] };
 }
 
+/* Mismo mecanismo que loadDepositos()/loadDepositosFicticios(), pero para
+   recaudacion.json (sync_xstore.py). Diferencia: el fallback si las 3
+   fuentes fallan NO es un dato inventado — es el snapshot ya embebido en
+   stores_data.js (STORES[].dias), que existía antes de conectar el
+   pipeline real. isDemo=true en ese caso dispara el badge correspondiente
+   en init(). */
+async function loadRecaudacion(){
+  const fallos = [];
+  for(const url of CONFIG.recaudacionSources){
+    try{
+      const res = await fetch(url, { cache: "no-store" });
+      if(!res.ok){
+        fallos.push(`${url} → HTTP ${res.status}`);
+        console.warn("[recaudacion] fuente no disponible (HTTP " + res.status + "):", url);
+        continue;
+      }
+      const data = await res.json();
+      if(!Array.isArray(data)){
+        fallos.push(`${url} → respuesta no es un array JSON`);
+        console.warn("[recaudacion] respuesta inesperada (no es array) desde", url, data);
+        continue;
+      }
+      return { rows: data, isDemo: false };
+    }catch(err){
+      fallos.push(`${url} → ${err.message}`);
+      console.warn("[recaudacion] error de red/parseo en", url, err);
+    }
+  }
+  console.warn("[recaudacion] todas las fuentes fallaron, se usa el snapshot embebido en stores_data.js:\n" + fallos.join("\n"));
+  return { rows: null, isDemo: true };
+}
+
 function buildDepositosMap(rows){
   const map = {}; // key: `${normNombre(NombreSucursal)}|${fecha}` -> { monto, registros:[] }
   rows.forEach(r=>{
@@ -560,6 +627,19 @@ function buildDepositosFicticiosMap(rows){
   return map;
 }
 
+/* recaudacion.json ya viene agrupado por sucursal+día (lo agrega
+   sync_xstore.py del lado del servidor) — acá solo se arma un mapa
+   codigo -> { fecha: recaudado } para lookup O(1) en getDayData(). */
+function buildRecaudacionMap(rows){
+  const map = {};
+  rows.forEach(r=>{
+    const dias = {};
+    (r.dias || []).forEach(d=>{ dias[d.fecha] = d.recaudado; });
+    map[r.codigo] = dias;
+  });
+  return map;
+}
+
 /* =========================================================
    ESTADO
    - depositado ahora viene de la lista SharePoint (o su fallback demo),
@@ -579,15 +659,30 @@ function buildDepositosFicticiosMap(rows){
    progresivamente. Por eso STATE ya no se pre-arma entero al inicio
    (initState): se calcula "on demand" por sucursal+fecha vía getState(),
    y se cachea para no recalcular en cada render.
+
+   CAMBIO (28-08-2026): getDayData() ahora prioriza RECAUDACION_MAP
+   (recaudacion.json, pipeline real vía sync_xstore.py) sobre el snapshot
+   embebido en store.dias (stores_data.js). El snapshot solo se usa si
+   RECAUDACION_LOADED es false — es decir, si las 3 fuentes de
+   recaudacion.json fallaron en init(). Ver loadRecaudacion() más arriba.
 ========================================================= */
 const STATE = {}; // STATE[codigo][fecha] = { depositado: number|null, depositoFicticio: number, comentario: string, registros: [] } (lazy)
 let DEPOSITOS_MAP = {};
 let DEPOSITOS_FICTICIOS_MAP = {};
+let RECAUDACION_MAP = {};
+let RECAUDACION_LOADED = false; // true una vez que recaudacion.json cargó bien desde alguna de las 3 fuentes
 
 /* Recaudado en efectivo para una sucursal+fecha, o null si esa fecha
-   todavía no tiene ningún dato cargado desde REPORTE_XSTORE (distinto
-   de recaudado === 0, que sí es un dato real: "hubo caja, recaudó $0"). */
+   todavía no tiene ningún dato cargado (distinto de recaudado === 0, que
+   sí es un dato real: "hubo caja, recaudó $0"). Fuente: recaudacion.json
+   (pipeline real) si cargó bien; si no, el snapshot embebido en
+   store.dias (stores_data.js). */
 function getDayData(store, fecha){
+  if(RECAUDACION_LOADED){
+    const dias = RECAUDACION_MAP[store.codigo];
+    if(!dias) return null;
+    return Object.prototype.hasOwnProperty.call(dias, fecha) ? dias[fecha] : null;
+  }
   if(!store._diasMap){
     store._diasMap = {};
     store.dias.forEach(d=>{ store._diasMap[d.fecha] = d.recaudado; });
@@ -1101,7 +1196,7 @@ function renderDetail(codigo, monthDates){
       <div class="legend-item"><span class="legend-dot" style="background:var(--amber-600)"></span>Depósito aún no registrado en la lista (hubo recaudación)</div>
       <div class="legend-item"><span class="legend-dot" style="background:var(--ink-400)"></span>Sin datos cargados todavía para ese día</div>
     </div>
-    <p class="empty-hint">Recaudado en efectivo = suma de MONTO en REPORTE_XSTORE donde MEDIO DE PAGO = EFE, por día. "Depositado" = suma de MontoDepositado en la lista SharePoint DepositosSucursalesBCI para esa sucursal y FechaRecaudacion (se suman varios registros si hubo más de una bolsa/transporte). "Depósito ficticio" complementa al depositado bancario cuando parte de la recaudación se cuadra por otra vía — por defecto es $0 y se completará automáticamente cuando se conecte su lista de origen (ver infraestructura_automatizacion.md). La Diferencia de cada día se calcula como (Depositado + Depósito ficticio) − Recaudado. La matriz muestra siempre todos los días del mes elegido: los días marcados "Sin datos" todavía no tienen ninguna información cargada desde la fuente (se irán completando automáticamente), y son distintos de los días "sin recaudación" (sí hay dato, y fue $0). Los montos con línea punteada tienen detalle al pasar el mouse: en un depósito registrado, el/los números de depósito y bolsa de transporte; en un día sin recaudación en efectivo, la aclaración de que no aplica depósito (se muestra $0 y cuadra). Los días con recaudación pero sin depósito en la lista se muestran como "Sin registrar" y sí cuentan como pendientes. Hoy se muestra con datos de ejemplo porque el pipeline real (Graph API → JSON) todavía no está conectado — ver infraestructura_automatizacion.md.</p>
+    <p class="empty-hint">Recaudado en efectivo = suma de MONTO en REPORTE_XSTORE donde MEDIO DE PAGO = EFE, por día. "Depositado" = suma de MontoDepositado en la lista SharePoint DepositosSucursalesBCI para esa sucursal y FechaRecaudacion (se suman varios registros si hubo más de una bolsa/transporte). "Depósito ficticio" complementa al depositado bancario cuando parte de la recaudación se cuadra por otra vía — por defecto es $0 y se completará automáticamente cuando se conecte su lista de origen (ver infraestructura_automatizacion.md). La Diferencia de cada día se calcula como (Depositado + Depósito ficticio) − Recaudado. La matriz muestra siempre todos los días del mes elegido: los días marcados "Sin datos" todavía no tienen ninguna información cargada desde la fuente (se irán completando automáticamente), y son distintos de los días "sin recaudación" (sí hay dato, y fue $0). Los montos con línea punteada tienen detalle al pasar el mouse: en un depósito registrado, el/los números de depósito y bolsa de transporte; en un día sin recaudación en efectivo, la aclaración de que no aplica depósito (se muestra $0 y cuadra). Los días con recaudación pero sin depósito en la lista se muestran como "Sin registrar" y sí cuentan como pendientes.</p>
   </div>
   `;
   document.getElementById("app").innerHTML = html;
@@ -1132,24 +1227,34 @@ function render(){
 }
 
 /* =========================================================
-   INIT — carga depósitos (real o demo) y depósitos ficticios (real o $0
-   por defecto), arma los mapas de match y recién ahí hace el primer
-   render. STATE se completa "on demand" por sucursal+fecha (ver
-   getState) a medida que se renderiza cada mes, así que no hace falta
-   inicializarlo entero acá.
+   INIT — carga recaudación (real o snapshot embebido), depósitos (real o
+   demo) y depósitos ficticios (real o $0 por defecto), arma los mapas de
+   match y recién ahí hace el primer render. STATE se completa "on demand"
+   por sucursal+fecha (ver getState) a medida que se renderiza cada mes,
+   así que no hace falta inicializarlo entero acá.
 ========================================================= */
 (async function init(){
-  const [{ rows, isDemo }, { rows: rowsFicticios }] = await Promise.all([
+  const [{ rows: rowsRecaudacion, isDemo: recaudacionEsSnapshot }, { rows, isDemo }, { rows: rowsFicticios }] = await Promise.all([
+    loadRecaudacion(),
     loadDepositos(),
     loadDepositosFicticios()
   ]);
+
+  if(!recaudacionEsSnapshot){
+    RECAUDACION_MAP = buildRecaudacionMap(rowsRecaudacion);
+    RECAUDACION_LOADED = true;
+  }
   DEPOSITOS_MAP = buildDepositosMap(rows);
   DEPOSITOS_FICTICIOS_MAP = buildDepositosFicticiosMap(rowsFicticios);
 
-  if(isDemo){
-    document.getElementById("demoBadge").innerHTML =
-      `<span class="demo-badge"><span class="dot"></span>Depósitos: datos de ejemplo</span>`;
+  const badges = [];
+  if(recaudacionEsSnapshot){
+    badges.push(`<span class="demo-badge"><span class="dot"></span>Recaudación: snapshot stores_data.js</span>`);
   }
+  if(isDemo){
+    badges.push(`<span class="demo-badge"><span class="dot"></span>Depósitos: datos de ejemplo</span>`);
+  }
+  document.getElementById("demoBadge").innerHTML = badges.join(" ");
 
   render();
 })();
