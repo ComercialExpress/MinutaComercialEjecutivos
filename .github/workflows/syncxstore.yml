@@ -1,0 +1,57 @@
+name: Sync RecaudacionXStore
+on:
+  schedule:
+    # Sesión 7 (27-08-2026): se retiró el paso de carga (load_xstore_excel.py /
+    # carga_diaria.py) — ya no hay Lista SharePoint que alimentar, el origen
+    # ahora es el libro Excel mensual que Guillermo ya mantiene en OneDrive/
+    # SharePoint (ver sync_xstore.py). Como no hay ningún script que dispare
+    # el sync después de pegar los datos, este cron es la ÚNICA forma en que
+    # el dashboard se entera de cambios — por eso corre dos veces al día en
+    # vez de una. 05:00 y 17:00 UTC = 01:00 y 13:00 hora Chile (UTC-4 actual).
+    # Ajustar horarios/offset si cambia el huso o la cadencia real de carga.
+    - cron: "0 5,17 * * *"
+  workflow_dispatch: {}       # correr a mano desde la pestaña Actions apenas
+                               # termines de pegar los datos del día, si no
+                               # querés esperar al próximo cron
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install requests
+      - name: Run sync script
+        env:
+          TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          XSTORE_LOOKBACK_MONTHS: "2"
+        run: python sync_xstore.py
+      - name: Subir muestra cruda como artifact (para verificar mapeo de columnas)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xstore-raw-sample
+          path: xstore-raw-sample.json
+          retention-days: 5
+          if-no-files-found: ignore
+      - name: Commit updated JSON
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add recaudacion.json
+          git diff --staged --quiet || git commit -m "Actualización automática de recaudación XStore - $(date +'%Y-%m-%d %H:%M')"
+          git push
+      - name: Purgar caché de jsDelivr (recaudacion.json)
+        # Mismo problema y mismo fix ya aplicado en sync-depositos.yml (ver
+        # infraestructura_automatizacion.md, sección "Lecciones aprendidas").
+        run: |
+          curl -s -o /dev/null -w "jsDelivr purge recaudacion.json -> HTTP %{http_code}\n" \
+            "https://purge.jsdelivr.net/gh/ComercialExpress/MinutaComercialEjecutivos@main/recaudacion.json"
