@@ -1694,6 +1694,20 @@
     "origen": "TIEMPO DE ESPERA"
   },
   {
+    "fecha": "2026-08-03",
+    "mes": "2026-08",
+    "sucursal": "MALL PLAZA LOS ÁNGELES",
+    "categoria": "buena",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-08-04",
+    "mes": "2026-08",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "SISTEMA"
+  },
+  {
     "fecha": "2026-08-07",
     "mes": "2026-08",
     "sucursal": "MALL CENTER CURICÓ",
@@ -1797,6 +1811,13 @@
     "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
     "categoria": "mala",
     "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-08-14",
+    "mes": "2026-08",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
   },
   {
     "fecha": "2026-08-20",
