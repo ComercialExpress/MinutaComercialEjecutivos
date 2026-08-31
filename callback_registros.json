@@ -1708,6 +1708,13 @@
     "origen": "SISTEMA"
   },
   {
+    "fecha": "2026-08-05",
+    "mes": "2026-08",
+    "sucursal": "MALL PLAZA LOS ÁNGELES",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
     "fecha": "2026-08-07",
     "mes": "2026-08",
     "sucursal": "MALL CENTER CURICÓ",
@@ -1771,6 +1778,13 @@
     "origen": "ERROR DE EVALUACIÓN"
   },
   {
+    "fecha": "2026-08-11",
+    "mes": "2026-08",
+    "sucursal": "MALL PLAZA LOS ÁNGELES",
+    "categoria": "buena",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
     "fecha": "2026-08-12",
     "mes": "2026-08",
     "sucursal": "LOS ÁNGELES LAUTARO",
@@ -1818,6 +1832,13 @@
     "sucursal": "LOS ÁNGELES LAUTARO",
     "categoria": "mala",
     "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-08-18",
+    "mes": "2026-08",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "COBERTURA"
   },
   {
     "fecha": "2026-08-20",
