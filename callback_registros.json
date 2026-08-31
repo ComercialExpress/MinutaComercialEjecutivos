@@ -1834,6 +1834,27 @@
     "origen": "ERROR DE EVALUACIÓN"
   },
   {
+    "fecha": "2026-08-14",
+    "mes": "2026-08",
+    "sucursal": "MALL ARAUCO CHILLÁN",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-08-17",
+    "mes": "2026-08",
+    "sucursal": "CHILLÁN EL ROBLE",
+    "categoria": "neutra",
+    "origen": "TIEMPO DE ESPERA"
+  },
+  {
+    "fecha": "2026-08-18",
+    "mes": "2026-08",
+    "sucursal": "CHILLÁN EL ROBLE",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
     "fecha": "2026-08-18",
     "mes": "2026-08",
     "sucursal": "TALCA CENTRO",
@@ -1841,10 +1862,24 @@
     "origen": "COBERTURA"
   },
   {
+    "fecha": "2026-08-19",
+    "mes": "2026-08",
+    "sucursal": "MALL ARAUCO CHILLÁN",
+    "categoria": "mala",
+    "origen": "SISTEMA"
+  },
+  {
     "fecha": "2026-08-20",
     "mes": "2026-08",
     "sucursal": "LINARES INDEPENDENCIA",
     "categoria": "buena",
     "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-08-20",
+    "mes": "2026-08",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
   }
 ]
