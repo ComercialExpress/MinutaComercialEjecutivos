@@ -1883,9 +1883,44 @@
     "origen": "ERROR DE EVALUACIÓN"
   },
   {
+    "fecha": "2026-09-01",
+    "mes": "2026-09",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "COBERTURA"
+  },
+  {
+    "fecha": "2026-09-01",
+    "mes": "2026-09",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-09-01",
+    "mes": "2026-09",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "SISTEMA"
+  },
+  {
     "fecha": "2026-09-08",
     "mes": "2026-09",
     "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "neutra",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-09-10",
+    "mes": "2026-09",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-09-10",
+    "mes": "2026-09",
+    "sucursal": "LINARES INDEPENDENCIA",
     "categoria": "neutra",
     "origen": "ERROR DE EVALUACIÓN"
   },
