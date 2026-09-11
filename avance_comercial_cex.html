@@ -298,29 +298,7 @@ th .col-goal-tag:empty{display:none;}
 /* ---------- Metric tabs — reemplaza las tarjetas KPI del resumen: navegación/orden
    de la matriz por indicador, sin duplicar cifras (mismo patrón "segmented control"
    que .view-toggle / .tabbar / el combo de búsqueda). ---------- */
-.metric-tabs-wrap{
-  display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-top:22px;
-  background:var(--card); border:1px solid var(--border); border-radius:var(--radius-lg);
-  box-shadow:var(--shadow-card); padding:14px 18px;
-}
-.metric-tabs-label{
-  flex:0 0 auto; font-size:10px; text-transform:uppercase; letter-spacing:.07em; font-weight:800; color:var(--ink-400);
-  display:flex; align-items:center; gap:7px; padding-right:14px; border-right:1px solid var(--border-soft);
-}
-.metric-tabs-label svg{width:14px; height:14px; stroke:currentColor; stroke-width:2.2; fill:none;}
-.metric-tabs{display:flex; gap:8px; flex-wrap:wrap; flex:1 1 auto;}
-.metric-tab{
-  display:flex; align-items:center; gap:7px; padding:9px 15px; border-radius:var(--radius-md);
-  background:var(--bg); border:1px solid transparent;
-  font-family:'Inter',sans-serif; color:var(--ink-700); font-weight:700; font-size:12px; cursor:pointer;
-  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease, color .18s ease;
-}
-.metric-tab svg{width:15px; height:15px; stroke:currentColor; stroke-width:2; fill:none; flex-shrink:0;}
-.metric-tab:hover{border-color:var(--navy-500); color:var(--navy-700); background:var(--card); transform:translateY(-1px);}
-.metric-tab.active{
-  background:linear-gradient(135deg,var(--navy-800),var(--navy-600)); border-color:transparent; color:#fff;
-  box-shadow:var(--shadow-card-hover);
-}
+.global-kpis{margin-top:24px}
 
 /* ---------- Store detail extras ---------- */
 .store-kpi-grid{display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-top:16px;}
@@ -462,7 +440,7 @@ button:disabled{opacity:.5;cursor:default}
 .upload-row .ghost-field{max-width:100%;white-space:normal;text-align:left}
 @media(max-width:560px){.header-card{padding:24px 20px}.header-title{font-size:22px}.brand-row{flex-wrap:wrap}.upload-row{width:100%}.header-card p{overflow-wrap:anywhere}}
 #sourceStatus{position:relative;z-index:1;margin:14px 0 0;line-height:1.6;color:#fff}
-body.no-data .nav-section,body.no-data .metric-tabs-wrap,body.no-data #panel-resumen,body.no-data #storePanels{display:none}
+body.no-data .nav-section,body.no-data .global-kpis,body.no-data #panel-resumen,body.no-data #storePanels{display:none}
 @media print{body.is-admin .admin-only,.admin-only,#refreshData,#publishedData{display:none!important}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
@@ -506,14 +484,11 @@ body.no-data .nav-section,body.no-data .metric-tabs-wrap,body.no-data #panel-res
     <p class="admin-only" style="position:relative;z-index:1">Carga el Excel, revisa el informe y descarga el JSON. Para compartirlo, reemplaza <b>avance_comercial.json</b> en la raíz del repositorio mediante <a style="color:white" href="https://github.com/ComercialExpress/MinutaComercialEjecutivos/upload/main" target="_blank" rel="noopener noreferrer">Add file → Upload files</a> y confirma el cambio en GitHub. La vista previa solo se ve en este navegador.</p>
   </div>
 
-  <!-- ============ METRIC TABS (navegación/orden de la matriz, reemplaza las tarjetas KPI) ============ -->
-  <div class="metric-tabs-wrap">
-    <span class="metric-tabs-label">
-      <svg viewBox="0 0 24 24"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
-      Ordenar matriz por
-    </span>
-    <div class="metric-tabs" id="metricTabs"></div>
-  </div>
+  <!-- Indicadores globales del corte -->
+  <section class="global-kpis" aria-label="Indicadores globales del corte">
+    <div class="section-heading"><h2>Resultado global</h2><span class="section-note">Todas las sucursales · corte publicado o vista previa actual</span></div>
+    <div class="store-kpi-grid" id="globalKpis"></div>
+  </section>
 
   <!-- ============ NAV POR SUCURSAL — filtro buscador ============
        "Resumen General" fijo a la izquierda + campo de búsqueda con panel
@@ -543,7 +518,7 @@ body.no-data .nav-section,body.no-data .metric-tabs-wrap,body.no-data #panel-res
 
     <div class="section-heading">
       <h2>Matriz comparativa</h2>
-      <span class="section-note" id="summarySectionNote">Ranking por Móvil Persona del día · click en una fila para ver el detalle por vendedor</span>
+      <span class="section-note" id="summarySectionNote">Orden establecido de sucursales · selecciona una fila para ver el detalle por vendedor</span>
     </div>
     <div class="card">
       <div class="card-title-row">
@@ -642,7 +617,7 @@ let STATE = {
   asOf: '—',
   summary: [],
   activeKey: 'resumen',
-  sortKey: 'movilPersona'
+
 };
 
 /* Logo corporativo, clonado del header principal para reutilizarlo en el encabezado
@@ -863,30 +838,9 @@ function navigateToStore(key){
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
-/* ---------- Metric tabs — reemplazan las tarjetas KPI del resumen general.
-   No muestran cifras (esas ya viven en la matriz); son puramente de navegación:
-   click en un indicador reordena la tabla por esa métrica. ---------- */
-const METRIC_TABS = [
-  {key:'movilPersona', label:'Móvil Persona', icon:'<svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg>'},
-  {key:'fibra', label:'Fibra Solicitud', icon:'<svg viewBox="0 0 24 24"><path d="M4 11a16 16 0 0116 0M7 15a10 10 0 0110 0M11 19h2"/></svg>'},
-  {key:'vozPortado', label:'Voz Portado', icon:'<svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.3 1.8.6 2.7a2 2 0 01-.4 2.1L8.1 9.6a16 16 0 006 6l1.1-1.2a2 2 0 012.1-.4c.9.3 1.8.5 2.7.6a2 2 0 011.9 2.3z"/></svg>'},
-  {key:'mixPorta', label:'%Mix Porta', icon:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 15l6-6M9.5 10a.5.5 0 100-1 .5.5 0 000 1zM14.5 15a.5.5 0 100-1 .5.5 0 000 1z"/></svg>'},
-  {key:'equiposCLP', label:'Equipos', icon:'<svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M11 18h2"/></svg>'},
-  {key:'accCLP', label:'Accesorios', icon:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>'}
-];
-function renderMetricTabs(){
-  const shell = document.getElementById('metricTabs');
-  shell.innerHTML = METRIC_TABS.map(t => `
-    <button type="button" class="metric-tab${STATE.sortKey===t.key?' active':''}" data-key="${t.key}">
-      ${t.icon}<span>${t.label}</span>
-    </button>`).join('');
-  shell.querySelectorAll('.metric-tab').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      STATE.sortKey = btn.dataset.key;
-      renderMetricTabs();
-      renderSummaryTable();
-    });
-  });
+/* Indicadores globales: reutilizan las tarjetas y reglas de la ficha. */
+function renderGlobalKpis(){
+  document.getElementById('globalKpis').innerHTML = kpiCardsHtml(computeTotal(STATE.summary));
 }
 
 /* ---------- Render: tabla resumen (genérica: sucursal o vendedor) ----------
@@ -1071,7 +1025,7 @@ function totalRowHtml(name, total){
 }
 
 function storeSummaryRowHtml(r, rank, navKey, maxes){
-  const rankCls = rank===0 ? 'gold' : rank===1 ? 'silver' : rank===2 ? 'bronze' : '';
+  const rankCls = '';
   return `
     <tr class="row-clickable" data-key="store-${navKey}">
       <td><span style="display:flex; align-items:center; gap:9px;"><span class="rank-badge ${rankCls}">${rank+1}</span><span class="tt" data-tip="Ver detalle por vendedor de ${escapeTipAttr(r.sucursal)}">${escapeTipAttr(r.sucursal)}</span></span></td>
@@ -1088,20 +1042,13 @@ function storeSummaryRowHtml(r, rank, navKey, maxes){
     </tr>`;
 }
 
-const SORT_ACCESSORS = {
-  movilPersona: r=>r.movilPersona, fibra: r=>r.fibra, vozPortado: r=>r.vozPortado,
-  mixPorta: r=>r.mixPorta, equiposCLP: r=>r.equiposCLP, accCLP: r=>r.accCLP
-};
 function renderSummaryTable(){
   const tbody = document.getElementById('summaryBody');
-  const sortLabel = (METRIC_TABS.find(t=>t.key===STATE.sortKey) || METRIC_TABS[0]).label;
-  const accessor = SORT_ACCESSORS[STATE.sortKey] || SORT_ACCESSORS.movilPersona;
-  const rows = STATE.summary.map(withDerived)
-    .sort((a,b)=> accessor(b) - accessor(a) || b.movilPersona - a.movilPersona || b.vozSS - a.vozSS || b.equiposCLP - a.equiposCLP);
+  const rows = STATE.summary.map(withDerived);
   const total = computeTotal(STATE.summary);
   const maxes = computeColumnMaxes(rows);
   document.getElementById('goalHeaderTag').textContent = `(${fmtPct(STATE.goal)})`;
-  document.getElementById('summarySectionNote').textContent = `Ranking por ${sortLabel} del día · click en un indicador arriba para reordenar, o en una fila para ver el detalle por vendedor`;
+  document.getElementById('summarySectionNote').textContent = 'Orden establecido de sucursales · selecciona una fila para ver el detalle por vendedor';
   tbody.innerHTML = rows.map((r,i) => storeSummaryRowHtml(r, i, STATE.summary.findIndex(s=>s.sucursal===r.sucursal), maxes)).join('') + totalRowHtml('Comercial Express', total);
 
   tbody.querySelectorAll('tr.row-clickable').forEach(tr=>{
@@ -1148,7 +1095,7 @@ function paintStoreSearchOptions(query){
 
   panel.innerHTML = filtered.map(({r, idx})=>{
     const up = r.mixPorta >= STATE.goal;
-    const rankCls = idx===0 ? 'gold' : idx===1 ? 'silver' : idx===2 ? 'bronze' : '';
+    const rankCls = '';
     return `<div class="store-search-option" data-key="store-${idx}">
         <span class="rank-badge ${rankCls}">${idx+1}</span>
         <span class="store-search-option-name">${escapeTipAttr(r.sucursal)}</span>
@@ -1309,7 +1256,7 @@ function renderAll(){
     return (ia===-1?999:ia) - (ib===-1?999:ib);
   });
   renderChips();
-  renderMetricTabs();
+  renderGlobalKpis();
   renderStoreCards();
   renderSummaryTable();
   renderStoreSearch();
@@ -1524,7 +1471,7 @@ document.getElementById('goalInput').addEventListener('input', function(e){
   STATE.goal = Number.isFinite(v) ? Math.max(0, Math.min(100, v)) : CONFIG.metaGoalPortaDefault;
   if(localSnapshot){localSnapshot.goal=STATE.goal;document.getElementById('downloadData').disabled=false;}
   const keyToRestore = STATE.activeKey;
-  renderMetricTabs();
+  renderGlobalKpis();
   renderStoreCards();
   renderSummaryTable();
   renderStoreSearch();
