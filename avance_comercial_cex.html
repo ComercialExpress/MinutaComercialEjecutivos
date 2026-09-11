@@ -444,28 +444,59 @@ body.no-data .nav-section,body.no-data .global-kpis,body.no-data #panel-resumen,
 @media print{body.is-admin .admin-only,.admin-only,#refreshData,#publishedData{display:none!important}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 
-.daily-cell{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 5px;min-width:0}
-.daily-value{font-family:'Sora',sans-serif;font-weight:800;font-size:12px;padding:3px 8px;border-radius:999px;background:var(--border-soft);white-space:nowrap}
-.met .daily-value{background:var(--green-100);color:var(--green-600)}
-.pending .daily-value{background:var(--red-100);color:var(--red-600)}
-.goal-progress{display:flex;flex-direction:column;gap:4px;align-items:stretch;width:100%;font-variant-numeric:tabular-nums}
-.goal-caption{display:block;font-size:10px;font-weight:500;color:var(--ink-500)}
-.goal-percent{font-size:9px;font-weight:700;color:var(--ink-500)}
-.goal-progress.met .goal-percent{color:var(--green-600)}
-.goal-progress.pending .goal-percent{color:var(--red-600)}
-.goal-track{height:4px;border-radius:99px;background:var(--border-soft);overflow:hidden;display:block}
-.goal-track>span{display:block;height:100%;background:var(--red-600)}
-.goal-progress.met .goal-track>span{background:var(--green-600)}
-.kpi-card .goal-progress,.kpi-card>.goal-caption{margin-top:10px}
-.kpi-card{min-width:0}.kpi-value{font-size:clamp(16px,1.55vw,22px)}
-.total-row .goal-caption,.total-row .goal-percent{color:#fff}
-.total-row .daily-value{background:rgba(255,255,255,.12);color:#fff}
-.total-row .goal-track{background:rgba(255,255,255,.2)}
-.total-row .goal-progress.pending .goal-percent{color:#FFBDC4}
-.total-row .goal-progress.met .goal-percent{color:#A8EFC5}
-.store-hero-badge.no-goal{background:rgba(255,255,255,.12);color:#fff}
-.daily-cell>.goal-caption.neutral{font-size:9px}
 
+/* Lectura ejecutiva: cifra, avance compacto y metas bajo demanda. */
+.daily-cell{display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 7px;min-width:0}
+.daily-value{font-family:'Inter',sans-serif;font-weight:650;font-size:13px;color:var(--ink-900);white-space:nowrap;line-height:1.3;cursor:help}
+.daily-value:focus-visible{outline:2px solid var(--orange-500);outline-offset:4px}
+.daily-value.tt,.kpi-label.tt{border-bottom:0;text-decoration:none}
+.matrix-progress{display:flex;align-items:center;gap:6px;width:100%;max-width:112px;min-height:13px}
+.matrix-track{display:block;height:3px;flex:1;min-width:12px;background:var(--border-soft);border-radius:99px;overflow:hidden}
+.matrix-track>span{display:block;height:100%;background:var(--navy-500);border-radius:99px}
+.matrix-percent{font-size:10px;font-weight:600;color:var(--ink-500);font-variant-numeric:tabular-nums;white-space:nowrap}
+.met .matrix-track>span{background:var(--green-600)}
+.met .matrix-percent{color:var(--green-600)}
+.matrix-progress.unavailable{justify-content:center;color:var(--ink-400)}
+.neutral .daily-value{color:var(--ink-500)}
+.daily-meta{display:none;font-size:10px;color:var(--ink-500);font-variant-numeric:tabular-nums;line-height:1.4}
+body.show-daily-metas .daily-meta{display:block}
+.matrix-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.matrix-legend{display:flex;align-items:center;gap:14px;color:var(--ink-500);font-size:11px;flex-wrap:wrap}
+.legend-item{display:inline-flex;align-items:center;gap:6px}
+.legend-line{width:18px;height:3px;border-radius:9px;background:var(--navy-500)}
+.legend-line.met{background:var(--green-600)}
+.meta-toggle{border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--ink-700);font:600 11px 'Inter',sans-serif;padding:9px 12px;cursor:pointer;transition:background .15s}
+.meta-toggle:hover,.meta-toggle[aria-pressed="true"]{background:var(--bg);border-color:var(--navy-500)}
+.goal-progress{display:flex;flex-direction:column;gap:9px;width:100%;font-variant-numeric:tabular-nums;margin-top:14px}
+.goal-summary{display:flex;justify-content:space-between;align-items:center;gap:5px;flex-wrap:wrap}
+.goal-caption{display:block;font-size:10px;font-weight:500;color:var(--ink-500)}
+.goal-percent{font-size:11px;font-weight:700;color:var(--navy-700);padding:3px 6px;background:var(--bg);border-radius:6px;white-space:nowrap}
+.goal-progress.met .goal-percent{color:var(--green-600);background:var(--green-100)}
+.goal-track{height:4px;border-radius:99px;background:var(--border-soft);overflow:hidden;display:block}
+.goal-track>span{display:block;height:100%;background:var(--navy-500)}
+.goal-progress.met .goal-track>span{background:var(--green-600)}
+.kpi-card>.goal-caption{margin-top:14px}
+.kpi-card{min-width:0;border-top:1px solid var(--border);padding:20px 16px 17px;box-shadow:var(--shadow-card)}
+.kpi-card:hover{transform:none;box-shadow:var(--shadow-card)}
+.kpi-label{font-size:10px;color:var(--ink-500);letter-spacing:.04em}
+.kpi-value{font-size:clamp(16px,1.55vw,24px);margin-top:12px;letter-spacing:-.035em}
+.kpi-sub{font-size:10px;min-height:14px;margin-top:6px}
+.total-row .daily-value{color:#fff;font-weight:750}
+.total-row .matrix-track{background:rgba(255,255,255,.16)}
+.total-row .matrix-track>span{background:#AEB8F0}
+.total-row .matrix-percent,.total-row .daily-meta{color:#D9DDF1}
+.total-row .met .matrix-percent{color:#A8EFC5}
+.total-row .met .matrix-track>span{background:#6BDC9D}
+.store-hero-badge.no-goal{background:rgba(255,255,255,.12);color:#fff}
+#summaryTable th{font-size:10px;color:var(--ink-500);font-weight:600;padding:14px 6px}
+#summaryTable td{height:76px}
+#summaryTable td:first-child{font-family:'Inter',sans-serif;font-weight:600;font-size:12px}
+#summaryTable .rank-badge{display:none}
+#summaryTable th:first-child{width:210px}
+#goalsStatus{font-size:11px;opacity:.78}
+#sourceStatus{font-size:11px;opacity:.78}
+@media print{.meta-toggle{display:none}.daily-meta{display:block}.matrix-track,.goal-track{print-color-adjust:exact}}
+@media(max-width:560px){.matrix-legend{font-size:10px;gap:9px}.matrix-tools{gap:10px}.kpi-value{font-size:19px}}
 </style>
 </head>
 <body>
@@ -505,7 +536,7 @@ body.no-data .nav-section,body.no-data .global-kpis,body.no-data #panel-resumen,
 
   <!-- Indicadores globales del corte -->
   <section class="global-kpis" aria-label="Indicadores globales del corte">
-    <div class="section-heading"><h2>Resultado global</h2><span class="section-note">Todas las sucursales · corte publicado o vista previa actual</span></div>
+    <div class="section-heading"><h2>Resultado global</h2><span class="section-note">Todas las sucursales · % de cumplimiento sobre la meta</span></div>
     <div class="store-kpi-grid" id="globalKpis"></div>
   </section>
 
@@ -542,7 +573,11 @@ body.no-data .nav-section,body.no-data .global-kpis,body.no-data #panel-resumen,
     <div class="card">
       <div class="card-title-row">
         <div class="card-title">Resumen por sucursal</div>
-        <div class="card-note">Meta del día y cumplimiento por indicador · Verde: cumple · Rojo: pendiente · Gris: sin meta</div>
+        <div class="card-note">Venta neta y avance sobre la meta diaria</div>
+      </div>
+      <div class="matrix-tools">
+        <div class="matrix-legend"><span class="legend-item"><span class="legend-line"></span>Avance</span><span class="legend-item"><span class="legend-line met"></span>Meta cumplida ≥100%</span><span>— Sin meta · Detalle al enfocar una cifra</span></div>
+        <button class="meta-toggle" id="toggleDailyMetas" type="button" aria-pressed="false" aria-controls="summaryTable">Mostrar metas</button>
       </div>
       <div class="table-scroll">
         <table class="rol-table" id="summaryTable">
@@ -704,9 +739,8 @@ function goalProgress(value,goal,key){
   if(goal===0) return '<span class="goal-caption neutral">Sin meta para hoy</span>';
   const achievement=value/goal*100;
   const ok=value>=goal;
-  return `<span class="goal-progress ${ok?'met':'pending'}" title="${ok?'Meta cumplida':'Avance respecto de la meta del día'}">
-    <span class="goal-caption">Meta ${goalFormat(goal,key)}</span>
-    <span class="goal-percent">${fmtPct(achievement)} de cumplimiento</span>
+  return `<span class="goal-progress ${ok?'met':'pending'}">
+    <span class="goal-summary"><span class="goal-caption">Meta ${goalFormat(goal,key)}</span><span class="goal-percent" title="${ok?'Meta cumplida':'Avance sobre la meta diaria'}">${fmtPct(achievement)}</span></span>
     <span class="goal-track"><span style="width:${Math.max(0,Math.min(100,achievement))}%"></span></span>
   </span>`;
 }
@@ -717,8 +751,14 @@ function targetCell(value,key,storeName){
   const label=money?fmtMoney(value):percentage?fmtPct(value):fmtInt(value);
   const state=goal===null || goal===0 ? 'neutral' : value>=goal ? 'met' : 'pending';
   const reportRow=storeName ? STATE.summary.find(r=>r.sucursal===storeName) : computeTotal(STATE.summary);
-  const tip=reportRow ? tipForMetric(reportRow,key) : '';
-  return `<span class="daily-cell ${state}"><span class="daily-value${tip?' tt':''}"${tip?` data-tip="${escapeTipAttr(tip)}"`:''}>${label}</span>${goalProgress(value,goal,key)}</span>`;
+  const breakdown=reportRow ? tipForMetric(reportRow,key) : '';
+  const achievement=goal>0?value/goal*100:null;
+  const metaLabel=goal===null?'Meta no disponible':goal===0?'Sin meta para hoy':`Meta ${goalFormat(goal,key)}`;
+  const tip=`Venta: ${label}\n${metaLabel}${achievement===null?'':`\nCumplimiento: ${fmtPct(achievement)}`}${breakdown?'\n\n'+breakdown:''}`;
+  const progress=achievement===null
+    ? '<span class="matrix-progress unavailable">—</span>'
+    : `<span class="matrix-progress"><span class="matrix-track"><span style="width:${Math.max(0,Math.min(100,achievement))}%"></span></span><span class="matrix-percent">${fmtPct(achievement)}</span></span>`;
+  return `<span class="daily-cell ${state}"><span class="daily-value tt" tabindex="0" data-tip="${escapeTipAttr(tip)}" aria-label="${escapeTipAttr(`${label}. ${metaLabel}${achievement===null?'':'. Cumplimiento '+fmtPct(achievement)}`)}">${label}</span>${progress}<span class="daily-meta">${metaLabel}</span></span>`;
 }
 function renderGoalsStatus(){
   const element=document.getElementById('goalsStatus');
@@ -727,7 +767,7 @@ function renderGoalsStatus(){
   if(date.slice(0,7)!==GOALS.period){element.textContent=`Metas disponibles: ${GOALS.period}. No hay metas para el corte ${STATE.asOf}.`;return;}
   const weight=GOALS.weights[date];
   const missing=STATE.summary.filter(r=>!GOALS.stores[goalStoreKey(r.sucursal)]).map(r=>r.sucursal);
-  element.textContent=`Meta diaria = meta mensual × peso del ${STATE.asOf}: ${(weight*100).toLocaleString('es-CL',{maximumFractionDigits:4})}% · Montos netos sin IVA. Porcentajes: objetivos constantes del período.`+(missing.length?` Sin meta: ${missing.join(', ')}.`:'');
+  element.textContent=`Metas ${GOALS.period} · Peso del ${STATE.asOf}: ${(weight*100).toLocaleString('es-CL',{maximumFractionDigits:4})}% · Montos netos sin IVA.`+(missing.length?` Sin meta: ${missing.join(', ')}.`:'');
 }
 async function refreshGoals(){
   if(goalsRefreshing) return;
@@ -1542,7 +1582,7 @@ async function refreshPublished(){
     if(generation!==sourceGeneration || localSnapshot) return;
     const version=JSON.stringify(snapshot);
     if(version!==publishedVersion){displaySnapshot(snapshot);publishedVersion=version;}
-    sourceStatus.textContent=`Datos publicados · ${snapshotLabel(snapshot)} · revisión automática cada minuto.`;
+    sourceStatus.textContent=`Datos publicados · ${snapshotLabel(snapshot)}.`;
   }catch(error){
     if(generation!==sourceGeneration || localSnapshot) return;
     sourceStatus.textContent=STATE.rows.length
@@ -1708,6 +1748,13 @@ document.getElementById('publishedData').addEventListener('click',()=>{
   document.addEventListener('scroll', ()=>{ if(current) place(current); }, true);
   window.addEventListener('resize', ()=>{ if(current) hide(); });
 })();
+
+document.getElementById('toggleDailyMetas').addEventListener('click',function(){
+  const visible=this.getAttribute('aria-pressed')!=='true';
+  document.body.classList.toggle('show-daily-metas',visible);
+  this.setAttribute('aria-pressed',String(visible));
+  this.textContent=visible?'Ocultar metas':'Mostrar metas';
+});
 
 /* ---------- Datos compartidos; ante errores nunca sustituir por ejemplos ---------- */
 document.body.classList.add('no-data');

@@ -111,7 +111,9 @@ La meta global suma las metas de sucursales incluidas. Para %Mix Porta global se
 
 La fila CEX del Excel difiere ligeramente de la suma de sucursales: Móvil Persona 4.868 frente a 4.867, Voz Portado 1.454 frente a 1.453, Voz SS 4.381 frente a 4.382 y Fibra Solicitud 445 frente a 444. Se conserva cada meta de sucursal y el total visible suma esas metas. Las diferencias se registran en `sourceTotalDifference` del JSON.
 
-Verde indica cumplimiento desde 100%, rojo avance inferior y gris meta ausente o cero. Si la meta diaria es cero (incluidos los días 18 y 19 con peso cero), se muestra “Sin meta para hoy” y no se divide por cero. Si no corresponde el período o falta una sucursal, se muestra “Meta no disponible”. Si falla la descarga de metas, se mantienen las ventas y se suspende la evaluación hasta recuperar las metas. Las sucursales activas sin ventas permanecen visibles con venta cero y su meta correspondiente.
+La matriz prioriza la venta como cifra principal y muestra debajo una barra fina con el porcentaje de avance. Azul indica avance inferior a la meta y verde cumplimiento desde 100%; el porcentaje permite interpretar el estado sin depender solo del color. Las metas exactas se consultan al pasar por una cifra, enfocarla con teclado o activar **Mostrar metas** para toda la matriz. La impresión muestra las metas.
+
+Si la meta diaria es cero (incluidos los días 18 y 19 con peso cero), se muestra un guion en el avance y “Sin meta para hoy” en el detalle, sin dividir por cero. Si no corresponde el período o falta una sucursal, el detalle indica “Meta no disponible”. Si falla la descarga de metas, se mantienen las ventas y se suspende la evaluación hasta recuperar las metas. Las sucursales activas sin ventas permanecen visibles con venta cero y su meta correspondiente. Las tarjetas globales conservan la meta visible con un porcentaje compacto y barra de avance.
 
 Las metas se consultan al abrir el informe, al actualizar, al volver a la pestaña y cada minuto. La carga local del Excel de ventas utiliza las mismas metas publicadas; su fecha de corte puede diferir de la fecha de publicación.
 
