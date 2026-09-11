@@ -6,9 +6,11 @@ Este informe sigue la estructura existente de MinutaComercialEjecutivos: HTML y 
 
 - `avance_comercial_cex.html`: informe y herramienta de carga manual en `?admin=1`.
 - `avance_comercial.json`: último corte validado, utilizado por todos los lectores.
+- `avance_metas.json`: metas mensuales por sucursal y pesos diarios del FCST.
+- `preparar_metas_avance.py`: conversión local de ambos Excel a JSON para futuros períodos (requiere Python y openpyxl).
 - `AVANCE_COMERCIAL.md`: instrucciones y mapeo de datos.
 
-Agregar estos tres archivos a la raíz de `main`. No reemplazar `index.html`, los otros informes, sus JSON ni los workflows existentes. Esta integración no necesita Azure, SharePoint, credenciales nuevas ni un workflow de sincronización.
+Agregar los archivos de esta integración a la raíz de `main`. No reemplazar `index.html`, los otros informes, sus JSON ni los workflows existentes. Esta integración no necesita Azure, SharePoint, credenciales nuevas ni un workflow de sincronización.
 
 Si Pages ya publica la raíz de `main`, el enlace esperado es:
 `https://comercialexpress.github.io/MinutaComercialEjecutivos/avance_comercial_cex.html`
@@ -19,8 +21,8 @@ Verificar la configuración actual de Pages en Settings → Pages antes de modif
 
 1. Exportar un único día desde Bsale en formato `.xlsx`, con las columnas detalladas abajo. No editar el Excel original.
 2. Abrir el informe con `?admin=1` al final de la dirección.
-3. Pulsar **Cargar Excel Bsale**, seleccionar el archivo y revisar la vista previa local.
-4. Ajustar la meta %Mix Porta si corresponde y pulsar **Descargar JSON para publicar**.
+3. Pulsar **Cargar Excel Bsale**, seleccionar el archivo y revisar la vista previa local. La fecha de ventas selecciona automáticamente el peso del FCST y las metas de ese período.
+4. Pulsar **Descargar JSON para publicar**. Las metas se administran en `avance_metas.json`, no en el archivo de ventas.
 5. En la raíz del repositorio, usar **Add file → Upload files** y cargar el archivo descargado con el nombre exacto `avance_comercial.json`. Si el navegador agrega `(1)` al nombre, renombrarlo antes. Reemplazar el archivo existente y confirmar con **Commit changes**, según los permisos y reglas del repositorio.
 6. Volver al informe y pulsar **Ver datos publicados**. Verificar el corte y la hora de preparación. Compartir el enlace sin `?admin=1` con los lectores.
 
@@ -81,3 +83,44 @@ Contrato: `{schemaVersion:1, generatedAt, asOf, goal, rows}`. `generatedAt` iden
 | Venta neta Accesorios (bruto $11.389.462 ÷ 1,19) | $9.570.976 |
 
 El lector Excel usa SheetJS, como el HTML de origen. Requiere conexión para cargar esa biblioteca desde CDN. El informe conserva la identidad visual CEX y las fuentes Sora e Inter.
+
+## Metas diarias y FCST
+
+Para septiembre 2026 se usa el **primer bloque**, encabezados en fila 6, sucursales en filas 7–15 y total CEX en fila 16 de `METAS_POR_SUCURSAL_2026_09.xlsx`, hoja Export. El segundo bloque queda excluido por confirmación del usuario.
+
+Se toma FECHA y PESO DIARIO del archivo `FCST_EXPRESS_2026_09.xlsx`, hoja Export, encabezados fila 2. Sus fechas son septiembre aunque el título dice agosto. Los 30 pesos suman 100%. No se utiliza el peso acumulado, `%AVANCE`, ni `% RESTANTE`.
+
+**Meta diaria por tienda e indicador = meta mensual × peso de la fecha de ventas.** Cumplimiento = venta del día / meta diaria × 100. No es un objetivo ajustado a la hora del día: una carga parcial se compara con la meta completa del día.
+
+| Indicador HTML | Meta mensual de origen |
+|---|---|
+| Móvil Persona | MOVIL_PERSONA |
+| Fibra Solicitud | FIBRA_SOLICITUD |
+| Voz Portado | VOZ_PORTADO |
+| Voz SS | VOZ_SS |
+| Equipos netos | (MONTO_EQUIPOS + MONTO_EQUIPOS_EMPRESA) × 1.000 |
+| Accesorios netos | (MONTO_ACCESORIOS + MONTO_ACCESORIOS_EMPRESA) × 1.000 |
+| Móvil Empresa | MOVIL_EMPRESA |
+| Solicitud Fijo Empresa | FIJO_EMPRESA |
+| %Mix Porta | PCT_MIX_PORTA × 100, objetivo constante del período |
+| %Mix Voz SS | VOZ_SS / MOVIL_PERSONA × 100, objetivo derivado constante del período |
+
+El usuario confirmó que las metas monetarias incluyen Persona + Empresa, el factor es exactamente 1.000 y los valores ya son netos: **no dividir las metas por 1,19**. Las ventas continúan convirtiéndose desde bruto a neto una sola vez. Cantidades objetivo con hasta dos decimales y pesos con hasta cuatro decimales porcentuales en pantalla; el cálculo conserva toda la precisión disponible. No redondear cantidades al entero antes de evaluar cumplimiento.
+
+La meta global suma las metas de sucursales incluidas. Para %Mix Porta global se ponderan los objetivos porcentuales de las tiendas por sus metas mensuales VOZ_SS; para %Mix Voz SS se divide la suma de metas VOZ_SS por la suma de metas MOVIL_PERSONA. No se asignan metas de sucursal a vendedores: su detalle sigue siendo referencial.
+
+La fila CEX del Excel difiere ligeramente de la suma de sucursales: Móvil Persona 4.868 frente a 4.867, Voz Portado 1.454 frente a 1.453, Voz SS 4.381 frente a 4.382 y Fibra Solicitud 445 frente a 444. Se conserva cada meta de sucursal y el total visible suma esas metas. Las diferencias se registran en `sourceTotalDifference` del JSON.
+
+Verde indica cumplimiento desde 100%, rojo avance inferior y gris meta ausente o cero. Si la meta diaria es cero (incluidos los días 18 y 19 con peso cero), se muestra “Sin meta para hoy” y no se divide por cero. Si no corresponde el período o falta una sucursal, se muestra “Meta no disponible”. Si falla la descarga de metas, se mantienen las ventas y se suspende la evaluación hasta recuperar las metas. Las sucursales activas sin ventas permanecen visibles con venta cero y su meta correspondiente.
+
+Las metas se consultan al abrir el informe, al actualizar, al volver a la pestaña y cada minuto. La carga local del Excel de ventas utiliza las mismas metas publicadas; su fecha de corte puede diferir de la fecha de publicación.
+
+### Actualizar el período de metas
+
+Ejecutar localmente con Python y openpyxl instalado:
+
+```text
+python preparar_metas_avance.py --metas "METAS_POR_SUCURSAL_2026_09.xlsx" --fcst "FCST_EXPRESS_2026_09.xlsx" --fila-encabezado 6 --salida avance_metas.json
+```
+
+Revisar la salida y reemplazar solo `avance_metas.json` en la raíz del repositorio. El script valida fechas, pesos, duplicados y valores numéricos. El encabezado y la hoja deben corresponder al formato documentado; si cambia la estructura, revisarla antes de importar. El JSON contiene un período: al publicar el siguiente mes, las ventas de otro mes siguen visibles pero sus metas se indican como no disponibles. No se necesitan cambios en los workflows existentes ni subir los Excel originales.

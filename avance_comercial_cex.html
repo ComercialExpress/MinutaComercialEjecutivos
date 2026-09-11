@@ -47,7 +47,7 @@ h1,h2,h3{font-family:'Sora',sans-serif; margin:0;}
 
 /* ---------- Header hero ---------- */
 .header-card{
-  position:relative; overflow:hidden;
+  position:relative; overflow:clip;
   background:linear-gradient(135deg,var(--navy-900),var(--navy-700),var(--navy-600));
   border-radius:var(--radius-lg); padding:32px clamp(28px,3vw,44px); color:#fff;
   box-shadow:var(--shadow-card);
@@ -443,6 +443,29 @@ button:disabled{opacity:.5;cursor:default}
 body.no-data .nav-section,body.no-data .global-kpis,body.no-data #panel-resumen,body.no-data #storePanels{display:none}
 @media print{body.is-admin .admin-only,.admin-only,#refreshData,#publishedData{display:none!important}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+.daily-cell{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 5px;min-width:0}
+.daily-value{font-family:'Sora',sans-serif;font-weight:800;font-size:12px;padding:3px 8px;border-radius:999px;background:var(--border-soft);white-space:nowrap}
+.met .daily-value{background:var(--green-100);color:var(--green-600)}
+.pending .daily-value{background:var(--red-100);color:var(--red-600)}
+.goal-progress{display:flex;flex-direction:column;gap:4px;align-items:stretch;width:100%;font-variant-numeric:tabular-nums}
+.goal-caption{display:block;font-size:10px;font-weight:500;color:var(--ink-500)}
+.goal-percent{font-size:9px;font-weight:700;color:var(--ink-500)}
+.goal-progress.met .goal-percent{color:var(--green-600)}
+.goal-progress.pending .goal-percent{color:var(--red-600)}
+.goal-track{height:4px;border-radius:99px;background:var(--border-soft);overflow:hidden;display:block}
+.goal-track>span{display:block;height:100%;background:var(--red-600)}
+.goal-progress.met .goal-track>span{background:var(--green-600)}
+.kpi-card .goal-progress,.kpi-card>.goal-caption{margin-top:10px}
+.kpi-card{min-width:0}.kpi-value{font-size:clamp(16px,1.55vw,22px)}
+.total-row .goal-caption,.total-row .goal-percent{color:#fff}
+.total-row .daily-value{background:rgba(255,255,255,.12);color:#fff}
+.total-row .goal-track{background:rgba(255,255,255,.2)}
+.total-row .goal-progress.pending .goal-percent{color:#FFBDC4}
+.total-row .goal-progress.met .goal-percent{color:#A8EFC5}
+.store-hero-badge.no-goal{background:rgba(255,255,255,.12);color:#fff}
+.daily-cell>.goal-caption.neutral{font-size:9px}
+
 </style>
 </head>
 <body>
@@ -464,11 +487,6 @@ body.no-data .nav-section,body.no-data .global-kpis,body.no-data #panel-resumen,
         </div>
       </div>
       <div class="upload-row">
-        <div class="goal-field admin-only">
-          <label for="goalInput" class="tt" data-tip="Umbral de %Mix Porta (Voz Portado ÷ Voz SS) que define si una sucursal cumple la meta del día.">Meta %Mix Porta</label>
-          <input type="number" id="goalInput" value="33.5" step="0.1" min="0" max="100">
-          <span style="color:rgba(255,255,255,.6); font-weight:700;">%</span>
-        </div>
         <label class="ghost-field admin-only" for="fileInput">
           <svg viewBox="0 0 24 24"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg>
           <span id="uploadLabel">Cargar Excel Bsale</span>
@@ -480,6 +498,7 @@ body.no-data .nav-section,body.no-data .global-kpis,body.no-data #panel-resumen,
       </div>
     </div>
     <div class="chips-row" id="chipsRow"></div>
+    <p id="goalsStatus" role="status" style="position:relative;z-index:1;line-height:1.6">Cargando metas y pesos diarios…</p>
     <p id="sourceStatus" role="status" aria-live="polite">Consultando la última carga publicada…</p>
     <p class="admin-only" style="position:relative;z-index:1">Carga el Excel, revisa el informe y descarga el JSON. Para compartirlo, reemplaza <b>avance_comercial.json</b> en la raíz del repositorio mediante <a style="color:white" href="https://github.com/ComercialExpress/MinutaComercialEjecutivos/upload/main" target="_blank" rel="noopener noreferrer">Add file → Upload files</a> y confirma el cambio en GitHub. La vista previa solo se ve en este navegador.</p>
   </div>
@@ -523,7 +542,7 @@ body.no-data .nav-section,body.no-data .global-kpis,body.no-data #panel-resumen,
     <div class="card">
       <div class="card-title-row">
         <div class="card-title">Resumen por sucursal</div>
-        <div class="card-note">Montos netos sin IVA · Barra = magnitud relativa · %Mix Porta en verde cumple la meta</div>
+        <div class="card-note">Meta del día y cumplimiento por indicador · Verde: cumple · Rojo: pendiente · Gris: sin meta</div>
       </div>
       <div class="table-scroll">
         <table class="rol-table" id="summaryTable">
@@ -549,7 +568,7 @@ body.no-data .nav-section,body.no-data .global-kpis,body.no-data #panel-resumen,
     <div class="footnote">
       Voz SS = líneas de voz (nuevas + portadas + seguimiento de línea); no incluye planes MIS.
       %Mix Porta = Voz Portado / Voz SS. %Mix Voz SS = Voz SS / Móvil Persona.
-      Las etiquetas vacías junto a cada indicador quedan reservadas para mostrar su meta apenas se defina en <code>CONFIG.metricGoals</code>.
+      Meta diaria = meta mensual × peso del día de ventas. Las metas de porcentaje no se ponderan por día. Las cantidades objetivo conservan decimales; el cumplimiento usa el valor sin redondear.
     </div>
 
     <div class="section-heading">
@@ -570,6 +589,7 @@ body.no-data .nav-section,body.no-data .global-kpis,body.no-data #panel-resumen,
    o reglas de clasificación del pivot de Bsale.
    ========================================================= */
 const CONFIG = {
+  goalsUrl:'https://raw.githubusercontent.com/ComercialExpress/MinutaComercialEjecutivos/main/avance_metas.json',
   ivaRate:0.19,
   dataUrl:'https://raw.githubusercontent.com/ComercialExpress/MinutaComercialEjecutivos/main/avance_comercial.json',
   refreshMs:60000,
@@ -624,6 +644,107 @@ let STATE = {
 /* Logo corporativo, clonado del header principal para reutilizarlo en el encabezado
    de cada ficha de sucursal sin duplicar el base64 en el script. */
 const LOGO_HTML = document.getElementById('mainLogoImg').outerHTML;
+
+/* Metas mensuales y peso diario: no usar la fecha del equipo ni el peso acumulado. */
+let GOALS = null;
+let goalsError = 'Cargando metas y pesos diarios…';
+let goalsRefreshing = false;
+const GOAL_KEYS = ['movilPersona','fibra','vozPortado','vozSS','equiposCLP','accCLP','movilEmpresa','fijoEmpresa'];
+function goalStoreKey(name){return String(name).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();}
+function salesDateKey(){
+  const match=STATE.asOf.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  return match ? `${match[3]}-${match[2]}-${match[1]}` : '';
+}
+function validateGoals(data){
+  if(!data || data.schemaVersion!==1 || !/^\d{4}-(0[1-9]|1[0-2])$/.test(data.period) || data.moneyBasis!=='net' || data.moneyScale!==1000 || data.moneySegments!=='PERSONA+EMPRESA') throw new Error('Formato de metas incompatible.');
+  if(!data.stores || !Object.keys(data.stores).length || !data.weights) throw new Error('Faltan metas o pesos diarios.');
+  for(const [name,store] of Object.entries(data.stores)){
+    if(name!==goalStoreKey(name)) throw new Error('Nombre de sucursal no normalizado.');
+    for(const key of [...GOAL_KEYS,'mixPorta']) if(typeof store[key]!=='number' || !Number.isFinite(store[key]) || store[key]<0) throw new Error(`Meta inválida: ${name} / ${key}`);
+    if(store.mixPorta>100) throw new Error('Meta %Mix Porta inválida.');
+  }
+  const [year,month]=data.period.split('-').map(Number);
+  const days=new Date(Date.UTC(year,month,0)).getUTCDate();
+  if(Object.keys(data.weights).length!==days) throw new Error('FCST incompleto.');
+  let sum=0;
+  for(let day=1;day<=days;day++){
+    const weight=data.weights[`${data.period}-${String(day).padStart(2,'0')}`];
+    if(typeof weight!=='number' || !Number.isFinite(weight) || weight<0 || weight>1) throw new Error('Peso diario inválido o faltante.');
+    sum+=weight;
+  }
+  if(Math.abs(sum-1)>1e-8) throw new Error('Los pesos diarios no suman 100%.');
+  return data;
+}
+function dailyGoal(storeName,key){
+  const date=salesDateKey();
+  if(!GOALS || date.slice(0,7)!==GOALS.period || !Object.hasOwn(GOALS.weights,date)) return null;
+  const names=storeName ? [storeName] : STATE.summary.map(r=>r.sucursal);
+  if(!names.length) return null;
+  const stores=names.map(name=>GOALS.stores[goalStoreKey(name)]);
+  if(stores.some(s=>!s)) return null;
+  if(key==='mixPorta'){
+    if(storeName) return stores[0].mixPorta;
+    const denominator=stores.reduce((sum,s)=>sum+s.vozSS,0);
+    return denominator>0 ? stores.reduce((sum,s)=>sum+s.mixPorta*s.vozSS,0)/denominator : null;
+  }
+  if(key==='mixVozSS'){
+    const denominator=stores.reduce((sum,s)=>sum+s.movilPersona,0);
+    return denominator>0 ? stores.reduce((sum,s)=>sum+s.vozSS,0)/denominator*100 : null;
+  }
+  if(!GOAL_KEYS.includes(key)) return null;
+  return stores.reduce((sum,s)=>sum+s[key],0)*GOALS.weights[date];
+}
+function goalFormat(value,key){
+  if(['mixPorta','mixVozSS'].includes(key)) return fmtPct(value);
+  if(['equiposCLP','accCLP'].includes(key)) return fmtMoney(value);
+  return value.toLocaleString('es-CL',{maximumFractionDigits:2});
+}
+function goalProgress(value,goal,key){
+  if(goal===null) return '<span class="goal-caption neutral">Meta no disponible</span>';
+  if(goal===0) return '<span class="goal-caption neutral">Sin meta para hoy</span>';
+  const achievement=value/goal*100;
+  const ok=value>=goal;
+  return `<span class="goal-progress ${ok?'met':'pending'}" title="${ok?'Meta cumplida':'Avance respecto de la meta del día'}">
+    <span class="goal-caption">Meta ${goalFormat(goal,key)}</span>
+    <span class="goal-percent">${fmtPct(achievement)} de cumplimiento</span>
+    <span class="goal-track"><span style="width:${Math.max(0,Math.min(100,achievement))}%"></span></span>
+  </span>`;
+}
+function targetCell(value,key,storeName){
+  const goal=dailyGoal(storeName,key);
+  const money=['equiposCLP','accCLP'].includes(key);
+  const percentage=['mixPorta','mixVozSS'].includes(key);
+  const label=money?fmtMoney(value):percentage?fmtPct(value):fmtInt(value);
+  const state=goal===null || goal===0 ? 'neutral' : value>=goal ? 'met' : 'pending';
+  const reportRow=storeName ? STATE.summary.find(r=>r.sucursal===storeName) : computeTotal(STATE.summary);
+  const tip=reportRow ? tipForMetric(reportRow,key) : '';
+  return `<span class="daily-cell ${state}"><span class="daily-value${tip?' tt':''}"${tip?` data-tip="${escapeTipAttr(tip)}"`:''}>${label}</span>${goalProgress(value,goal,key)}</span>`;
+}
+function renderGoalsStatus(){
+  const element=document.getElementById('goalsStatus');
+  if(!GOALS){element.textContent=goalsError;return;}
+  const date=salesDateKey();
+  if(date.slice(0,7)!==GOALS.period){element.textContent=`Metas disponibles: ${GOALS.period}. No hay metas para el corte ${STATE.asOf}.`;return;}
+  const weight=GOALS.weights[date];
+  const missing=STATE.summary.filter(r=>!GOALS.stores[goalStoreKey(r.sucursal)]).map(r=>r.sucursal);
+  element.textContent=`Meta diaria = meta mensual × peso del ${STATE.asOf}: ${(weight*100).toLocaleString('es-CL',{maximumFractionDigits:4})}% · Montos netos sin IVA. Porcentajes: objetivos constantes del período.`+(missing.length?` Sin meta: ${missing.join(', ')}.`:'');
+}
+async function refreshGoals(){
+  if(goalsRefreshing) return;
+  goalsRefreshing=true;
+  const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),20000);
+  try{
+    const url=new URL(CONFIG.goalsUrl,location.href);url.searchParams.set('_',Date.now());
+    const response=await fetch(url,{cache:'no-store',signal:controller.signal});
+    if(!response.ok) throw new Error(`HTTP ${response.status}`);
+    GOALS=validateGoals(await response.json());goalsError='';
+  }catch(error){GOALS=null;goalsError=`Metas no disponibles (${error.message}). Las ventas siguen visibles.`;}
+  finally{
+    clearTimeout(timeout);goalsRefreshing=false;
+    if(STATE.rows.length){const active=STATE.activeKey;renderAll();setActive(active);}
+    else renderGoalsStatus();
+  }
+}
 
 /* ---------- Utilidades de formato ---------- */
 function fmtInt(n){ return Math.round(n).toLocaleString('es-CL'); }
@@ -775,18 +896,19 @@ function combineTip(desc, bdTip){
 function kpiCardsHtml(total, opts){
   opts = opts || {};
   const cards = [
-    {label:'Móvil Persona', tip:combineTip('Líneas móviles nuevas o portadas vendidas a personas naturales en el día.', tipForMetric(total,'movilPersona')), value:fmtInt(total.movilPersona), sub:opts.empresaSub===false?'':`+${fmtInt(total.movilEmpresa)} empresa`, accent:'var(--navy-600)'},
-    {label:'Fibra Solicitud', tip:combineTip('Solicitudes de internet Hogar Fibra ingresadas en el día.', tipForMetric(total,'fibra')), value:fmtInt(total.fibra), sub:opts.empresaSub===false?'':`+${fmtInt(total.fijoEmpresa)} empresa`, accent:'var(--blue-600)'},
-    {label:'Voz Portado', tip:'Líneas de voz portadas desde otra compañía en el día.', value:fmtInt(total.vozPortado), sub:`de ${fmtInt(total.vozSS)} voz SS`, accent:'var(--purple-600)'},
-    {label:'%Mix Porta', tip:'Voz Portado ÷ Voz SS. Es el indicador de la meta comercial del día.', value:fmtPct(total.mixPorta), sub:`meta ${fmtPct(STATE.goal)}`, accent: total.mixPorta >= STATE.goal ? 'var(--green-600)' : 'var(--red-600)'},
-    {label:'Equipos netos', tip:combineTip('Venta neta de equipos sin IVA: subtotal bruto ÷ 1,19.', tipForMetric(total,'equiposCLP')), value:fmtMoney(total.equiposCLP), sub:`${fmtInt(total.equiposQ||0)} equipo(s) vendido(s)`, accent:'var(--amber-600)'},
-    {label:'Accesorios netos', tip:combineTip('Venta neta de accesorios sin IVA: subtotal bruto ÷ 1,19.', tipForMetric(total,'accCLP')), value:fmtMoney(total.accCLP), sub:`${fmtInt(total.accQ||0)} accesorio(s) vendido(s)`, accent:'var(--orange-600)'},
+    {key:'movilPersona', label:'Móvil Persona', tip:combineTip('Líneas móviles nuevas o portadas vendidas a personas naturales en el día.', tipForMetric(total,'movilPersona')), value:fmtInt(total.movilPersona), sub:opts.empresaSub===false?'':`+${fmtInt(total.movilEmpresa)} empresa`, accent:'var(--navy-600)'},
+    {key:'fibra', label:'Fibra Solicitud', tip:combineTip('Solicitudes de internet Hogar Fibra ingresadas en el día.', tipForMetric(total,'fibra')), value:fmtInt(total.fibra), sub:opts.empresaSub===false?'':`+${fmtInt(total.fijoEmpresa)} empresa`, accent:'var(--blue-600)'},
+    {key:'vozPortado', label:'Voz Portado', tip:'Líneas de voz portadas desde otra compañía en el día.', value:fmtInt(total.vozPortado), sub:`de ${fmtInt(total.vozSS)} voz SS`, accent:'var(--purple-600)'},
+    {key:'mixPorta', label:'%Mix Porta', tip:'Voz Portado ÷ Voz SS. Objetivo porcentual del período, sin ponderación diaria.', value:fmtPct(total.mixPorta), sub:'Objetivo del período', accent: dailyGoal(total.sucursal || null,'mixPorta')===null ? 'var(--ink-400)' : total.mixPorta >= dailyGoal(total.sucursal || null,'mixPorta') ? 'var(--green-600)' : 'var(--red-600)'},
+    {key:'equiposCLP', label:'Equipos netos', tip:combineTip('Venta neta de equipos sin IVA: subtotal bruto ÷ 1,19.', tipForMetric(total,'equiposCLP')), value:fmtMoney(total.equiposCLP), sub:`${fmtInt(total.equiposQ||0)} equipo(s) vendido(s)`, accent:'var(--amber-600)'},
+    {key:'accCLP', label:'Accesorios netos', tip:combineTip('Venta neta de accesorios sin IVA: subtotal bruto ÷ 1,19.', tipForMetric(total,'accCLP')), value:fmtMoney(total.accCLP), sub:`${fmtInt(total.accQ||0)} accesorio(s) vendido(s)`, accent:'var(--orange-600)'},
   ];
   return cards.map((c,i)=>`
     <div class="kpi-card" style="--accent:${c.accent}; animation-delay:${i*0.05}s">
       <div class="kpi-label tt" data-tip="${escapeTipAttr(c.tip)}">${c.label}</div>
       <div class="kpi-value">${c.value}</div>
       <div class="kpi-sub">${c.sub}</div>
+      ${goalProgress(total[c.key],dailyGoal(total.sucursal || null,c.key),c.key)}
     </div>`).join('');
 }
 
@@ -795,7 +917,7 @@ function ringSvg(pct, ok){
   const r = 21, c = 2*Math.PI*r;
   const clamped = Math.max(0, Math.min(100, pct));
   const offset = c - (clamped/100)*c;
-  const color = ok ? 'var(--green-600)' : (clamped >= 20 ? 'var(--amber-600)' : 'var(--red-600)');
+  const color = ok===null ? 'var(--ink-400)' : ok ? 'var(--green-600)' : (clamped >= 20 ? 'var(--amber-600)' : 'var(--red-600)');
   return `<div class="ring-wrap">
       <svg viewBox="0 0 48 48" width="52" height="52">
         <circle class="ring-bg" cx="24" cy="24" r="${r}"></circle>
@@ -811,7 +933,8 @@ function renderStoreCards(){
   if(!container) return;
   const rows = STATE.summary.map(withDerived);
   container.innerHTML = rows.map((r,i)=>{
-    const up = r.mixPorta >= STATE.goal;
+    const storeMixGoal = dailyGoal(r.sucursal,'mixPorta');
+    const up = storeMixGoal !== null && r.mixPorta >= storeMixGoal;
     return `
     <div class="store-card" data-key="store-${i}" role="button" tabindex="0" aria-label="Ver detalle de ${escapeTipAttr(r.sucursal)}">
       <div class="store-card-top">
@@ -819,7 +942,7 @@ function renderStoreCards(){
           <div class="store-card-name">${escapeTipAttr(r.sucursal)}</div>
           <div class="store-card-sub"><span class="nav-status-dot ${up?'up':'down'}"></span>${fmtInt(r.docs||0)} registros del corte</div>
         </div>
-        ${ringSvg(r.mixPorta, up)}
+        ${ringSvg(r.mixPorta, storeMixGoal===null?null:up)}
       </div>
       <div class="store-card-mini-grid">
         <div class="store-mini-stat"><div class="store-mini-label tt" data-tip="Líneas móviles a personas naturales">Móvil</div><div class="store-mini-value">${fmtInt(r.movilPersona)}</div></div>
@@ -827,7 +950,7 @@ function renderStoreCards(){
         <div class="store-mini-stat"><div class="store-mini-label tt" data-tip="Solicitudes de Hogar Fibra">Fibra</div><div class="store-mini-value">${fmtInt(r.fibra)}</div></div>
       </div>
       <div class="store-card-foot">
-        <span class="pill"><span class="pill-dot" style="color:${up?'var(--green-600)':'var(--red-600)'}"></span>${up?'Cumple meta':'Bajo meta'}</span>
+        <span class="pill"><span class="pill-dot" style="color:${up?'var(--green-600)':'var(--red-600)'}"></span>${storeMixGoal===null?'Sin meta disponible':up?'Cumple meta %Mix Porta':'Bajo meta %Mix Porta'}</span>
         <span class="store-card-link">Ver detalle <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
       </div>
     </div>`;
@@ -946,7 +1069,7 @@ function metricCell(value, maxes, key, formatFn, tip){
   const max = (maxes && maxes[key]) || 1;
   const pct = isZero ? 0 : Math.max(6, Math.min(100, (v / max) * 100));
   const grad = METRIC_GRADIENT[key] || 'linear-gradient(90deg,var(--navy-500),var(--navy-700))';
-  const goal = CONFIG.metricGoals ? CONFIG.metricGoals[key] : null;
+  const goal = null;
   const isMoney = formatFn === fmtMoney;
   let bg, fg;
   if(goal !== null && goal !== undefined){
@@ -966,9 +1089,9 @@ function metricCell(value, maxes, key, formatFn, tip){
 }
 function cellMixPorta(pct, row, showBar){
   if(showBar === undefined) showBar = true;
-  const ok = pct >= STATE.goal;
-  const pillBg = ok ? 'linear-gradient(180deg,#EAFBF2,var(--green-100))' : 'linear-gradient(180deg,#FFF0F1,var(--red-100))';
-  const pillTxt = ok ? 'var(--green-600)' : 'var(--red-600)';
+  const ok = true; // Vista por vendedor: mix referencial, sin meta individual asignada.
+  const pillBg = 'var(--border-soft)';
+  const pillTxt = 'var(--ink-700)';
   const barGrad = ok ? 'linear-gradient(90deg,#57D89A,var(--green-600))' : 'linear-gradient(90deg,#FF8C97,var(--red-600))';
   const width = Math.max(4, Math.min(100, pct));
   const tip = row ? `Voz Portado: ${fmtInt(row.vozPortado)}\nVoz SS: ${fmtInt(row.vozSS)}` : null;
@@ -1014,7 +1137,8 @@ function tipCellFill(content, tip){
   if(!tip) return `<span class="cell-fill">${content}</span>`;
   return `<span class="cell-fill tt" data-tip="${escapeTipAttr(tip)}">${content}</span>`;
 }
-function totalRowHtml(name, total){
+function totalRowHtml(name, total, showGoals=false){
+  if(showGoals) return `<tr class="total-row"><td>${escapeTipAttr(name)}</td>${['movilPersona','fibra','vozPortado','vozSS','mixPorta','mixVozSS','equiposCLP','accCLP','movilEmpresa','fijoEmpresa'].map(key=>`<td>${targetCell(total[key],key,null)}</td>`).join('')}</tr>`;
   return `
     <tr class="total-row">
       <td>${escapeTipAttr(name)}</td>
@@ -1036,16 +1160,16 @@ function storeSummaryRowHtml(r, rank, navKey, maxes){
   return `
     <tr class="row-clickable" data-key="store-${navKey}">
       <td><span style="display:flex; align-items:center; gap:9px;"><span class="rank-badge ${rankCls}">${rank+1}</span><span class="tt" data-tip="Ver detalle por vendedor de ${escapeTipAttr(r.sucursal)}">${escapeTipAttr(r.sucursal)}</span></span></td>
-      <td>${metricCell(r.movilPersona, maxes, 'movilPersona', fmtInt, tipForMetric(r,'movilPersona'))}</td>
-      <td>${metricCell(r.fibra, maxes, 'fibra', fmtInt, tipForMetric(r,'fibra'))}</td>
-      <td>${metricCell(r.vozPortado, maxes, 'vozPortado', fmtInt, tipForMetric(r,'vozPortado'))}</td>
-      <td>${metricCell(r.vozSS, maxes, 'vozSS', fmtInt, tipForMetric(r,'vozSS'))}</td>
-      <td>${cellMixPorta(r.mixPorta, r)}</td>
-      <td>${cellMixVozSS(r.mixVozSS, r)}</td>
-      <td>${metricCell(r.equiposCLP, maxes, 'equiposCLP', fmtMoney, tipForMetric(r,'equiposCLP'))}</td>
-      <td>${metricCell(r.accCLP, maxes, 'accCLP', fmtMoney, tipForMetric(r,'accCLP'))}</td>
-      <td>${metricCell(r.movilEmpresa, maxes, 'movilEmpresa', fmtInt, tipForMetric(r,'movilEmpresa'))}</td>
-      <td>${metricCell(r.fijoEmpresa, maxes, 'fijoEmpresa', fmtInt, tipForMetric(r,'fijoEmpresa'))}</td>
+      <td>${targetCell(r.movilPersona, 'movilPersona', r.sucursal)}</td>
+      <td>${targetCell(r.fibra, 'fibra', r.sucursal)}</td>
+      <td>${targetCell(r.vozPortado, 'vozPortado', r.sucursal)}</td>
+      <td>${targetCell(r.vozSS, 'vozSS', r.sucursal)}</td>
+      <td>${targetCell(r.mixPorta, 'mixPorta', r.sucursal)}</td>
+      <td>${targetCell(r.mixVozSS, 'mixVozSS', r.sucursal)}</td>
+      <td>${targetCell(r.equiposCLP, 'equiposCLP', r.sucursal)}</td>
+      <td>${targetCell(r.accCLP, 'accCLP', r.sucursal)}</td>
+      <td>${targetCell(r.movilEmpresa, 'movilEmpresa', r.sucursal)}</td>
+      <td>${targetCell(r.fijoEmpresa, 'fijoEmpresa', r.sucursal)}</td>
     </tr>`;
 }
 
@@ -1054,9 +1178,9 @@ function renderSummaryTable(){
   const rows = STATE.summary.map(withDerived);
   const total = computeTotal(STATE.summary);
   const maxes = computeColumnMaxes(rows);
-  document.getElementById('goalHeaderTag').textContent = `(${fmtPct(STATE.goal)})`;
+  document.getElementById('goalHeaderTag').textContent = '';
   document.getElementById('summarySectionNote').textContent = 'Orden establecido de sucursales · selecciona una fila para ver el detalle por vendedor';
-  tbody.innerHTML = rows.map((r,i) => storeSummaryRowHtml(r, i, STATE.summary.findIndex(s=>s.sucursal===r.sucursal), maxes)).join('') + totalRowHtml('Comercial Express', total);
+  tbody.innerHTML = rows.map((r,i) => storeSummaryRowHtml(r, i, STATE.summary.findIndex(s=>s.sucursal===r.sucursal), maxes)).join('') + totalRowHtml('Comercial Express', total, true);
 
   tbody.querySelectorAll('tr.row-clickable').forEach(tr=>{
     tr.addEventListener('click', ()=> navigateToStore(tr.dataset.key));
@@ -1101,7 +1225,8 @@ function paintStoreSearchOptions(query){
   }
 
   panel.innerHTML = filtered.map(({r, idx})=>{
-    const up = r.mixPorta >= STATE.goal;
+    const storeMixGoal = dailyGoal(r.sucursal,'mixPorta');
+    const up = storeMixGoal !== null && r.mixPorta >= storeMixGoal;
     const rankCls = '';
     return `<div class="store-search-option" data-key="store-${idx}">
         <span class="rank-badge ${rankCls}">${idx+1}</span>
@@ -1179,7 +1304,8 @@ function renderStorePanels(){
 
   rows.forEach((r, i)=>{
     const id = 'panel-store-' + i;
-    const up = r.mixPorta >= STATE.goal;
+    const storeMixGoal = dailyGoal(r.sucursal,'mixPorta');
+    const up = storeMixGoal !== null && r.mixPorta >= storeMixGoal;
     const vendorRows = computeVendorSummary(STATE.rows, STATE.cols, r.sucursal).map(withDerived);
     const vendorTotal = computeTotal(vendorRows, r.sucursal);
 
@@ -1234,7 +1360,7 @@ function renderStorePanels(){
               <div class="store-hero-title">${escapeTipAttr(r.sucursal)}</div>
               <div class="store-hero-sub">${fmtInt(r.docs||0)} registros · ${fmtInt(vendorRows.length)} vendedores con movimiento</div>
             </div>
-            <div class="store-hero-badge ${up?'up':'down'}">${up ? '✓ Cumple meta %Mix Porta' : '△ Bajo meta %Mix Porta'}</div>
+            <div class="store-hero-badge ${storeMixGoal===null?'no-goal':up?'up':'down'}">${storeMixGoal===null?'Sin meta disponible':up ? '✓ Cumple meta %Mix Porta' : '△ Bajo meta %Mix Porta'}</div>
           </div>
         </div>
 
@@ -1262,6 +1388,7 @@ function renderAll(){
     const ib = CONFIG.storeOrder.indexOf(b.sucursal);
     return (ia===-1?999:ia) - (ib===-1?999:ib);
   });
+  renderGoalsStatus();
   renderChips();
   renderGlobalKpis();
   renderStoreCards();
@@ -1387,7 +1514,7 @@ function snapshotFromWorkbook(workbook){
 function displaySnapshot(snapshot){
   const selectedStore = STATE.activeKey.startsWith('store-') ? STATE.summary[Number(STATE.activeKey.slice(6))]?.sucursal : null;
   STATE.rows=snapshot.rows; STATE.cols=DATA_COLS; STATE.asOf=snapshot.asOf; STATE.goal=snapshot.goal;
-  document.getElementById('goalInput').value=STATE.goal;
+
   renderAll();
   document.body.classList.remove('no-data');
   if(selectedStore){
@@ -1461,6 +1588,7 @@ document.getElementById('downloadData').addEventListener('click',()=>{
 document.getElementById('refreshData').addEventListener('click',()=>{
   if(localSnapshot){sourceStatus.textContent='Estás viendo una carga local. Usa «Ver datos publicados» para volver al informe compartido.';return;}
   refreshPublished();
+  refreshGoals();
 });
 document.getElementById('publishedData').addEventListener('click',()=>{
   if(!isAdminMode) return;
@@ -1471,19 +1599,7 @@ document.getElementById('publishedData').addEventListener('click',()=>{
   document.getElementById('uploadLabel').textContent='Cargar Excel Bsale';
   sourceStatus.textContent='Consultando datos publicados…';
   refreshPublished();
-});
-
-document.getElementById('goalInput').addEventListener('input', function(e){
-  const v = parseFloat(e.target.value);
-  STATE.goal = Number.isFinite(v) ? Math.max(0, Math.min(100, v)) : CONFIG.metaGoalPortaDefault;
-  if(localSnapshot){localSnapshot.goal=STATE.goal;document.getElementById('downloadData').disabled=false;}
-  const keyToRestore = STATE.activeKey;
-  renderGlobalKpis();
-  renderStoreCards();
-  renderSummaryTable();
-  renderStoreSearch();
-  renderStorePanels();
-  setActive(keyToRestore);
+  refreshGoals();
 });
 
 /* ---------- Tooltip genérico (data-tip) — anclado a <body>, no a un ancestro ----------
@@ -1596,8 +1712,9 @@ document.getElementById('goalInput').addEventListener('input', function(e){
 /* ---------- Datos compartidos; ante errores nunca sustituir por ejemplos ---------- */
 document.body.classList.add('no-data');
 refreshPublished();
-setInterval(()=>{if(!document.hidden && !localSnapshot) refreshPublished();},CONFIG.refreshMs);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden && !localSnapshot) refreshPublished();});
+refreshGoals();
+setInterval(()=>{if(!document.hidden){if(!localSnapshot) refreshPublished();refreshGoals();}},CONFIG.refreshMs);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){if(!localSnapshot) refreshPublished();refreshGoals();}});
 </script>
 </body>
 </html>
