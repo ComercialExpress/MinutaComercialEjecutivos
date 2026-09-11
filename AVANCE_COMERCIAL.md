@@ -30,6 +30,8 @@ Cargar un Excel y descargar el JSON no lo publica. Solo el cambio confirmado en 
 
 ## Datos y reglas
 
+Las sucursales activas se definen en `CONFIG.storeOrder`. Siempre aparecen en la matriz, tarjetas y buscador, incluso sin registros en el corte, con indicadores en cero y detalle vacío. Si el archivo incluye una sucursal adicional, también se conserva para no omitir sus ventas. Actualizar el catálogo cuando una sucursal deje de estar activa o se incorpore una nueva.
+
 Fuente comprobada: `PIVOT_EXPORT.xlsx`, hoja `Flexmonster Pivot Table`, encabezados en la fila 1, 557 registros del 10/09/2026. No requiere una tabla formal de Excel: se busca una única hoja con todos los encabezados requeridos.
 
 | Clave JSON | Columna de Bsale | Uso |

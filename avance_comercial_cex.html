@@ -711,7 +711,12 @@ function aggregateRows(rows, cols, groupKey){
 }
 
 function computeStoreSummary(rows, cols){
-  return aggregateRows(rows, cols, 'sucursal').map(g => Object.assign({sucursal:g.name}, g));
+  const groups = aggregateRows(rows, cols, 'sucursal');
+  const byName = new Map(groups.map(g => [g.name, g]));
+  // El catálogo mantiene visibles las sucursales activas aun sin registros.
+  // Conservar también sucursales presentes en el archivo para no perder ventas.
+  const names = [...new Set([...CONFIG.storeOrder, ...groups.map(g => g.name)])];
+  return names.map(name => Object.assign({sucursal:name}, byName.get(name) || emptyBreakdownRow(name)));
 }
 
 function computeVendorSummary(rows, cols, storeName){
