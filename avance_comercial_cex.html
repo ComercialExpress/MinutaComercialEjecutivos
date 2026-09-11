@@ -523,7 +523,7 @@ body.no-data .nav-section,body.no-data .global-kpis,body.no-data #panel-resumen,
     <div class="card">
       <div class="card-title-row">
         <div class="card-title">Resumen por sucursal</div>
-        <div class="card-note">Barra = magnitud relativa entre sucursales · %Mix Porta en verde cumple la meta</div>
+        <div class="card-note">Montos netos sin IVA · Barra = magnitud relativa · %Mix Porta en verde cumple la meta</div>
       </div>
       <div class="table-scroll">
         <table class="rol-table" id="summaryTable">
@@ -536,8 +536,8 @@ body.no-data .nav-section,body.no-data .global-kpis,body.no-data #panel-resumen,
               <th><span class="tt" data-tip="Total de líneas de voz: nuevas + portadas + segunda línea.">Voz SS<br><span class="col-goal-tag" data-metric="vozSS"></span></span></th>
               <th><span class="tt" data-tip="Voz Portado ÷ Voz SS. Indicador clave de la meta comercial del día.">%Mix Porta<br><span id="goalHeaderTag" style="font-weight:600;">(33,5%)</span></span></th>
               <th><span class="tt" data-tip="Voz SS ÷ Móvil Persona.">%Mix<br>Voz SS</span></th>
-              <th><span class="tt" data-tip="Venta bruta de equipos del día.">Equipos<br><span class="col-goal-tag" data-metric="equiposCLP"></span></span></th>
-              <th><span class="tt" data-tip="Venta bruta de accesorios del día.">Accesorios<br><span class="col-goal-tag" data-metric="accCLP"></span></span></th>
+              <th><span class="tt" data-tip="Venta neta de equipos sin IVA: subtotal bruto ÷ 1,19.">Equipos netos<br><span class="col-goal-tag" data-metric="equiposCLP"></span></span></th>
+              <th><span class="tt" data-tip="Venta neta de accesorios sin IVA: subtotal bruto ÷ 1,19.">Accesorios netos<br><span class="col-goal-tag" data-metric="accCLP"></span></span></th>
               <th><span class="tt" data-tip="Líneas móviles vendidas a segmento empresa.">Móvil<br>Empresa<br><span class="col-goal-tag" data-metric="movilEmpresa"></span></span></th>
               <th><span class="tt" data-tip="Solicitudes de fijo/fibra para segmento empresa.">Solicitud<br>Fijo Empresa<br><span class="col-goal-tag" data-metric="fijoEmpresa"></span></span></th>
             </tr>
@@ -570,6 +570,7 @@ body.no-data .nav-section,body.no-data .global-kpis,body.no-data #panel-resumen,
    o reglas de clasificación del pivot de Bsale.
    ========================================================= */
 const CONFIG = {
+  ivaRate:0.19,
   dataUrl:'https://raw.githubusercontent.com/ComercialExpress/MinutaComercialEjecutivos/main/avance_comercial.json',
   refreshMs:60000,
   columnAliases:{
@@ -672,7 +673,8 @@ function aggregateRows(rows, cols, groupKey){
     const tipo = String(get(r,'tipo') || '').trim().toUpperCase();
     const segmento = String(get(r,'segmento') || '').trim().toUpperCase();
     const producto = String(get(r,'producto') || '').trim().toUpperCase();
-    const monto = Number(get(r,'monto'));
+    // Bsale entrega el subtotal bruto. Convertir una sola vez y redondear solo al mostrar.
+    const monto = Number(get(r,'monto')) / (1 + CONFIG.ivaRate);
     const quantity = Number(get(r,'cantidad'));
 
     const isPersona = segmento === CONFIG.segmentoPersona;
@@ -772,8 +774,8 @@ function kpiCardsHtml(total, opts){
     {label:'Fibra Solicitud', tip:combineTip('Solicitudes de internet Hogar Fibra ingresadas en el día.', tipForMetric(total,'fibra')), value:fmtInt(total.fibra), sub:opts.empresaSub===false?'':`+${fmtInt(total.fijoEmpresa)} empresa`, accent:'var(--blue-600)'},
     {label:'Voz Portado', tip:'Líneas de voz portadas desde otra compañía en el día.', value:fmtInt(total.vozPortado), sub:`de ${fmtInt(total.vozSS)} voz SS`, accent:'var(--purple-600)'},
     {label:'%Mix Porta', tip:'Voz Portado ÷ Voz SS. Es el indicador de la meta comercial del día.', value:fmtPct(total.mixPorta), sub:`meta ${fmtPct(STATE.goal)}`, accent: total.mixPorta >= STATE.goal ? 'var(--green-600)' : 'var(--red-600)'},
-    {label:'Equipos', tip:combineTip('Venta bruta de equipos del día.', tipForMetric(total,'equiposCLP')), value:fmtMoney(total.equiposCLP), sub:`${fmtInt(total.equiposQ||0)} equipo(s) vendido(s)`, accent:'var(--amber-600)'},
-    {label:'Accesorios', tip:combineTip('Venta bruta de accesorios del día.', tipForMetric(total,'accCLP')), value:fmtMoney(total.accCLP), sub:`${fmtInt(total.accQ||0)} accesorio(s) vendido(s)`, accent:'var(--orange-600)'},
+    {label:'Equipos netos', tip:combineTip('Venta neta de equipos sin IVA: subtotal bruto ÷ 1,19.', tipForMetric(total,'equiposCLP')), value:fmtMoney(total.equiposCLP), sub:`${fmtInt(total.equiposQ||0)} equipo(s) vendido(s)`, accent:'var(--amber-600)'},
+    {label:'Accesorios netos', tip:combineTip('Venta neta de accesorios sin IVA: subtotal bruto ÷ 1,19.', tipForMetric(total,'accCLP')), value:fmtMoney(total.accCLP), sub:`${fmtInt(total.accQ||0)} accesorio(s) vendido(s)`, accent:'var(--orange-600)'},
   ];
   return cards.map((c,i)=>`
     <div class="kpi-card" style="--accent:${c.accent}; animation-delay:${i*0.05}s">
@@ -1197,8 +1199,8 @@ function renderStorePanels(){
                 <th>Voz SS</th>
                 <th><span class="tt" data-tip="Referencial por vendedor. La meta %Mix Porta se evalúa a nivel de sucursal, no por ejecutivo.">%Mix Porta</span></th>
                 <th>%Mix<br>Voz SS</th>
-                <th>Equipos</th>
-                <th>Accesorios</th>
+                <th>Equipos<br>netos</th>
+                <th>Accesorios<br>netos</th>
                 <th>Móvil<br>Empresa</th>
                 <th>Solicitud<br>Fijo Empresa</th>
               </tr>

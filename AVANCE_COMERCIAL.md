@@ -43,14 +43,14 @@ Fuente comprobada: `PIVOT_EXPORT.xlsx`, hoja `Flexmonster Pivot Table`, encabeza
 | q | Cantidad | Unidades y desglose por producto |
 | m | Suma de Subtotal Bruto | Venta bruta de equipos y accesorios |
 
-Se suma **Cantidad**, según confirmación del usuario, para Móvil, Fibra, Voz, unidades de Equipos y Accesorios y sus desgloses. Los montos suman **Suma de Subtotal Bruto** y no se multiplican de nuevo por Cantidad. Las columnas MONTO EQUIPO SIN RECARGO y MONTO ACCESORIO SIN RECARGO no se usan: se conserva el criterio de venta bruta del modelo original.
+Se suma **Cantidad**, según confirmación del usuario, para Móvil, Fibra, Voz, unidades de Equipos y Accesorios y sus desgloses. Los montos convierten **Suma de Subtotal Bruto ÷ 1,19** a neto sin IVA y no se multiplican de nuevo por Cantidad. Se conservan los decimales durante la agregación y se redondea a pesos enteros solo al mostrar. El JSON y el Excel mantienen el monto bruto original; la conversión se aplica una sola vez en el HTML, tanto en la vista publicada como en la carga local. Las columnas MONTO EQUIPO SIN RECARGO y MONTO ACCESORIO SIN RECARGO no se usan: se usa el subtotal bruto de origen para obtener el neto sin IVA solicitado.
 
 Reglas comerciales conservadas del modelo original:
 
 - MOVIL + PERSONA → Móvil Persona; MOVIL + EMPRESA → Móvil Empresa.
 - HOGAR FIBRA + PERSONA → Fibra Solicitud; HOGAR FIBRA + EMPRESA → Solicitud Fijo Empresa.
 - Productos MOVIL/PERSONA que empiezan por VOZ → Voz SS; los que además contienen PORTADO → Voz Portado.
-- EQUIPO y ACCESORIO → montos brutos y unidades, para ambos segmentos.
+- EQUIPO y ACCESORIO → montos netos sin IVA y unidades, para ambos segmentos.
 - %Mix Porta = Voz Portado / Voz SS × 100. %Mix Voz SS = Voz SS / Móvil Persona × 100. Se calculan sobre las cantidades agregadas, no promediando porcentajes de vendedores o sucursales. Con denominador cero se conserva el criterio original de mostrar 0%.
 - Las otras categorías permanecen en el conteo de registros, pero no se asignan a indicadores nuevos. Registros no equivale a documentos únicos: un documento puede tener varias líneas.
 
@@ -75,7 +75,7 @@ Contrato: `{schemaVersion:1, generatedAt, asOf, goal, rows}`. `generatedAt` iden
 | Fibra total (persona + empresa) | 14 |
 | Unidades Equipos | 158 |
 | Unidades Accesorios | 158 |
-| Venta bruta Equipos | $83.322.453 |
-| Venta bruta Accesorios | $11.389.462 |
+| Venta neta Equipos (bruto $83.322.453 ÷ 1,19) | $70.018.868 |
+| Venta neta Accesorios (bruto $11.389.462 ÷ 1,19) | $9.570.976 |
 
 El lector Excel usa SheetJS, como el HTML de origen. Requiere conexión para cargar esa biblioteca desde CDN. El informe conserva la identidad visual CEX y las fuentes Sora e Inter.
