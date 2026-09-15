@@ -1,0 +1,61 @@
+name: Sync Avance Comercial Bsale
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/30 * * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-avance-comercial
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Instalar lector Excel y cliente HTTP
+        run: python -m pip install 'openpyxl==3.1.5' 'requests==2.32.5'
+      - name: Leer y validar ventas, metas y FCST desde SharePoint
+        env:
+          TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AVANCE_SITE_ID: ${{ vars.AVANCE_SITE_ID }}
+          AVANCE_PIVOT_PATH: ${{ vars.AVANCE_PIVOT_PATH }}
+          AVANCE_METAS_PATH: ${{ vars.AVANCE_METAS_PATH }}
+          AVANCE_FCST_PATH: ${{ vars.AVANCE_FCST_PATH }}
+          AVANCE_METAS_HEADER_ROW: ${{ vars.AVANCE_METAS_HEADER_ROW }}
+        run: python sync_avance_comercial.py
+      - name: Publicar JSON validados si cambiaron
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add -- avance_comercial.json avance_metas.json
+          if git diff --cached --quiet; then
+            echo 'Sin cambios en el origen.'
+            exit 0
+          fi
+          git commit -m "Actualización automática Avance Comercial Bsale - $(date -u +'%Y-%m-%d %H:%M UTC')"
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then exit 0; fi
+            git fetch origin main
+            # Reaplicar solo si los otros workflows cambiaron archivos diferentes.
+            # Si hay conflicto en ventas/metas, detenerse sin sobrescribirlo.
+            git rebase origin/main
+          done
+          echo 'No se pudo publicar después de tres intentos.'
+          exit 1

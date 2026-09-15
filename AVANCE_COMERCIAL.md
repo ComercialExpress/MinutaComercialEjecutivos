@@ -19,6 +19,26 @@ Verificar la configuración actual de Pages en Settings → Pages antes de modif
 
 ## Actualizar cada corte
 
+### Lectura automática desde SharePoint
+
+El workflow **Sync Avance Comercial Bsale** (`.github/workflows/sync-avance-comercial.yml`) se ejecuta cada 30 minutos y permite ejecución manual en Actions → Sync Avance Comercial Bsale → Run workflow → main. Sustituye el paso manual de descargar y subir JSON cuando el archivo ya está sincronizado en SharePoint. La carga manual del HTML sigue disponible como alternativa.
+
+Se reutilizan los secrets existentes `AZURE_TENANT_ID`, `AZURE_CLIENT_ID` y `AZURE_CLIENT_SECRET`. Se descarga el contenido del Excel mediante Microsoft Graph y se interpreta con openpyxl; no se usa Workbook API ni es necesario convertir el rango en una Tabla de Excel.
+
+Rutas relativas a la raíz de la biblioteca del sitio BIBLIOTECA_CEX:
+
+- Ventas: `INFORMES COMERCIALES/B) INFORME DE VENTAS AVANCE/PIVOT_EXPORT.xlsx`.
+- Metas: `0. METAS/{year}/METAS_POR_SUCURSAL_{year}_{month}.xlsx`.
+- FCST: `INFORMES COMERCIALES/D) FCST_EXPRESS/FCST_PUBLICADO/FCST_EXPRESS_{year}_{month}.xlsx`.
+
+El año y mes se obtienen de **Fecha Documento**, no de la fecha de ejecución. Los Excel deben estar guardados y sincronizados en SharePoint; GitHub no lee directamente el disco local del usuario. Al actualizar la exportación de Bsale con el mismo nombre y ruta, basta con esperar la siguiente ejecución o iniciarla manualmente.
+
+El script `sync_avance_comercial.py` valida las tres fuentes antes de escribir; publica `avance_comercial.json` y `avance_metas.json` juntos en un commit. Si falla una descarga o validación, no se publica ningún cambio. Si los datos no cambiaron, conserva `generatedAt` y no genera commits vacíos. No publica los Excel, códigos de cliente, números de documento, archivos temporales ni muestras crudas. Conflictos con cambios simultáneos en estos JSON detienen la publicación para no sobrescribir una carga reciente.
+
+Opcionalmente pueden definirse las variables de repositorio `AVANCE_SITE_ID`, `AVANCE_PIVOT_PATH`, `AVANCE_METAS_PATH`, `AVANCE_FCST_PATH` y `AVANCE_METAS_HEADER_ROW`. Si están vacías se utilizan las rutas anteriores, el sitio de los flujos existentes y la fila 6 del primer bloque de metas confirmado. El sitio/rutas están sujetos a la verificación de acceso de la primera ejecución remota.
+
+### Carga manual alternativa
+
 1. Exportar un único día desde Bsale en formato `.xlsx`, con las columnas detalladas abajo. No editar el Excel original.
 2. Abrir el informe con `?admin=1` al final de la dirección.
 3. Pulsar **Cargar Excel Bsale**, seleccionar el archivo y revisar la vista previa local. La fecha de ventas selecciona automáticamente el peso del FCST y las metas de ese período.
