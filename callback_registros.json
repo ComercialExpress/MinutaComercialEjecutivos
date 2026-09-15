@@ -1885,6 +1885,13 @@
   {
     "fecha": "2026-09-01",
     "mes": "2026-09",
+    "sucursal": "CHILLÁN EL ROBLE",
+    "categoria": "mala",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-09-01",
+    "mes": "2026-09",
     "sucursal": "LOS ÁNGELES LAUTARO",
     "categoria": "mala",
     "origen": "COBERTURA"
