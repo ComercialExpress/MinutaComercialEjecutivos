@@ -1941,6 +1941,13 @@
   {
     "fecha": "2026-09-10",
     "mes": "2026-09",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-09-10",
+    "mes": "2026-09",
     "sucursal": "LINARES INDEPENDENCIA",
     "categoria": "mala",
     "origen": "ERROR DE EVALUACIÓN"
