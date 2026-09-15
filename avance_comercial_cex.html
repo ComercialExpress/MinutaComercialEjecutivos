@@ -299,6 +299,15 @@ th .col-goal-tag:empty{display:none;}
    de la matriz por indicador, sin duplicar cifras (mismo patrón "segmented control"
    que .view-toggle / .tabbar / el combo de búsqueda). ---------- */
 .global-kpis{margin-top:24px}
+.global-kpis>.section-heading{align-items:center;gap:14px}
+.calculation-card{display:flex;align-items:center;gap:20px;padding:13px 18px;background:var(--card);border:1px solid var(--border);border-left:3px solid var(--orange-500);border-radius:var(--radius-md);box-shadow:var(--shadow-card);font-family:'Inter',sans-serif}
+.calculation-part{display:flex;flex-direction:column;gap:4px}
+.calculation-label{font-size:9px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-500)}
+.calculation-value{font-size:14px;font-weight:600;color:var(--navy-900);font-variant-numeric:tabular-nums}
+.calculation-weight{border-left:1px solid var(--border);padding-left:20px}
+.calculation-weight .calculation-value{color:var(--orange-600)}
+.calculation-note{font-size:10px;color:var(--ink-500)}
+@media(max-width:560px){.calculation-card{width:100%;justify-content:space-between;gap:12px;padding:12px}.calculation-weight{padding-left:12px}.calculation-value{font-size:13px}}
 
 /* ---------- Store detail extras ---------- */
 .store-kpi-grid{display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-top:16px;}
@@ -538,7 +547,7 @@ body.show-daily-metas .daily-meta{display:block}
 
   <!-- Indicadores globales del corte -->
   <section class="global-kpis" aria-label="Indicadores globales del corte">
-    <div class="section-heading"><h2>Resultado global</h2><span class="section-note">Todas las sucursales · % de cumplimiento sobre la meta</span></div>
+    <div class="section-heading"><h2>Resultado global</h2><div class="calculation-card" id="calculationReference" role="status" aria-label="Referencia del cálculo de metas diarias"></div></div>
     <div class="store-kpi-grid" id="globalKpis"></div>
   </section>
 
@@ -1012,6 +1021,12 @@ function navigateToStore(key){
 
 /* Indicadores globales: reutilizan las tarjetas y reglas de la ficha. */
 function renderGlobalKpis(){
+  const dateKey=salesDateKey();
+  const validWeight=GOALS && dateKey.slice(0,7)===GOALS.period && Object.hasOwn(GOALS.weights,dateKey);
+  const weight=validWeight ? GOALS.weights[dateKey] : null;
+  const weekday=dateKey ? new Date(dateKey+'T12:00:00Z').toLocaleDateString('es-CL',{weekday:'long',timeZone:'UTC'}) : '';
+  const weightLabel=weight===null ? 'No disponible' : (weight*100).toLocaleString('es-CL',{minimumFractionDigits:4,maximumFractionDigits:4})+'%';
+  document.getElementById('calculationReference').innerHTML=`<div class="calculation-part"><span class="calculation-label">Día de ventas</span><span class="calculation-value">${escapeTipAttr(STATE.asOf)}</span><span class="calculation-note">${escapeTipAttr(weekday)}</span></div><div class="calculation-part calculation-weight"><span class="calculation-label">Peso diario FCST</span><span class="calculation-value">${weightLabel}</span><span class="calculation-note">${weight===null?'Sin peso para este corte':weight===0?'Día sin ponderación':'Meta mensual × peso diario'}</span></div>`;
   document.getElementById('globalKpis').innerHTML = kpiCardsHtml(computeTotal(STATE.summary));
 }
 
