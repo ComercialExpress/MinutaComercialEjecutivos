@@ -28,13 +28,14 @@ body{
   font-family:'Inter',sans-serif; font-size:13px;
   -webkit-font-smoothing:antialiased;
 }
-.wrap{max-width:1180px; margin:0 auto; padding:20px 20px 60px;}
+/* Mismas dimensiones de presentación que el informe Avance Comercial CEX. */
+.wrap{width:100%; max-width:1720px; margin:0 auto; padding:24px clamp(20px,3.4vw,56px) 72px;}
 
 /* ---------- Header hero ---------- */
 .header-card{
   position:relative; overflow:hidden;
   background:linear-gradient(135deg,var(--navy-900),var(--navy-700) 55%,var(--navy-600));
-  border-radius:var(--radius-lg); padding:24px 26px; color:#fff;
+  border-radius:var(--radius-lg); padding:32px clamp(28px,3vw,44px); color:#fff;
   box-shadow:var(--shadow-card); margin-bottom:16px;
 }
 .header-card::after{
@@ -49,7 +50,7 @@ body{
 }
 .brand-div{width:1px; height:16px; background:rgba(255,255,255,.25);}
 .kicker{font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.65);}
-.h1{font-family:'Sora'; font-size:19px; font-weight:700; margin:2px 0 0;}
+.h1{font-family:'Sora'; font-size:25px; font-weight:800; letter-spacing:-.01em; margin:2px 0 0;}
 .header-meta{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:4px; position:relative;}
 .asof{font-size:11.5px; color:rgba(255,255,255,.6);}
 .demo-badge{
@@ -114,7 +115,7 @@ body{
 .pill-brand{background:var(--orange-100); color:var(--orange-600);}
 
 /* ---------- Cards / charts ---------- */
-.grid-2{display:grid; grid-template-columns:1.1fr .9fr; gap:14px; margin-bottom:16px;}
+.grid-2{display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr); gap:14px; margin-bottom:16px;}
 .card{
   background:var(--card); border:1px solid var(--border); border-radius:var(--radius-lg); padding:20px;
   box-shadow:var(--shadow-card);
@@ -178,6 +179,17 @@ tr.row-nodata{background:#FAFAFC;}
   .kpi-row{grid-template-columns:repeat(2,1fr);}
   .grid-2{grid-template-columns:1fr;}
   .range-name{flex-basis:120px;}
+}
+@media (max-width:560px){
+  .wrap{padding:16px 16px 40px;}
+  .header-card{padding:24px 20px;}
+  .h1{font-size:21px;}
+  .field{flex:1 1 150px; min-width:0;}
+  .tab{padding:9px 6px; font-size:11.5px;}
+  .kpi-row{grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px;}
+  .kpi-card{padding:16px 12px;}
+  .card{padding:16px;}
+  table.rol-table{min-width:560px;}
 }
 @media print{
   body{background:#fff;}
