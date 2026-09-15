@@ -481,10 +481,10 @@ body.show-daily-metas .daily-meta{display:block}
 .goal-summary{display:flex;justify-content:space-between;align-items:center;gap:5px;flex-wrap:wrap}
 .goal-caption{display:block;font-size:10px;font-weight:500;color:var(--ink-500)}
 .goal-percent{font-size:11px;font-weight:700;color:var(--navy-700);padding:3px 6px;background:var(--bg);border-radius:6px;white-space:nowrap}
-.goal-progress.met .goal-percent{color:var(--green-600);background:var(--green-100)}
+
 .goal-track{height:4px;border-radius:99px;background:var(--border-soft);overflow:hidden;display:block}
 .goal-track>span{display:block;height:100%;background:var(--navy-500)}
-.goal-progress.met .goal-track>span{background:var(--green-600)}
+
 .kpi-card>.goal-caption{margin-top:14px}
 .kpi-card{min-width:0;border-top:1px solid var(--border);padding:20px 16px 17px;box-shadow:var(--shadow-card)}
 .kpi-card:hover{transform:none;box-shadow:var(--shadow-card)}
@@ -498,6 +498,19 @@ body.show-daily-metas .daily-meta{display:block}
 .total-row .daily-meta{color:#D9DDF1}
 .total-row .met .matrix-percent{color:#155C35}
 .total-row .met .matrix-track>span{background:#BCE5CD}
+/* La misma escala se aplica a sucursales, totales y tarjetas globales. */
+.matrix-progress:not(.unavailable) .matrix-track,
+.total-row .matrix-progress:not(.unavailable) .matrix-track{
+  background:color-mix(in srgb,var(--achievement-color) 20%,white);
+}
+.matrix-progress .matrix-track>span,
+.total-row .matrix-progress .matrix-track>span,
+.goal-progress .goal-track>span{background:var(--achievement-color)}
+.matrix-progress .matrix-percent,
+.total-row .matrix-progress .matrix-percent,
+.goal-progress .goal-percent{color:#202344}
+.goal-progress .goal-percent{background:color-mix(in srgb,var(--achievement-color) 35%,white)}
+.legend-line.scale{width:64px;height:7px;background:linear-gradient(90deg,rgb(244,177,177),rgb(248,220,133),rgb(156,216,177))}
 .store-hero-badge.no-goal{background:rgba(255,255,255,.12);color:#fff}
 #summaryTable th{font-size:10px;color:var(--ink-500);font-weight:600;padding:14px 6px}
 #summaryTable td{height:76px}
@@ -587,7 +600,7 @@ body.show-daily-metas .daily-meta{display:block}
         <div class="card-note">Venta neta y avance sobre la meta diaria</div>
       </div>
       <div class="matrix-tools">
-        <div class="matrix-legend"><span class="legend-item"><span class="legend-line"></span>Avance</span><span class="legend-item"><span class="legend-line met"></span>Meta cumplida ≥100%</span><span>— Sin meta · Detalle al enfocar una cifra</span></div>
+        <div class="matrix-legend"><span class="legend-item"><span class="legend-line scale"></span>Rojo 0% · Amarillo 50% · Verde ≥100%</span><span>— Sin meta · Detalle al enfocar una cifra</span></div>
         <button class="meta-toggle" id="toggleDailyMetas" type="button" aria-pressed="false" aria-controls="summaryTable">Mostrar metas</button>
       </div>
       <div class="table-scroll">
@@ -745,12 +758,20 @@ function goalFormat(value,key){
   if(['equiposCLP','accCLP'].includes(key)) return fmtMoney(value);
   return value.toLocaleString('es-CL',{maximumFractionDigits:2});
 }
+// Escala continua: rojo 0%, amarillo 50%, verde desde 100%.
+function achievementColor(percent){
+  const value=Math.max(0,Math.min(100,percent));
+  const stops=[[244,177,177],[248,220,133],[156,216,177]];
+  const index=value<50?0:1;
+  const fraction=(value-index*50)/50;
+  return 'rgb('+stops[index].map((channel,i)=>Math.round(channel+(stops[index+1][i]-channel)*fraction)).join(',')+')';
+}
 function goalProgress(value,goal,key){
   if(goal===null) return '<span class="goal-caption neutral">Meta no disponible</span>';
   if(goal===0) return '<span class="goal-caption neutral">Sin meta para hoy</span>';
   const achievement=value/goal*100;
   const ok=value>=goal;
-  return `<span class="goal-progress ${ok?'met':'pending'}">
+  return `<span class="goal-progress ${ok?'met':'pending'}" style="--achievement-color:${achievementColor(achievement)}">
     <span class="goal-summary"><span class="goal-caption">Meta ${goalFormat(goal,key)}</span><span class="goal-percent" title="${ok?'Meta cumplida':'Avance sobre la meta diaria'}">${fmtPct(achievement)}</span></span>
     <span class="goal-track"><span style="width:${Math.max(0,Math.min(100,achievement))}%"></span></span>
   </span>`;
@@ -768,7 +789,7 @@ function targetCell(value,key,storeName){
   const tip=`Venta: ${label}\n${metaLabel}${achievement===null?'':`\nCumplimiento: ${fmtPct(achievement)}`}${breakdown?'\n\n'+breakdown:''}`;
   const progress=achievement===null
     ? '<span class="matrix-progress unavailable">—</span>'
-    : `<span class="matrix-progress"><span class="matrix-track"><span style="width:${Math.max(0,Math.min(100,achievement))}%"></span></span><span class="matrix-percent">${fmtPct(achievement)}</span></span>`;
+    : `<span class="matrix-progress" style="--achievement-color:${achievementColor(achievement)}"><span class="matrix-track"><span style="width:${Math.max(0,Math.min(100,achievement))}%"></span></span><span class="matrix-percent">${fmtPct(achievement)}</span></span>`;
   return `<span class="daily-cell ${state}${money?' is-money':''}"><span class="daily-value tt" tabindex="0" data-tip="${escapeTipAttr(tip)}" aria-label="${escapeTipAttr(`${label}. ${metaLabel}${achievement===null?'':'. Cumplimiento '+fmtPct(achievement)}`)}">${label}</span>${progress}<span class="daily-meta">${metaLabel}</span></span>`;
 }
 function renderGoalsStatus(){
