@@ -10,7 +10,7 @@ Este informe sigue la estructura existente de MinutaComercialEjecutivos: HTML y 
 - `preparar_metas_avance.py`: conversión local de ambos Excel a JSON para futuros períodos (requiere Python y openpyxl).
 - `AVANCE_COMERCIAL.md`: instrucciones y mapeo de datos.
 
-Agregar los archivos de esta integración a la raíz de `main`. No reemplazar `index.html`, los otros informes, sus JSON ni los workflows existentes. Esta integración no necesita Azure, SharePoint, credenciales nuevas ni un workflow de sincronización.
+Los archivos del informe se mantienen en la raíz de `main`, sin reemplazar `index.html`, los otros informes, sus JSON ni sus workflows. La sincronización automática utiliza `sync_avance_comercial.py` y `.github/workflows/sync-avance-comercial.yml`, con las credenciales Azure existentes.
 
 Si Pages ya publica la raíz de `main`, el enlace esperado es:
 `https://comercialexpress.github.io/MinutaComercialEjecutivos/avance_comercial_cex.html`
@@ -35,7 +35,7 @@ El año y mes se obtienen de **Fecha Documento**, no de la fecha de ejecución. 
 
 El script `sync_avance_comercial.py` valida las tres fuentes antes de escribir; publica `avance_comercial.json` y `avance_metas.json` juntos en un commit. Si falla una descarga o validación, no se publica ningún cambio. Si los datos no cambiaron, conserva `generatedAt` y no genera commits vacíos. No publica los Excel, códigos de cliente, números de documento, archivos temporales ni muestras crudas. Conflictos con cambios simultáneos en estos JSON detienen la publicación para no sobrescribir una carga reciente.
 
-Opcionalmente pueden definirse las variables de repositorio `AVANCE_SITE_ID`, `AVANCE_PIVOT_PATH`, `AVANCE_METAS_PATH`, `AVANCE_FCST_PATH` y `AVANCE_METAS_HEADER_ROW`. Si están vacías se utilizan las rutas anteriores, el sitio de los flujos existentes y la fila 6 del primer bloque de metas confirmado. El sitio/rutas están sujetos a la verificación de acceso de la primera ejecución remota.
+Opcionalmente pueden definirse las variables de repositorio `AVANCE_SITE_ID`, `AVANCE_PIVOT_PATH`, `AVANCE_METAS_PATH`, `AVANCE_FCST_PATH` y `AVANCE_METAS_HEADER_ROW`. Si están vacías se utilizan las rutas anteriores, el sitio de los flujos existentes y la fila 6 del primer bloque de metas confirmado. El acceso y la publicación se verificaron correctamente en la [primera ejecución remota](https://github.com/ComercialExpress/MinutaComercialEjecutivos/actions/runs/34981904351), el 15/09/2026.
 
 ### Carga manual alternativa
 
