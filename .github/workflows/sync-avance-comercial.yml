@@ -27,6 +27,8 @@ jobs:
           python-version: '3.11'
       - name: Instalar lector Excel y cliente HTTP
         run: python -m pip install 'openpyxl==3.1.5' 'requests==2.32.5'
+      - name: Verificar formatos del export Bsale
+        run: python -m unittest test_sync_avance_comercial -v
       - name: Leer y validar ventas, metas y FCST desde SharePoint
         env:
           TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}

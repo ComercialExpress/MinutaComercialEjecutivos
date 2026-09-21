@@ -23,6 +23,8 @@ FCST_PATH = 'INFORMES COMERCIALES/D) FCST_EXPRESS/FCST_PUBLICADO/FCST_EXPRESS_{y
 COLUMNS = {'f':'Fecha Documento','v':'Vendedor','s':'Sucursal','sg':'SEGMENTO',
            't':'Tipo de Producto / Servicio','p':'Producto / Servicio + Variante',
            'm':'Suma de Subtotal Bruto','q':'Cantidad'}
+HEADER_ALIASES = {key: (name,) for key, name in COLUMNS.items()}
+HEADER_ALIASES['m'] = ('Suma de Subtotal Bruto', 'Subtotal Bruto')
 
 
 def parse_pivot(source):
@@ -33,17 +35,19 @@ def parse_pivot(source):
             rows=iter(sheet.values)
             for raw in rows:
                 headers=[str(c or '').strip() for c in raw]
-                if all(h in headers for h in COLUMNS.values()):
-                    if any(headers.count(h)!=1 for h in COLUMNS.values()):
-                        raise ValueError('El export contiene columnas duplicadas.')
-                    candidates.append((headers,list(rows)))
+                matches = {key: [i for i, h in enumerate(headers) if h in aliases]
+                           for key, aliases in HEADER_ALIASES.items()}
+                if all(matches.values()):
+                    if any(len(indices)!=1 for indices in matches.values()):
+                        raise ValueError('El export contiene columnas duplicadas o alias ambiguos.')
+                    candidates.append(({key: indices[0] for key, indices in matches.items()},list(rows)))
                     break
         if len(candidates)!=1: raise ValueError('Debe existir una sola hoja con las columnas verificadas de Bsale.')
-        headers,records=candidates[0]
+        indices,records=candidates[0]
         out=[]; dates=set()
         for index,raw in enumerate(records,1):
             if all(v is None or v=='' for v in raw): continue
-            row={k:raw[headers.index(h)] for k,h in COLUMNS.items()}
+            row={key:raw[index] for key,index in indices.items()}
             value=row['f']
             if isinstance(value,(dt.datetime,dt.date)): date=value
             elif isinstance(value,str):
