@@ -26,6 +26,8 @@ jobs:
           python-version: "3.11"
       - name: Install dependencies
         run: pip install requests openpyxl
+      - name: Probar recuperación de errores de red EPA
+        run: python -m unittest test_sync_epa_network -v
       - name: Debug - check secret lengths (no expone valores)
         env:
           TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -59,8 +61,16 @@ jobs:
             git commit -m "Actualización automática de datos Callback y EPA - $(date +'%Y-%m-%d %H:%M')"
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
-          git pull --rebase origin main
-          git push
+          for attempt in 1 2 3 4 5; do
+            git pull --rebase origin main
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "Publicación rechazada; reintento ${attempt}/5 con la rama actualizada."
+            sleep $((attempt * 2))
+          done
+          echo "::error::No se pudo publicar tras cinco intentos."
+          exit 1
       - name: Reconstruir GitHub Pages con las bases actualizadas
         if: steps.publish.outputs.changed == 'true' || github.event_name == 'push'
         env:
