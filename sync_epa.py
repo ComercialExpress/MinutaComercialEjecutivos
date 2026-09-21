@@ -8,6 +8,7 @@ import datetime as dt
 import json
 import os
 import tempfile
+import time
 from urllib.parse import quote
 from pathlib import Path
 import re
@@ -100,23 +101,45 @@ def update_html(html_path, data):
     temporary.replace(html_path)
     return True
 
-def download_graph(destination):
+def graph_request(method, url, *, stage, **kwargs):
+    """Reintentar la petición completa, incluyendo redirección y cuerpo descargado."""
     import requests
+    for attempt in range(1, 5):
+        delay = 2 ** attempt
+        try:
+            response = requests.request(method, url, **kwargs)
+        except (requests.Timeout, requests.ConnectionError) as exc:
+            reason = type(exc).__name__
+        else:
+            if response.status_code == 200:
+                return response
+            reason = f'HTTP {response.status_code}'
+            retryable = response.status_code in (408, 429, 500, 502, 503, 504)
+            retry_after = response.headers.get('Retry-After', '')
+            if retry_after.isdigit():
+                delay = max(delay, min(int(retry_after), 120))
+            response.close()
+            if not retryable:
+                raise ValueError(f'{stage}: {reason}.')
+        if attempt == 4:
+            raise ValueError(f'{stage}: {reason} tras {attempt} intentos.') from None
+        print(f'{stage}: {reason}; reintento {attempt + 1}/4 en {delay}s.', flush=True)
+        time.sleep(delay)
+
+
+def download_graph(destination):
     site = os.environ.get('EPA_SITE_ID') or 'clcomercialexpress.sharepoint.com,d331a44f-8002-4cab-8db4-061cb13eb493,1d32dc11-bde8-40af-8d21-d070452a7b2b'
     folder = os.environ.get('EPA_FOLDER_PATH') or 'BASES ENTEL/EPA_CALIDAD'
-    auth = requests.post(f'https://login.microsoftonline.com/{quote(os.environ["TENANT_ID"], safe="")}/oauth2/v2.0/token',
+    auth = graph_request('POST', f'https://login.microsoftonline.com/{quote(os.environ["TENANT_ID"], safe="")}/oauth2/v2.0/token',
+        stage='Autenticación EPA',
         data={'client_id': os.environ['CLIENT_ID'], 'client_secret': os.environ['CLIENT_SECRET'],
               'scope': 'https://graph.microsoft.com/.default', 'grant_type': 'client_credentials'}, timeout=40)
-    if auth.status_code != 200:
-        raise ValueError(f'Autenticación EPA falló (HTTP {auth.status_code}).')
     headers = {'Authorization': 'Bearer ' + auth.json()['access_token']}
     base = f'https://graph.microsoft.com/v1.0/sites/{site}/drive'
     url = f'{base}/root:/{quote(folder, safe="/")}:/children?$top=200'
     items = []
     while url:
-        response = requests.get(url, headers=headers, timeout=60)
-        if response.status_code != 200:
-            raise ValueError(f'No se pudo listar EPA_CALIDAD (HTTP {response.status_code}).')
+        response = graph_request('GET', url, stage='Listado EPA_CALIDAD', headers=headers, timeout=(60, 120))
         page = response.json()
         items.extend(page.get('value', []))
         url = page.get('@odata.nextLink')
@@ -125,13 +148,13 @@ def download_graph(destination):
     files = [i for i in items if 'file' in i and re.fullmatch(r'EPA[ _]PERSONA[ _]IPSO_.*\.xlsx', i['name'], re.I)]
     if not files:
         raise ValueError('EPA_CALIDAD no contiene bases de encuestas.')
-    for item in files:
+    for index, item in enumerate(files, 1):
         name = item['name']
         if Path(name).name != name or '/' in name or '\\' in name:
             raise ValueError('Nombre de archivo EPA no válido.')
-        response = requests.get(f'{base}/items/{quote(item["id"], safe="")}/content', headers=headers, timeout=(20,120))
-        if response.status_code != 200:
-            raise ValueError(f'No se pudo descargar una base EPA (HTTP {response.status_code}).')
+        print(f'Descargando base EPA {index}/{len(files)}: {name}', flush=True)
+        response = graph_request('GET', f'{base}/items/{quote(item["id"], safe="")}/content',
+            stage=f'Descarga EPA {name}', headers=headers, timeout=(60, 180))
         (destination / name).write_bytes(response.content)
     print(f'Descargadas {len(files)} bases EPA desde SharePoint.')
 
