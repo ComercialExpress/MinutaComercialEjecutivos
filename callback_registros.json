@@ -1906,6 +1906,13 @@
   {
     "fecha": "2026-09-01",
     "mes": "2026-09",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-09-01",
+    "mes": "2026-09",
     "sucursal": "TALCA CENTRO",
     "categoria": "mala",
     "origen": "SISTEMA"
@@ -1953,6 +1960,13 @@
     "origen": "SISTEMA"
   },
   {
+    "fecha": "2026-09-08",
+    "mes": "2026-09",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "COBERTURA"
+  },
+  {
     "fecha": "2026-09-09",
     "mes": "2026-09",
     "sucursal": "LOS ÁNGELES LAUTARO",
@@ -1986,6 +2000,13 @@
     "sucursal": "CHILLÁN EL ROBLE",
     "categoria": "mala",
     "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-09-12",
+    "mes": "2026-09",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "COBERTURA"
   },
   {
     "fecha": "2026-09-14",
