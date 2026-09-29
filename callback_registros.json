@@ -1962,6 +1962,13 @@
   {
     "fecha": "2026-09-08",
     "mes": "2026-09",
+    "sucursal": "MALL CENTER CURICÓ",
+    "categoria": "neutra",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-09-08",
+    "mes": "2026-09",
     "sucursal": "TALCA CENTRO",
     "categoria": "mala",
     "origen": "COBERTURA"
@@ -2021,6 +2028,13 @@
     "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
     "categoria": "mala",
     "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-09-20",
+    "mes": "2026-09",
+    "sucursal": "MALL CENTER CURICÓ",
+    "categoria": "mala",
+    "origen": "COBERTURA"
   },
   {
     "fecha": "2026-09-21",
