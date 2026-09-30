@@ -1927,9 +1927,23 @@
   {
     "fecha": "2026-09-04",
     "mes": "2026-09",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "neutra",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-09-04",
+    "mes": "2026-09",
     "sucursal": "MALL CENTER CURICÓ",
     "categoria": "neutra",
     "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-09-04",
+    "mes": "2026-09",
+    "sucursal": "MALL PLAZA LOS ÁNGELES",
+    "categoria": "buena",
+    "origen": "BUENA ATENCIÓN"
   },
   {
     "fecha": "2026-09-04",
@@ -2007,6 +2021,13 @@
     "sucursal": "CHILLÁN EL ROBLE",
     "categoria": "mala",
     "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-09-12",
+    "mes": "2026-09",
+    "sucursal": "MALL PLAZA LOS ÁNGELES",
+    "categoria": "mala",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
   },
   {
     "fecha": "2026-09-12",
