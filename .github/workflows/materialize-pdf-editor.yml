@@ -31,7 +31,9 @@ jobs:
               print('Editor already materialized; nothing to do.')
               raise SystemExit(0)
 
-          payload = base64.b64decode(match.group(1))
+          encoded = ''.join(match.group(1).split())
+          encoded += '=' * (-len(encoded) % 4)
+          payload = base64.b64decode(encoded, validate=False)
           html = gzip.decompress(payload).decode('utf-8')
           if '<title>PDF Studio' not in html or 'pdf-lib@1.17.1' not in html:
               raise RuntimeError('Decoded payload does not look like the expected PDF editor.')
