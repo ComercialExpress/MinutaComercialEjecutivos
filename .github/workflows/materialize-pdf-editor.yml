@@ -1,0 +1,52 @@
+name: Materialize PDF Editor
+
+on:
+  push:
+    paths:
+      - 'editor-pdf/index.html'
+      - '.github/workflows/materialize-pdf-editor.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Replace compressed loader with real HTML
+        shell: python
+        run: |
+          from pathlib import Path
+          import re, base64, gzip
+
+          path = Path('editor-pdf/index.html')
+          text = path.read_text(encoding='utf-8')
+          match = re.search(r"const p='([^']+)'", text)
+          if not match:
+              print('Editor already materialized; nothing to do.')
+              raise SystemExit(0)
+
+          payload = base64.b64decode(match.group(1))
+          html = gzip.decompress(payload).decode('utf-8')
+          if '<title>PDF Studio' not in html or 'pdf-lib@1.17.1' not in html:
+              raise RuntimeError('Decoded payload does not look like the expected PDF editor.')
+
+          path.write_text(html, encoding='utf-8')
+          print(f'Materialized editor: {len(html)} characters')
+
+      - name: Commit materialized editor
+        run: |
+          if git diff --quiet -- editor-pdf/index.html; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add editor-pdf/index.html
+          git commit -m "Fix online PDF editor publication"
+          git push
