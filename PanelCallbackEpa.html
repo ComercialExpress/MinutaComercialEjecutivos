@@ -266,6 +266,21 @@ tr.row-nodata{background:#FAFAFC;}
 
   <!-- ===== PANEL: RESUMEN ===== -->
   <div class="panel active" id="panel-resumen">
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-title">Gestión de callbacks respecto de EPA</div>
+      <p class="card-sub">Esperados = encuestas GLOBAL neutras (3) + malas (1–2). Gestión = callbacks realizados / esperados × 100.</p>
+      <div class="kpi-row">
+        <div class="kpi-card"><div class="kpi-label">Callbacks esperados</div><div class="kpi-value" data-gestion="expected">—</div><div class="kpi-sub">Neutras + malas de EPA</div></div>
+        <div class="kpi-card"><div class="kpi-label">Callbacks realizados</div><div class="kpi-value" data-gestion="done">—</div><div class="kpi-sub">Total de callbacks calificados</div></div>
+        <div class="kpi-card"><div class="kpi-label">Gestión / esperados</div><div class="kpi-value" data-gestion="ratio">—</div><div class="kpi-sub">Relación de volumen</div></div>
+        <div class="kpi-card"><div class="kpi-label">Brecha por sucursal</div><div class="kpi-value" data-gestion="gap">—</div><div class="kpi-sub">Suma de faltantes, sin compensar excedentes</div></div>
+      </div>
+      <div class="table-wrap" tabindex="0" aria-label="Gestión por sucursal, desplazamiento horizontal">
+        <table class="rol-table" style="min-width:850px"><thead><tr><th>Sucursal</th><th class="num">EPA neutras</th><th class="num">EPA malas</th><th class="num">Esperados</th><th class="num">Realizados</th><th class="num">Gestión</th><th class="num">Brecha</th></tr></thead><tbody data-gestion-rows></tbody></table>
+      </div>
+      <p class="card-sub" data-gestion-note></p>
+      <p class="card-sub">Comparación por mes y sucursal, sin cruce individual de encuestas. Puede superar 100%. Brecha = máximo entre esperados − realizados y 0; no representa encuestas pendientes identificadas. Sin base EPA: no se calcula gestión.</p>
+    </div>
     <div class="kpi-row">
       <div class="kpi-card">
         <div class="kpi-label">Callbacks calificados</div>
@@ -323,6 +338,21 @@ tr.row-nodata{background:#FAFAFC;}
 
   <!-- ===== PANEL: SUCURSALES ===== -->
   <div class="panel" id="panel-sucursales">
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-title">Gestión de callbacks respecto de EPA</div>
+      <p class="card-sub">Esperados = encuestas GLOBAL neutras (3) + malas (1–2). Gestión = callbacks realizados / esperados × 100.</p>
+      <div class="kpi-row">
+        <div class="kpi-card"><div class="kpi-label">Callbacks esperados</div><div class="kpi-value" data-gestion="expected">—</div><div class="kpi-sub">Neutras + malas de EPA</div></div>
+        <div class="kpi-card"><div class="kpi-label">Callbacks realizados</div><div class="kpi-value" data-gestion="done">—</div><div class="kpi-sub">Total de callbacks calificados</div></div>
+        <div class="kpi-card"><div class="kpi-label">Gestión / esperados</div><div class="kpi-value" data-gestion="ratio">—</div><div class="kpi-sub">Relación de volumen</div></div>
+        <div class="kpi-card"><div class="kpi-label">Brecha por sucursal</div><div class="kpi-value" data-gestion="gap">—</div><div class="kpi-sub">Suma de faltantes, sin compensar excedentes</div></div>
+      </div>
+      <div class="table-wrap" tabindex="0" aria-label="Gestión por sucursal, desplazamiento horizontal">
+        <table class="rol-table" style="min-width:850px"><thead><tr><th>Sucursal</th><th class="num">EPA neutras</th><th class="num">EPA malas</th><th class="num">Esperados</th><th class="num">Realizados</th><th class="num">Gestión</th><th class="num">Brecha</th></tr></thead><tbody data-gestion-rows></tbody></table>
+      </div>
+      <p class="card-sub" data-gestion-note></p>
+      <p class="card-sub">Comparación por mes y sucursal, sin cruce individual de encuestas. Puede superar 100%. Brecha = máximo entre esperados − realizados y 0; no representa encuestas pendientes identificadas. Sin base EPA: no se calcula gestión.</p>
+    </div>
     <div class="card">
       <div class="card-title-row">
         <div>
@@ -648,6 +678,7 @@ async function loadRegistros(urls){
       if(fallos.length){
         console.info('[callback] mirrors descartados antes de encontrar uno funcional:', fallos);
       }
+      CALLBACK_LOADED=true;
       return data;
     }catch(e){
       fallos.push(`${url} → ${e.message}`);
@@ -731,7 +762,34 @@ function aggByOrigen(records){
     });
 }
 
+function renderGestion(){
+  const mes=document.getElementById('selMes').value, suc=document.getElementById('selSucursal').value;
+  const surveys=EPA.registros.filter(r=>(mes==='all'||r.mes===mes)&&(suc==='all'||r.sucursal===suc));
+  const records=getFiltered();
+  const loaded=!document.getElementById('dataSourceBadge').classList.contains('badge-error') && CALLBACK_LOADED;
+  const names=suc==='all'?orderedBranches([...surveys,...records].map(r=>r.sucursal)):[suc];
+  const rows=names.map(name=>{
+    const base=surveys.filter(r=>r.sucursal===name);
+    const neutral=base.filter(r=>epaRating(r.valores[14]).key==='neutra').length;
+    const bad=base.filter(r=>epaRating(r.valores[14]).key==='mala').length;
+    const done=records.filter(r=>r.sucursal===name).length, expected=neutral+bad;
+    const periods=new Set(base.map(r=>r.mes));
+    const complete=base.length>0 && records.filter(r=>r.sucursal===name).every(r=>periods.has(r.mes));
+    return {name,neutral,bad,done,expected,complete,gap:Math.max(expected-done,0)};
+  });
+  const total=rows.reduce((a,r)=>({neutral:a.neutral+r.neutral,bad:a.bad+r.bad,done:a.done+r.done,expected:a.expected+r.expected,gap:a.gap+(r.complete?r.gap:0)}),{neutral:0,bad:0,done:0,expected:0,gap:0});
+  total.complete=surveys.length>0 && rows.every(r=>r.complete || (!r.done&&!r.expected));
+  const count=n=>n.toLocaleString('es-CL');
+  const ratio=r=>!loaded?'Sin datos callback':!r.complete?'Sin base EPA':!r.expected?'Sin esperados':fmtPct(r.done/r.expected*100);
+  const cells=r=>'<td class="num">'+[count(r.neutral),count(r.bad),r.complete?count(r.expected):'Sin base EPA',loaded?count(r.done):'—',ratio(r),loaded&&r.complete?count(r.gap):'—'].join('</td><td class="num">')+'</td>';
+  document.querySelectorAll('[data-gestion-rows]').forEach(el=>el.innerHTML=rows.map(r=>'<tr><td class="first">'+escapeEPA(r.name)+'</td>'+cells(r)+'</tr>').join('')+'<tr class="total-row"><td>Total general</td>'+cells(total)+'</tr>');
+  const values={expected:surveys.length?count(total.expected):'Sin base EPA',done:loaded?count(total.done):'—',ratio:ratio(total),gap:loaded&&total.complete?count(total.gap):'—'};
+  document.querySelectorAll('[data-gestion]').forEach(el=>el.textContent=values[el.dataset.gestion]);
+  document.querySelectorAll('[data-gestion-note]').forEach(el=>el.textContent='EPA actualizada: '+EPA.actualizado+' · '+mesLabel(mes)+(total.complete?'':' · Cobertura EPA ausente o incompleta para la comparación.'));
+}
+let CALLBACK_LOADED=false;
 function renderAll(){
+  renderGestion();
   renderEPA();
   const filtered = getFiltered();
   const mesSel = document.getElementById('selMes').value;
