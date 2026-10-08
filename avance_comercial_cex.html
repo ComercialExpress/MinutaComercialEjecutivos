@@ -585,6 +585,42 @@ h1,h2,h3,.kpi-value,.store-card-name{font-family:'Inter',sans-serif}
 @media(max-width:560px){.wrap{padding:12px 12px 40px}.header-title-row{gap:12px}.header-description{font-size:12px}.header-card .upload-row{width:100%}.section-note{line-height:1.5}.matrix-legend{font-size:11px}.global-kpis .calculation-card{gap:10px}.calculation-label{max-width:140px}.store-card-foot .pill{font-size:11px}}
 @media print{.reading-guide-grid{display:grid}.header-card{print-color-adjust:exact}}
 .table-mobile-hint{display:none}@media(max-width:560px){.store-search-shell{flex-direction:column;gap:8px}.nav-home-btn{justify-content:center}.table-mobile-hint{display:block;font-size:11px;line-height:1.5;color:var(--ink-500);margin:0 0 10px}.store-search-option{flex-wrap:wrap;gap:6px}}
+/* Resumen con identidad por familia de indicadores. */
+.global-kpis .kpi-card{border-top:4px solid var(--accent);background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 9%,white),white 72%);box-shadow:0 3px 12px rgba(23,35,56,.07)}
+.global-kpis .kpi-label{color:var(--accent);font-weight:750}
+.global-kpis .kpi-value{color:var(--navy-900)}
+.global-kpis .kpi-card:nth-child(1){--accent:#2458B8!important}
+.global-kpis .kpi-card:nth-child(2){--accent:#087B87!important}
+.global-kpis .kpi-card:nth-child(3){--accent:#7243B5!important}
+.global-kpis .kpi-card:nth-child(4){--accent:#7243B5!important}
+.global-kpis .kpi-card:nth-child(5){--accent:#B7530B!important}
+.global-kpis .kpi-card:nth-child(6){--accent:#B7530B!important}
+#panel-resumen>.card{border-top:4px solid #F5821F}
+#panel-resumen .card-title{color:#243B65;font-size:15px}
+#summaryTable thead th{background:#263B63;color:#FFF;font-size:12px;font-weight:750;line-height:1.4;padding:13px 7px;border-bottom:4px solid #6D8ABD;border-right:1px solid rgba(255,255,255,.2);text-shadow:none}
+#summaryTable thead th:first-child{background:#203252;border-bottom-color:#F5821F;font-size:13px}
+#summaryTable thead th:nth-child(2){background:#2458A6;border-bottom-color:#73ADFF}
+#summaryTable thead th:nth-child(3){background:#086975;border-bottom-color:#4DD7CB}
+#summaryTable thead th:nth-child(n+4):nth-child(-n+7){background:#63399A;border-bottom-color:#C3A0FF}
+#summaryTable thead th:nth-child(8),#summaryTable thead th:nth-child(9){background:#99430D;border-bottom-color:#FFB567}
+#summaryTable thead th:nth-child(10),#summaryTable thead th:nth-child(11){background:#2458A6;border-bottom-color:#73ADFF}
+#summaryTable thead .tt{border-bottom:0;text-decoration:none}
+#summaryTable tbody tr:not(.total-row):nth-child(even) td{background:#F4F7FC}
+#summaryTable tbody tr:not(.total-row):hover td{background:#E8F0FD}
+#summaryTable tbody tr:not(.total-row) td:first-child{color:#233F6B;font-weight:700;border-left:3px solid #D1DFF3}
+#summaryTable tbody tr:not(.total-row):hover td:first-child{border-left-color:#F5821F}
+#summaryTable tr.total-row td{background:#20385E;border-top:2px solid #F5821F}
+#summaryTable .matrix-progress{border-radius:6px}
+#summaryTable .matrix-percent{font-weight:750}
+#panel-resumen .legend-line.scale{height:8px;background:linear-gradient(90deg,rgb(246,128,139),rgb(250,201,67),rgb(61,195,137))}
+#panel-resumen .meta-toggle{background:#EDF3FF;color:#214F97;border-color:#B2C8EA}
+#panel-resumen .meta-toggle:hover,#panel-resumen .meta-toggle[aria-pressed="true"]{background:#2458A6;color:#FFF;border-color:#2458A6}
+#panel-resumen .store-card{border-top:3px solid #547DBB}
+#panel-resumen .store-mini-stat:nth-child(1){background:#EAF1FF;color:#2458A6}
+#panel-resumen .store-mini-stat:nth-child(2){background:#F1EAFE;color:#63399A}
+#panel-resumen .store-mini-stat:nth-child(3){background:#E1F5F3;color:#086975}
+#panel-resumen .store-mini-label{color:inherit}
+@media print{#summaryTable thead th,.global-kpis .kpi-card{print-color-adjust:exact}}
 </style>
 </head>
 <body>
@@ -829,7 +865,7 @@ function goalFormat(value,key){
 // Escala continua: rojo 0%, amarillo 50%, verde desde 100%.
 function achievementColor(percent){
   const value=Math.max(0,Math.min(100,percent));
-  const stops=[[244,177,177],[248,220,133],[156,216,177]];
+  const stops=[[246,128,139],[250,201,67],[61,195,137]];
   const index=value<50?0:1;
   const fraction=(value-index*50)/50;
   return 'rgb('+stops[index].map((channel,i)=>Math.round(channel+(stops[index+1][i]-channel)*fraction)).join(',')+')';
