@@ -521,6 +521,70 @@ body.show-daily-metas .daily-meta{display:block}
 #sourceStatus{font-size:11px;opacity:.78}
 @media print{.meta-toggle{display:none}.daily-meta{display:block}.matrix-track,.goal-track{print-color-adjust:exact}}
 @media(max-width:560px){.matrix-legend{font-size:10px;gap:9px}.matrix-tools{gap:10px}.kpi-value{font-size:19px}}
+/* Resumen compacto: menos espacio vertical, cifras y controles legibles. */
+.global-kpis{margin-top:16px}
+.global-kpis>.section-heading{margin:16px 2px 8px}
+.global-kpis .store-kpi-grid{gap:8px;margin-top:10px}
+.global-kpis .kpi-card{padding:13px 12px}
+.global-kpis .kpi-value{margin-top:7px}
+.global-kpis .kpi-sub{margin-top:4px}
+.global-kpis .goal-progress{margin-top:8px;gap:5px}
+.global-kpis .calculation-card{padding:9px 12px;gap:14px}
+#panel-resumen .section-heading{margin:18px 2px 8px}
+#panel-resumen>.card{padding:16px;margin-top:10px}
+#panel-resumen .card-title-row{margin-bottom:10px}
+#panel-resumen .matrix-tools{margin-bottom:10px;gap:8px}
+#summaryTable th{padding:9px 6px}
+#summaryTable td{height:58px}
+#summaryTable .daily-cell{padding:6px;gap:4px}
+#panel-resumen .footnote{margin-top:10px;line-height:1.5}
+#panel-resumen .store-cards-grid{gap:12px}
+#panel-resumen .store-card{padding:16px}
+@media(max-width:560px){
+  #panel-resumen>.card{padding:12px}
+  .global-kpis .kpi-card{padding:12px 10px}
+  .global-kpis .calculation-card{width:100%;gap:10px}
+}
+
+/* Identidad corporativa y lectura clara — octubre 2026. */
+:root{--bg:#F4F6FA;--ink-900:#172338;--ink-700:#34445A;--ink-500:#536379;--ink-400:#64748B;--border:#DDE4ED;--border-soft:#E9EEF4;--radius-lg:14px;--shadow-card:0 2px 8px rgba(23,35,56,.04)}
+body{background:var(--bg)}
+.wrap{padding-top:18px}
+h1,h2,h3,.kpi-value,.store-card-name{font-family:'Inter',sans-serif}
+.header-card{background:linear-gradient(115deg,#16233D,#26395C);padding:22px 28px;border:1px solid #30425F}
+.header-card::after{display:none}
+.header-card::before{background:none;border-top:3px solid var(--orange-500)}
+.brand-row{margin-bottom:14px}.brand-name{color:#D4DEED;letter-spacing:.06em}
+.header-title{font-size:26px;font-weight:700;letter-spacing:-.03em}
+.header-description{margin:6px 0 0;color:#DFE6F1;font-size:13px;line-height:1.55}
+.header-sub{color:#E0E7F1;margin-top:10px}
+.header-card #goalsStatus,.header-card #sourceStatus{color:#DFE6F1;opacity:1;font-size:11px;line-height:1.5;margin-top:8px}
+.chips-row{margin-top:14px;gap:6px}.chip{padding:5px 10px;border-radius:7px}
+.ghost-field{font-family:inherit;font-weight:600;min-height:40px}
+#refreshData{background:#FFF;color:#203252;border-color:#FFF}#refreshData:hover{background:#EEF2F8}
+.nav-section{margin-top:18px}.section-heading h2{font-size:17px;font-weight:700;letter-spacing:-.025em}
+.section-note{font-size:12px;color:var(--ink-500)}
+.kpi-card{border-radius:12px}.kpi-label{font-size:11px;text-transform:none;letter-spacing:0;font-weight:600;color:var(--ink-700)}
+.kpi-value{font-weight:750;letter-spacing:-.04em}.kpi-sub{font-size:11px}
+.goal-caption{font-size:11px}.goal-percent{font-size:11px}.goal-track{height:5px}
+.card-title{font-family:'Inter',sans-serif;font-weight:700;font-size:14px}.card-note{font-size:12px}
+#summaryTable th{text-transform:none;letter-spacing:0;font-size:11px;line-height:1.4;color:#43536A;background:#F1F4F8}
+#summaryTable td:first-child{line-height:1.45}
+#summaryTable .daily-meta{font-size:11px}
+.matrix-legend{font-size:12px;line-height:1.5}.matrix-legend strong{font-weight:600}
+.meta-toggle{font-size:12px;min-height:38px;padding:8px 12px;color:#26395C;border-color:#BCC8D8}
+.reading-guide{margin-top:12px;border:1px solid var(--border);border-radius:10px;background:#FFF}
+.reading-guide summary{padding:12px 16px;cursor:pointer;font-size:12px;font-weight:600;color:#304563}
+.reading-guide summary:hover{background:#F1F4F8}
+.reading-guide-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;padding:4px 16px 16px}
+.reading-guide h3{font-size:12px;margin:0 0 6px}.reading-guide p{font-size:12px;line-height:1.7;color:var(--ink-500);margin:0}
+.store-card{border-color:var(--border);box-shadow:var(--shadow-card)}.store-card-name{font-size:14px;font-weight:700}
+.store-card-sub{font-size:11px}.store-card-foot{gap:8px;flex-wrap:wrap}.store-card-foot .pill{font-size:10px;white-space:normal}
+.calculation-label{font-size:10px;text-transform:none;letter-spacing:0}.calculation-note{font-size:11px}
+@media(max-width:760px){.reading-guide-grid{grid-template-columns:1fr;gap:16px}.header-card{padding:20px}.header-title{font-size:23px}}
+@media(max-width:560px){.wrap{padding:12px 12px 40px}.header-title-row{gap:12px}.header-description{font-size:12px}.header-card .upload-row{width:100%}.section-note{line-height:1.5}.matrix-legend{font-size:11px}.global-kpis .calculation-card{gap:10px}.calculation-label{max-width:140px}.store-card-foot .pill{font-size:11px}}
+@media print{.reading-guide-grid{display:grid}.header-card{print-color-adjust:exact}}
+.table-mobile-hint{display:none}@media(max-width:560px){.store-search-shell{flex-direction:column;gap:8px}.nav-home-btn{justify-content:center}.table-mobile-hint{display:block;font-size:11px;line-height:1.5;color:var(--ink-500);margin:0 0 10px}.store-search-option{flex-wrap:wrap;gap:6px}}
 </style>
 </head>
 <body>
@@ -535,7 +599,8 @@ body.show-daily-metas .daily-meta{display:block}
     </div>
     <div class="header-title-row">
       <div>
-        <div class="header-title">Avance Comercial Diario</div>
+        <h1 class="header-title">Avance comercial diario</h1>
+        <p class="header-description">Ventas, metas y resultados de nuestras sucursales en un solo lugar.</p>
         <div class="header-sub">
           <span id="asOfLabel">Esperando datos publicados</span>
           <span id="demoBadge" class="demo-badge" hidden>Datos de ejemplo</span>
@@ -548,7 +613,7 @@ body.show-daily-metas .daily-meta{display:block}
         </label>
         <input type="file" id="fileInput" accept=".xlsx" hidden>
         <button type="button" class="ghost-field admin-only" id="downloadData" disabled>Descargar JSON para publicar</button>
-        <button type="button" class="ghost-field" id="refreshData">Actualizar</button>
+        <button type="button" class="ghost-field" id="refreshData">Actualizar datos</button>
         <button type="button" class="ghost-field admin-only" id="publishedData">Ver datos publicados</button>
       </div>
     </div>
@@ -560,7 +625,7 @@ body.show-daily-metas .daily-meta{display:block}
 
   <!-- Indicadores globales del corte -->
   <section class="global-kpis" aria-label="Indicadores globales del corte">
-    <div class="section-heading"><h2>Resultado global</h2><div class="calculation-card" id="calculationReference" role="status" aria-label="Referencia del cálculo de metas diarias"></div></div>
+    <div class="section-heading"><h2>Resultados del día</h2><div class="calculation-card" id="calculationReference" role="status" aria-label="Referencia del cálculo de metas diarias"></div></div>
     <div class="store-kpi-grid" id="globalKpis"></div>
   </section>
 
@@ -591,48 +656,51 @@ body.show-daily-metas .daily-meta{display:block}
   <div class="panel active panel-fade-in" id="panel-resumen">
 
     <div class="section-heading">
-      <h2>Matriz comparativa</h2>
-      <span class="section-note" id="summarySectionNote">Orden establecido de sucursales · selecciona una fila para ver el detalle por vendedor</span>
+      <h2>Comparación de sucursales</h2>
+      <span class="section-note" id="summarySectionNote">Selecciona una sucursal para ver sus resultados por vendedor.</span>
     </div>
     <div class="card">
       <div class="card-title-row">
         <div class="card-title">Resumen por sucursal</div>
-        <div class="card-note">Venta neta y avance sobre la meta diaria</div>
+        <div class="card-note">Ventas del día y cumplimiento de metas</div>
       </div>
       <div class="matrix-tools">
-        <div class="matrix-legend"><span class="legend-item"><span class="legend-line scale"></span>Rojo 0% · Amarillo 50% · Verde ≥100%</span><span>— Sin meta · Detalle al enfocar una cifra</span></div>
+        <div class="matrix-legend"><span class="legend-item"><span class="legend-line scale" aria-hidden="true"></span>Avance hacia la meta</span><span><strong>100% = meta cumplida</strong> · — = sin meta disponible</span></div>
         <button class="meta-toggle" id="toggleDailyMetas" type="button" aria-pressed="false" aria-controls="summaryTable">Mostrar metas</button>
       </div>
-      <div class="table-scroll">
+      <p class="table-mobile-hint">Desliza la tabla hacia los lados para ver todos los indicadores.</p><div class="table-scroll" role="region" aria-label="Resultados por sucursal. En pantallas pequeñas, desplaza la tabla horizontalmente." tabindex="0">
         <table class="rol-table" id="summaryTable">
           <thead>
             <tr>
               <th style="text-align:left;">Sucursal</th>
-              <th><span class="tt" data-tip="Líneas móviles nuevas o portadas vendidas a personas naturales en el día.">Móvil<br>Persona<br><span class="col-goal-tag" data-metric="movilPersona"></span></span></th>
-              <th><span class="tt" data-tip="Solicitudes de internet Hogar Fibra ingresadas en el día.">Fibra<br>Solicitud<br><span class="col-goal-tag" data-metric="fibra"></span></span></th>
-              <th><span class="tt" data-tip="Líneas de voz portadas desde otra compañía.">Voz<br>Portado<br><span class="col-goal-tag" data-metric="vozPortado"></span></span></th>
-              <th><span class="tt" data-tip="Total de líneas de voz: nuevas + portadas + segunda línea.">Voz SS<br><span class="col-goal-tag" data-metric="vozSS"></span></span></th>
-              <th><span class="tt" data-tip="Voz Portado ÷ Voz SS. Indicador clave de la meta comercial del día.">%Mix Porta<br><span id="goalHeaderTag" style="font-weight:600;">(33,5%)</span></span></th>
-              <th><span class="tt" data-tip="Voz SS ÷ Móvil Persona.">%Mix<br>Voz SS</span></th>
+              <th><span class="tt" data-tip="Líneas móviles nuevas o portadas vendidas a personas naturales en el día.">Móvil<br>personas<br><span class="col-goal-tag" data-metric="movilPersona"></span></span></th>
+              <th><span class="tt" data-tip="Solicitudes de internet Hogar Fibra ingresadas en el día.">Solicitudes<br>de fibra<br><span class="col-goal-tag" data-metric="fibra"></span></span></th>
+              <th><span class="tt" data-tip="Líneas de voz portadas desde otra compañía.">Líneas<br>portadas<br><span class="col-goal-tag" data-metric="vozPortado"></span></span></th>
+              <th><span class="tt" data-tip="Total de líneas de voz: nuevas + portadas + segunda línea.">Total voz<br><span class="col-goal-tag" data-metric="vozSS"></span></span></th>
+              <th><span class="tt" data-tip="Voz Portado ÷ Voz SS. Indicador clave de la meta comercial del día.">Portabilidad<br>(%)<br><span id="goalHeaderTag" style="font-weight:600;">(33,5%)</span></span></th>
+              <th><span class="tt" data-tip="Voz SS ÷ Móvil Persona.">Voz sobre<br>móvil (%)</span></th>
               <th><span class="tt" data-tip="Venta neta de equipos sin IVA: subtotal bruto ÷ 1,19.">Equipos netos<br><span class="col-goal-tag" data-metric="equiposCLP"></span></span></th>
               <th><span class="tt" data-tip="Venta neta de accesorios sin IVA: subtotal bruto ÷ 1,19.">Accesorios netos<br><span class="col-goal-tag" data-metric="accCLP"></span></span></th>
-              <th><span class="tt" data-tip="Líneas móviles vendidas a segmento empresa.">Móvil<br>Empresa<br><span class="col-goal-tag" data-metric="movilEmpresa"></span></span></th>
-              <th><span class="tt" data-tip="Solicitudes de fijo/fibra para segmento empresa.">Solicitud<br>Fijo Empresa<br><span class="col-goal-tag" data-metric="fijoEmpresa"></span></span></th>
+              <th><span class="tt" data-tip="Líneas móviles vendidas a segmento empresa.">Móvil<br>empresas<br><span class="col-goal-tag" data-metric="movilEmpresa"></span></span></th>
+              <th><span class="tt" data-tip="Solicitudes de fijo/fibra para segmento empresa.">Fijo<br>empresas<br><span class="col-goal-tag" data-metric="fijoEmpresa"></span></span></th>
             </tr>
           </thead>
           <tbody id="summaryBody"></tbody>
         </table>
       </div>
     </div>
-    <div class="footnote">
-      Voz SS = líneas de voz (nuevas + portadas + seguimiento de línea); no incluye planes MIS.
-      %Mix Porta = Voz Portado / Voz SS. %Mix Voz SS = Voz SS / Móvil Persona.
-      Meta diaria = meta mensual × peso del día de ventas. Las metas de porcentaje no se ponderan por día. Las cantidades objetivo conservan decimales; el cumplimiento usa el valor sin redondear.
-    </div>
+    <details class="reading-guide">
+      <summary>Cómo leer este informe</summary>
+      <div class="reading-guide-grid">
+        <div><h3>Ventas y cumplimiento</h3><p>La cifra principal muestra la venta del día. El porcentaje de la barra indica cuánto se ha cumplido de la meta: 50% es la mitad y 100% significa que se alcanzó. Usa «Mostrar metas» para ver el objetivo de cada indicador.</p></div>
+        <div><h3>Qué significa cada indicador</h3><p><strong>Portabilidad:</strong> líneas de voz que llegan desde otra compañía, divididas por el total de líneas de voz (Voz SS). <strong>Voz sobre móvil:</strong> líneas de voz divididas por Móvil Personas. Voz SS incluye líneas nuevas, portadas y seguimiento de línea; excluye planes MIS.</p></div>
+        <div><h3>Montos y metas</h3><p>Los montos están en pesos chilenos, sin IVA. La meta diaria es la meta mensual multiplicada por la proporción asignada al día. Cantidades y pesos se muestran como enteros; el cumplimiento conserva la precisión original. Las metas porcentuales se mantienen durante el mes.</p></div>
+      </div>
+    </details>
 
     <div class="section-heading">
       <h2>Sucursales</h2>
-      <span class="section-note">Click en una tarjeta para ver el detalle por vendedor</span>
+      <span class="section-note">Revisa el detalle de ventas de cada sucursal.</span>
     </div>
     <div class="store-cards-grid" id="storeCardsGrid"></div>
   </div>
@@ -756,7 +824,7 @@ function dailyGoal(storeName,key){
 function goalFormat(value,key){
   if(['mixPorta','mixVozSS'].includes(key)) return fmtPct(value);
   if(['equiposCLP','accCLP'].includes(key)) return fmtMoney(value);
-  return value.toLocaleString('es-CL',{maximumFractionDigits:2});
+  return Math.round(value).toLocaleString('es-CL');
 }
 // Escala continua: rojo 0%, amarillo 50%, verde desde 100%.
 function achievementColor(percent){
@@ -968,16 +1036,16 @@ function combineTip(desc, bdTip){
 function kpiCardsHtml(total, opts){
   opts = opts || {};
   const cards = [
-    {key:'movilPersona', label:'Móvil Persona', tip:combineTip('Líneas móviles nuevas o portadas vendidas a personas naturales en el día.', tipForMetric(total,'movilPersona')), value:fmtInt(total.movilPersona), sub:opts.empresaSub===false?'':`+${fmtInt(total.movilEmpresa)} empresa`, accent:'var(--navy-600)'},
-    {key:'fibra', label:'Fibra Solicitud', tip:combineTip('Solicitudes de internet Hogar Fibra ingresadas en el día.', tipForMetric(total,'fibra')), value:fmtInt(total.fibra), sub:opts.empresaSub===false?'':`+${fmtInt(total.fijoEmpresa)} empresa`, accent:'var(--blue-600)'},
-    {key:'vozPortado', label:'Voz Portado', tip:'Líneas de voz portadas desde otra compañía en el día.', value:fmtInt(total.vozPortado), sub:`de ${fmtInt(total.vozSS)} voz SS`, accent:'var(--purple-600)'},
-    {key:'mixPorta', label:'%Mix Porta', tip:'Voz Portado ÷ Voz SS. Objetivo porcentual del período, sin ponderación diaria.', value:fmtPct(total.mixPorta), sub:'Objetivo del período', accent: dailyGoal(total.sucursal || null,'mixPorta')===null ? 'var(--ink-400)' : total.mixPorta >= dailyGoal(total.sucursal || null,'mixPorta') ? 'var(--green-600)' : 'var(--red-600)'},
+    {key:'movilPersona', label:'Móvil personas', tip:combineTip('Líneas móviles nuevas o portadas vendidas a personas naturales en el día.', tipForMetric(total,'movilPersona')), value:fmtInt(total.movilPersona), sub:opts.empresaSub===false?'':`+${fmtInt(total.movilEmpresa)} empresa`, accent:'var(--navy-600)'},
+    {key:'fibra', label:'Solicitudes de fibra', tip:combineTip('Solicitudes de internet Hogar Fibra ingresadas en el día.', tipForMetric(total,'fibra')), value:fmtInt(total.fibra), sub:opts.empresaSub===false?'':`+${fmtInt(total.fijoEmpresa)} empresa`, accent:'var(--blue-600)'},
+    {key:'vozPortado', label:'Líneas portadas', tip:'Líneas de voz portadas desde otra compañía en el día.', value:fmtInt(total.vozPortado), sub:`de ${fmtInt(total.vozSS)} líneas de voz`, accent:'var(--purple-600)'},
+    {key:'mixPorta', label:'Portabilidad (%)', tip:'Voz Portado ÷ Voz SS. Objetivo porcentual del período, sin ponderación diaria.', value:fmtPct(total.mixPorta), sub:'Portadas sobre el total de voz', accent: dailyGoal(total.sucursal || null,'mixPorta')===null ? 'var(--ink-400)' : total.mixPorta >= dailyGoal(total.sucursal || null,'mixPorta') ? 'var(--green-600)' : 'var(--red-600)'},
     {key:'equiposCLP', label:'Equipos netos', tip:combineTip('Venta neta de equipos sin IVA: subtotal bruto ÷ 1,19.', tipForMetric(total,'equiposCLP')), value:fmtMoney(total.equiposCLP), sub:`${fmtInt(total.equiposQ||0)} equipo(s) vendido(s)`, accent:'var(--amber-600)'},
     {key:'accCLP', label:'Accesorios netos', tip:combineTip('Venta neta de accesorios sin IVA: subtotal bruto ÷ 1,19.', tipForMetric(total,'accCLP')), value:fmtMoney(total.accCLP), sub:`${fmtInt(total.accQ||0)} accesorio(s) vendido(s)`, accent:'var(--orange-600)'},
   ];
   return cards.map((c,i)=>`
     <div class="kpi-card" style="--accent:${c.accent}; animation-delay:${i*0.05}s">
-      <div class="kpi-label tt" data-tip="${escapeTipAttr(c.tip)}">${c.label}</div>
+      <div class="kpi-label tt" tabindex="0" data-tip="${escapeTipAttr(c.tip)}">${c.label}</div>
       <div class="kpi-value">${c.value}</div>
       <div class="kpi-sub">${c.sub}</div>
       ${goalProgress(total[c.key],dailyGoal(total.sucursal || null,c.key),c.key)}
@@ -990,7 +1058,7 @@ function ringSvg(pct, ok){
   const clamped = Math.max(0, Math.min(100, pct));
   const offset = c - (clamped/100)*c;
   const color = ok===null ? 'var(--ink-400)' : ok ? 'var(--green-600)' : (clamped >= 20 ? 'var(--amber-600)' : 'var(--red-600)');
-  return `<div class="ring-wrap">
+  return `<div class="ring-wrap" role="img" aria-label="Portabilidad: ${fmtPct(pct)}" title="Porcentaje de líneas de voz portadas">
       <svg viewBox="0 0 48 48" width="52" height="52">
         <circle class="ring-bg" cx="24" cy="24" r="${r}"></circle>
         <circle class="ring-fg" cx="24" cy="24" r="${r}" stroke="${color}" stroke-dasharray="${c.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}"></circle>
@@ -1022,7 +1090,7 @@ function renderStoreCards(){
         <div class="store-mini-stat"><div class="store-mini-label tt" data-tip="Solicitudes de Hogar Fibra">Fibra</div><div class="store-mini-value">${fmtInt(r.fibra)}</div></div>
       </div>
       <div class="store-card-foot">
-        <span class="pill"><span class="pill-dot" style="color:${up?'var(--green-600)':'var(--red-600)'}"></span>${storeMixGoal===null?'Sin meta disponible':up?'Cumple meta %Mix Porta':'Bajo meta %Mix Porta'}</span>
+        <span class="pill"><span class="pill-dot" style="color:${up?'var(--green-600)':'var(--red-600)'}"></span>${storeMixGoal===null?'Sin meta disponible':up?'Meta de portabilidad cumplida':'Portabilidad bajo la meta'}</span>
         <span class="store-card-link">Ver detalle <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
       </div>
     </div>`;
@@ -1047,7 +1115,7 @@ function renderGlobalKpis(){
   const weight=validWeight ? GOALS.weights[dateKey] : null;
   const weekday=dateKey ? new Date(dateKey+'T12:00:00Z').toLocaleDateString('es-CL',{weekday:'long',timeZone:'UTC'}) : '';
   const weightLabel=weight===null ? 'No disponible' : (weight*100).toLocaleString('es-CL',{minimumFractionDigits:4,maximumFractionDigits:4})+'%';
-  document.getElementById('calculationReference').innerHTML=`<div class="calculation-part"><span class="calculation-label">Día de ventas</span><span class="calculation-value">${escapeTipAttr(STATE.asOf)}</span><span class="calculation-note">${escapeTipAttr(weekday)}</span></div><div class="calculation-part calculation-weight"><span class="calculation-label">Peso diario FCST</span><span class="calculation-value">${weightLabel}</span><span class="calculation-note">${weight===null?'Sin peso para este corte':weight===0?'Día sin ponderación':'Meta mensual × peso diario'}</span></div>`;
+  document.getElementById('calculationReference').innerHTML=`<div class="calculation-part"><span class="calculation-label">Fecha de las ventas</span><span class="calculation-value">${escapeTipAttr(STATE.asOf)}</span><span class="calculation-note">${escapeTipAttr(weekday)}</span></div><div class="calculation-part calculation-weight"><span class="calculation-label">Proporción de la meta mensual</span><span class="calculation-value">${weightLabel}</span><span class="calculation-note">${weight===null?'No disponible para esta fecha':weight===0?'Sin meta asignada para este día':'Porción asignada a este día'}</span></div>`;
   document.getElementById('globalKpis').innerHTML = kpiCardsHtml(computeTotal(STATE.summary));
 }
 
@@ -1257,7 +1325,7 @@ function renderSummaryTable(){
   const total = computeTotal(STATE.summary);
   const maxes = computeColumnMaxes(rows);
   document.getElementById('goalHeaderTag').textContent = '';
-  document.getElementById('summarySectionNote').textContent = 'Orden establecido de sucursales · selecciona una fila para ver el detalle por vendedor';
+  document.getElementById('summarySectionNote').textContent = 'Selecciona una sucursal para ver sus resultados por vendedor.';
   tbody.innerHTML = rows.map((r,i) => storeSummaryRowHtml(r, i, STATE.summary.findIndex(s=>s.sucursal===r.sucursal), maxes)).join('') + totalRowHtml('Comercial Express', total, true);
 
   tbody.querySelectorAll('tr.row-clickable').forEach(tr=>{
@@ -1438,7 +1506,7 @@ function renderStorePanels(){
               <div class="store-hero-title">${escapeTipAttr(r.sucursal)}</div>
               <div class="store-hero-sub">${fmtInt(r.docs||0)} registros · ${fmtInt(vendorRows.length)} vendedores con movimiento</div>
             </div>
-            <div class="store-hero-badge ${storeMixGoal===null?'no-goal':up?'up':'down'}">${storeMixGoal===null?'Sin meta disponible':up ? '✓ Cumple meta %Mix Porta' : '△ Bajo meta %Mix Porta'}</div>
+            <div class="store-hero-badge ${storeMixGoal===null?'no-goal':up?'up':'down'}">${storeMixGoal===null?'Sin meta disponible':up ? '✓ Meta de portabilidad cumplida' : '△ Portabilidad bajo la meta'}</div>
           </div>
         </div>
 
@@ -1460,7 +1528,7 @@ function renderStorePanels(){
 
 function renderAll(){
   document.getElementById('demoBadge').style.display = STATE.isDemo ? 'inline-flex' : 'none';
-  document.getElementById('asOfLabel').textContent = 'Corte al ' + STATE.asOf;
+  document.getElementById('asOfLabel').textContent = 'Ventas del ' + STATE.asOf;
   STATE.summary = computeStoreSummary(STATE.rows, STATE.cols).sort((a,b)=>{
     const ia = CONFIG.storeOrder.indexOf(a.sucursal);
     const ib = CONFIG.storeOrder.indexOf(b.sucursal);
