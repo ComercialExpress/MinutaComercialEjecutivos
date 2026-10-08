@@ -652,6 +652,31 @@ body.show-daily-metas #summaryTable .matrix-percent,body.show-daily-metas #summa
 @media(max-width:560px){.summary-banner{padding:16px;gap:14px}.summary-banner h3{font-size:20px}.summary-banner-title>svg{width:30px;height:30px}.summary-banner .matrix-legend{flex-wrap:wrap}.summary-banner .matrix-tools{gap:12px!important}.summary-banner .meta-toggle{width:100%}#panel-resumen>.card{padding:0}}
 @media print{#summaryTable .matrix-percent,#summaryTable .daily-meta{display:block}.summary-banner{print-color-adjust:exact}}
 #summaryTable .matrix-progress:not(.unavailable) .matrix-track{background:color-mix(in srgb,var(--achievement-color) 14%,#F1F4F8)}
+/* Presentación de referencia: barras tipo cápsula y cabecera azul luminosa. */
+#panel-resumen>.card{border-radius:12px;border-color:#DDECF7;background:#FFF}
+.summary-banner{background:linear-gradient(110deg,#17385F 0%,#235C8D 100%);padding:18px 22px;border-bottom:1px solid #8EBBDA;box-shadow:inset 0 1px 0 #FFFFFF35}
+.summary-banner h3{font-size:24px;letter-spacing:-.025em}.summary-banner-title>svg{filter:drop-shadow(0 2px 5px #00BBFF30)}
+#panel-resumen .summary-banner .meta-toggle{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:#FFFFFF08;color:#FFF;border-color:#91B4D1;box-shadow:inset 0 1px 0 #FFFFFF15;border-radius:10px}
+#panel-resumen .summary-banner .meta-toggle::before{content:'';display:block;flex-shrink:0;width:20px;height:20px;background:currentColor;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='black' stroke-width='2' d='M2 12s4-8 10-8 10 8 10 8-4 8-10 8S2 12 2 12Z'/%3E%3Ccircle cx='12' cy='12' r='3' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E") center/contain no-repeat}
+#panel-resumen .summary-banner .meta-toggle:hover,#panel-resumen .summary-banner .meta-toggle[aria-pressed="true"]{background:#FFFFFF20;color:#FFF;border-color:#D8ECFA}
+#summaryTable thead th,#summaryTable thead th:first-child,#summaryTable thead th:nth-child(n){background:#F0F9FF;color:#143974;border-color:#E2F0F9;padding:16px 8px}
+#summaryTable tbody tr:not(.total-row):nth-child(even) td{background:#F0F8FE}
+#summaryTable tbody tr:not(.total-row):hover td{background:#E4F2FD}
+#summaryTable tbody tr:not(.total-row) td:first-child{color:#173B73}
+#summaryTable td{border-color:#E7F1F9;height:66px}
+#summaryTable .daily-cell{padding:10px 8px;gap:6px}
+#summaryTable .daily-value{font-weight:750;color:#122B60}
+#summaryTable .matrix-progress{position:relative;display:block;height:20px;min-height:20px;max-width:112px;border-radius:999px;overflow:hidden;background:#E8EDF3}
+#summaryTable .matrix-progress .matrix-track,#summaryTable .matrix-progress:not(.unavailable) .matrix-track{position:absolute;inset:0;height:20px;min-height:20px;border-radius:999px;background:#E8EDF3}
+#summaryTable .matrix-track>span{background:var(--achievement-color);border-radius:999px}
+#summaryTable .matrix-progress .matrix-percent,#summaryTable .met .matrix-percent{position:absolute;inset:0;line-height:20px;font-size:11px;font-weight:750;color:#142A46;text-align:center;text-shadow:0 1px 0 #FFFFFF40}
+#summaryTable .daily-meta{font-size:11px}
+#summaryTable tr.total-row td{background:#17385F;border-right-color:#2D5076}
+#summaryTable tr.total-row .daily-value{color:#FFF}
+#summaryTable tr.total-row .matrix-progress .matrix-track{background:#72859D}
+#summaryTable tr.total-row .matrix-percent{color:#10243C;text-shadow:0 1px 0 #FFFFFF30}
+#summaryTable tr.total-row .unavailable .matrix-percent{color:#FFF;text-shadow:none}
+@media(max-width:560px){.summary-banner{padding:16px}.summary-banner h3{font-size:21px}}
 </style>
 </head>
 <body>
