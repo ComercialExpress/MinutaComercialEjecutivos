@@ -623,7 +623,7 @@ h1,h2,h3,.kpi-value,.store-card-name{font-family:'Inter',sans-serif}
 .summary-banner-title{display:flex;align-items:center;gap:14px}.summary-banner-title>svg{width:38px;height:38px;flex-shrink:0}
 .summary-banner h3{font-size:22px;font-weight:700;color:#FFF;letter-spacing:-.025em}.summary-banner p{margin:5px 0 0;color:#E4EEF8;font-size:13px;line-height:1.4}
 #panel-resumen .summary-banner .matrix-tools{margin:0;gap:20px;flex-wrap:wrap}.summary-banner .matrix-legend{color:#FFF;font-size:11px;gap:14px}.summary-banner .matrix-legend>span{display:flex;align-items:center;gap:6px;white-space:nowrap}
-.legend-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#FFD05A}.legend-dot.green{background:#60D78B}.legend-dot.gray{background:#DEE7F2}
+.legend-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#FFD05A}.legend-dot.green{background:#60D78B}.legend-dot.red{background:#FF5868}.legend-dot.gray{background:#DEE7F2}
 #panel-resumen .summary-banner .meta-toggle{background:#FFF;color:#173D73;border:1px solid #D8E5F3;border-radius:8px;padding:12px 16px;font-size:12px;min-width:146px;box-shadow:0 2px 6px #142C4930}
 #panel-resumen .summary-banner .meta-toggle:hover{background:#EAF4FF}#panel-resumen .summary-banner .meta-toggle[aria-pressed="true"]{background:#DDF2FF;color:#123A68}
 #panel-resumen .table-scroll{padding:12px 0 0}
@@ -729,7 +729,7 @@ body.show-daily-metas #summaryTable .matrix-percent,body.show-daily-metas #summa
     <div class="card">
       <div class="summary-banner">
         <div class="summary-banner-title"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="19" width="7" height="11" rx="3" fill="#5B9BFF"/><rect x="12" y="10" width="7" height="20" rx="3" fill="#40B7F6"/><rect x="22" y="2" width="7" height="28" rx="3" fill="#31D4D2"/></svg><div><h3>Resumen por sucursal</h3><p>Ventas del día y cumplimiento de metas</p></div></div>
-        <div class="matrix-tools"><div class="matrix-legend"><span><i class="legend-dot green"></i>100% o más</span><span><i class="legend-dot amber"></i>En avance</span><span><i class="legend-dot gray"></i>Sin meta</span></div><button class="meta-toggle" id="toggleDailyMetas" type="button" aria-pressed="false" aria-expanded="false" aria-controls="summaryTable">Mostrar detalles</button></div>
+        <div class="matrix-tools"><div class="matrix-legend"><span><i class="legend-dot green"></i>90% o más</span><span><i class="legend-dot amber"></i>70% a menos de 90%</span><span><i class="legend-dot red"></i>Menos de 70%</span><span><i class="legend-dot gray"></i>Sin meta</span></div><button class="meta-toggle" id="toggleDailyMetas" type="button" aria-pressed="false" aria-expanded="false" aria-controls="summaryTable">Mostrar detalles</button></div>
       </div>
       <p class="table-mobile-hint">Desliza la tabla hacia los lados para ver todos los indicadores.</p><div class="table-scroll" role="region" aria-label="Resultados por sucursal. En pantallas pequeñas, desplaza la tabla horizontalmente." tabindex="0">
         <table class="rol-table" id="summaryTable">
@@ -889,13 +889,11 @@ function goalFormat(value,key){
   if(['equiposCLP','accCLP'].includes(key)) return fmtMoney(value);
   return Math.round(value).toLocaleString('es-CL');
 }
-// Escala continua: rojo 0%, amarillo 50%, verde desde 100%.
+// Tres colores fijos; el cumplimiento de la meta se sigue evaluando al 100%.
 function achievementColor(percent){
-  const value=Math.max(0,Math.min(100,percent));
-  const stops=[[246,128,139],[250,201,67],[61,195,137]];
-  const index=value<50?0:1;
-  const fraction=(value-index*50)/50;
-  return 'rgb('+stops[index].map((channel,i)=>Math.round(channel+(stops[index+1][i]-channel)*fraction)).join(',')+')';
+  if(percent>=90) return '#60D78B';
+  if(percent>=70) return '#FFD05A';
+  return '#FF5868';
 }
 function goalProgress(value,goal,key){
   if(goal===null) return '<span class="goal-caption neutral">Meta no disponible</span>';
