@@ -2161,5 +2161,19 @@
     "sucursal": "LINARES INDEPENDENCIA",
     "categoria": "neutra",
     "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-10-02",
+    "mes": "2026-10",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "mala",
+    "origen": "COBERTURA"
+  },
+  {
+    "fecha": "2026-10-06",
+    "mes": "2026-10",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "neutra",
+    "origen": "ERROR DE EVALUACIÓN"
   }
 ]
