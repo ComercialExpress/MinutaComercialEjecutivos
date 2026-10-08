@@ -599,11 +599,6 @@ h1,h2,h3,.kpi-value,.store-card-name{font-family:'Inter',sans-serif}
 #panel-resumen .card-title{color:#243B65;font-size:15px}
 #summaryTable thead th{background:#263B63;color:#FFF;font-size:12px;font-weight:750;line-height:1.4;padding:13px 7px;border-bottom:4px solid #6D8ABD;border-right:1px solid rgba(255,255,255,.2);text-shadow:none}
 #summaryTable thead th:first-child{background:#203252;border-bottom-color:#F5821F;font-size:13px}
-#summaryTable thead th:nth-child(2){background:#2458A6;border-bottom-color:#73ADFF}
-#summaryTable thead th:nth-child(3){background:#086975;border-bottom-color:#4DD7CB}
-#summaryTable thead th:nth-child(n+4):nth-child(-n+7){background:#63399A;border-bottom-color:#C3A0FF}
-#summaryTable thead th:nth-child(8),#summaryTable thead th:nth-child(9){background:#99430D;border-bottom-color:#FFB567}
-#summaryTable thead th:nth-child(10),#summaryTable thead th:nth-child(11){background:#2458A6;border-bottom-color:#73ADFF}
 #summaryTable thead .tt{border-bottom:0;text-decoration:none}
 #summaryTable tbody tr:not(.total-row):nth-child(even) td{background:#F4F7FC}
 #summaryTable tbody tr:not(.total-row):hover td{background:#E8F0FD}
@@ -621,6 +616,42 @@ h1,h2,h3,.kpi-value,.store-card-name{font-family:'Inter',sans-serif}
 #panel-resumen .store-mini-stat:nth-child(3){background:#E1F5F3;color:#086975}
 #panel-resumen .store-mini-label{color:inherit}
 @media print{#summaryTable thead th,.global-kpis .kpi-card{print-color-adjust:exact}}
+
+/* Referencia visual: encabezado azul, columnas claras y detalles bajo demanda. */
+#panel-resumen>.card{padding:0;border:1px solid #DFE8F2;overflow:hidden;box-shadow:0 3px 16px rgba(32,56,94,.06)}
+.summary-banner{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 20px;background:linear-gradient(110deg,#18345C,#21496A);color:#FFF}
+.summary-banner-title{display:flex;align-items:center;gap:14px}.summary-banner-title>svg{width:38px;height:38px;flex-shrink:0}
+.summary-banner h3{font-size:22px;font-weight:700;color:#FFF;letter-spacing:-.025em}.summary-banner p{margin:5px 0 0;color:#E4EEF8;font-size:13px;line-height:1.4}
+#panel-resumen .summary-banner .matrix-tools{margin:0;gap:20px;flex-wrap:wrap}.summary-banner .matrix-legend{color:#FFF;font-size:11px;gap:14px}.summary-banner .matrix-legend>span{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.legend-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#FFD05A}.legend-dot.green{background:#60D78B}.legend-dot.gray{background:#DEE7F2}
+#panel-resumen .summary-banner .meta-toggle{background:#FFF;color:#173D73;border:1px solid #D8E5F3;border-radius:8px;padding:12px 16px;font-size:12px;min-width:146px;box-shadow:0 2px 6px #142C4930}
+#panel-resumen .summary-banner .meta-toggle:hover{background:#EAF4FF}#panel-resumen .summary-banner .meta-toggle[aria-pressed="true"]{background:#DDF2FF;color:#123A68}
+#panel-resumen .table-scroll{padding:12px 0 0}
+#summaryTable thead th,#summaryTable thead th:first-child,#summaryTable thead th:nth-child(n){background:#F2F7FC;color:#153B72;border-bottom:1px solid #DCE8F5;border-right:1px solid #E4EDF7;font-size:12px;font-weight:650;padding:16px 8px;text-align:center}
+#summaryTable thead th:first-child{text-align:left;padding-left:16px;font-size:14px;font-weight:750}
+.column-heading{display:flex;align-items:center;justify-content:center;gap:7px}.column-heading svg{width:22px;height:22px;flex-shrink:0;fill:none;stroke:#173C76;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.column-heading>.tt{text-align:left;line-height:1.4}
+#summaryTable tbody tr:not(.total-row) td:first-child{border-left:0}
+#summaryTable tbody tr:not(.total-row):nth-child(even) td{background:#F7FAFD}
+#summaryTable td{border-right:1px solid #EAF0F7;height:62px}
+#summaryTable .daily-cell{padding:10px 7px;gap:7px}
+#summaryTable .daily-value{font-size:14px;font-weight:700}
+#summaryTable .matrix-progress{display:flex;flex-direction:column;align-items:center;gap:5px;height:auto;min-height:8px;overflow:visible;background:transparent;border-radius:0}
+#summaryTable .matrix-track{position:relative;inset:auto;height:8px;min-height:8px;width:100%;border-radius:999px;background:#E9EEF5;overflow:hidden}
+#summaryTable .matrix-track>span{border-radius:999px}
+#summaryTable .matrix-percent{display:none;position:static;line-height:1.4;font-size:12px;color:#34455D}
+#summaryTable .daily-meta{display:none;font-size:11px;line-height:1.4;color:#536379}
+body.show-daily-metas #summaryTable .matrix-percent,body.show-daily-metas #summaryTable .daily-meta{display:block}
+#summaryTable .met .matrix-percent{color:#08703D}
+#summaryTable tr.total-row td{background:#1D3A61;border-top:0;border-right-color:#3A5274}
+#summaryTable tr.total-row .daily-value,#summaryTable tr.total-row .matrix-percent{color:#FFF}
+#summaryTable tr.total-row .daily-meta{color:#E0EBFA}
+#summaryTable tr.total-row .matrix-track{background:#526885}
+#panel-resumen .table-mobile-hint{padding:10px 12px 0}
+@media(max-width:1100px){.summary-banner{flex-wrap:wrap}.summary-banner .matrix-tools{width:100%;justify-content:space-between}}
+@media(max-width:560px){.summary-banner{padding:16px;gap:14px}.summary-banner h3{font-size:20px}.summary-banner-title>svg{width:30px;height:30px}.summary-banner .matrix-legend{flex-wrap:wrap}.summary-banner .matrix-tools{gap:12px!important}.summary-banner .meta-toggle{width:100%}#panel-resumen>.card{padding:0}}
+@media print{#summaryTable .matrix-percent,#summaryTable .daily-meta{display:block}.summary-banner{print-color-adjust:exact}}
+#summaryTable .matrix-progress:not(.unavailable) .matrix-track{background:color-mix(in srgb,var(--achievement-color) 14%,#F1F4F8)}
 </style>
 </head>
 <body>
@@ -696,29 +727,25 @@ h1,h2,h3,.kpi-value,.store-card-name{font-family:'Inter',sans-serif}
       <span class="section-note" id="summarySectionNote">Selecciona una sucursal para ver sus resultados por vendedor.</span>
     </div>
     <div class="card">
-      <div class="card-title-row">
-        <div class="card-title">Resumen por sucursal</div>
-        <div class="card-note">Ventas del día y cumplimiento de metas</div>
-      </div>
-      <div class="matrix-tools">
-        <div class="matrix-legend"><span class="legend-item"><span class="legend-line scale" aria-hidden="true"></span>Avance hacia la meta</span><span><strong>100% = meta cumplida</strong> · — = sin meta disponible</span></div>
-        <button class="meta-toggle" id="toggleDailyMetas" type="button" aria-pressed="false" aria-controls="summaryTable">Mostrar metas</button>
+      <div class="summary-banner">
+        <div class="summary-banner-title"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="19" width="7" height="11" rx="3" fill="#5B9BFF"/><rect x="12" y="10" width="7" height="20" rx="3" fill="#40B7F6"/><rect x="22" y="2" width="7" height="28" rx="3" fill="#31D4D2"/></svg><div><h3>Resumen por sucursal</h3><p>Ventas del día y cumplimiento de metas</p></div></div>
+        <div class="matrix-tools"><div class="matrix-legend"><span><i class="legend-dot green"></i>100% o más</span><span><i class="legend-dot amber"></i>En avance</span><span><i class="legend-dot gray"></i>Sin meta</span></div><button class="meta-toggle" id="toggleDailyMetas" type="button" aria-pressed="false" aria-expanded="false" aria-controls="summaryTable">Mostrar detalles</button></div>
       </div>
       <p class="table-mobile-hint">Desliza la tabla hacia los lados para ver todos los indicadores.</p><div class="table-scroll" role="region" aria-label="Resultados por sucursal. En pantallas pequeñas, desplaza la tabla horizontalmente." tabindex="0">
         <table class="rol-table" id="summaryTable">
           <thead>
             <tr>
               <th style="text-align:left;">Sucursal</th>
-              <th><span class="tt" data-tip="Líneas móviles nuevas o portadas vendidas a personas naturales en el día.">Móvil<br>personas<br><span class="col-goal-tag" data-metric="movilPersona"></span></span></th>
-              <th><span class="tt" data-tip="Solicitudes de internet Hogar Fibra ingresadas en el día.">Solicitudes<br>de fibra<br><span class="col-goal-tag" data-metric="fibra"></span></span></th>
-              <th><span class="tt" data-tip="Líneas de voz portadas desde otra compañía.">Líneas<br>portadas<br><span class="col-goal-tag" data-metric="vozPortado"></span></span></th>
-              <th><span class="tt" data-tip="Total de líneas de voz: nuevas + portadas + segunda línea.">Total voz<br><span class="col-goal-tag" data-metric="vozSS"></span></span></th>
-              <th><span class="tt" data-tip="Voz Portado ÷ Voz SS. Indicador clave de la meta comercial del día.">Portabilidad<br>(%)<br><span id="goalHeaderTag" style="font-weight:600;">(33,5%)</span></span></th>
-              <th><span class="tt" data-tip="Voz SS ÷ Móvil Persona.">Voz sobre<br>móvil (%)</span></th>
-              <th><span class="tt" data-tip="Venta neta de equipos sin IVA: subtotal bruto ÷ 1,19.">Equipos netos<br><span class="col-goal-tag" data-metric="equiposCLP"></span></span></th>
-              <th><span class="tt" data-tip="Venta neta de accesorios sin IVA: subtotal bruto ÷ 1,19.">Accesorios netos<br><span class="col-goal-tag" data-metric="accCLP"></span></span></th>
-              <th><span class="tt" data-tip="Líneas móviles vendidas a segmento empresa.">Móvil<br>empresas<br><span class="col-goal-tag" data-metric="movilEmpresa"></span></span></th>
-              <th><span class="tt" data-tip="Solicitudes de fijo/fibra para segmento empresa.">Fijo<br>empresas<br><span class="col-goal-tag" data-metric="fijoEmpresa"></span></span></th>
+              <th><span class="column-heading"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M2 21v-3a7 7 0 0114 0v3M17 4a4 4 0 010 8M19 15a6 6 0 013 6"/></svg><span class="tt" data-tip="Líneas móviles nuevas o portadas vendidas a personas naturales en el día.">Móvil<br>personas<br><span class="col-goal-tag" data-metric="movilPersona"></span></span></span></th>
+              <th><span class="column-heading"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 8a16 16 0 0120 0M5 12a11 11 0 0114 0M8 16a6 6 0 018 0"/><circle cx="12" cy="20" r="1"/></svg><span class="tt" data-tip="Solicitudes de internet Hogar Fibra ingresadas en el día.">Solicitudes<br>de fibra<br><span class="col-goal-tag" data-metric="fibra"></span></span></span></th>
+              <th><span class="column-heading"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16l-4-4M20 17H4l4 4M20 7l-4 4M4 17l4-4"/></svg><span class="tt" data-tip="Líneas de voz portadas desde otra compañía.">Líneas<br>portadas<br><span class="col-goal-tag" data-metric="vozPortado"></span></span></span></th>
+              <th><span class="column-heading"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l4 5-3 3a16 16 0 007 7l3-3 5 4c-1 4-4 4-6 3A25 25 0 012 9C1 6 2 4 5 3z"/></svg><span class="tt" data-tip="Total de líneas de voz: nuevas + portadas + segunda línea.">Total voz<br><span class="col-goal-tag" data-metric="vozSS"></span></span></span></th>
+              <th><span class="column-heading"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M2 21v-3a7 7 0 0114 0v3M17 4a4 4 0 010 8M19 15a6 6 0 013 6"/></svg><span class="tt" data-tip="Voz Portado ÷ Voz SS. Indicador clave de la meta comercial del día.">Portabilidad<br>(%)<br><span id="goalHeaderTag" style="font-weight:600;">(33,5%)</span></span></span></th>
+              <th><span class="column-heading"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21v-5M9 21V11M15 21V6M21 21V1"/></svg><span class="tt" data-tip="Voz SS ÷ Móvil Persona.">Voz sobre<br>móvil (%)</span></span></th>
+              <th><span class="column-heading"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 5h4M11 19h2"/></svg><span class="tt" data-tip="Venta neta de equipos sin IVA: subtotal bruto ÷ 1,19.">Equipos netos<br><span class="col-goal-tag" data-metric="equiposCLP"></span></span></span></th>
+              <th><span class="column-heading"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 14v-3a9 9 0 0118 0v3"/><rect x="2" y="12" width="5" height="9" rx="2"/><rect x="17" y="12" width="5" height="9" rx="2"/></svg><span class="tt" data-tip="Venta neta de accesorios sin IVA: subtotal bruto ÷ 1,19.">Accesorios netos<br><span class="col-goal-tag" data-metric="accCLP"></span></span></span></th>
+              <th><span class="column-heading"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="M8 7V3h8v4M2 13h20M10 11v4h4v-4"/></svg><span class="tt" data-tip="Líneas móviles vendidas a segmento empresa.">Móvil<br>empresas<br><span class="col-goal-tag" data-metric="movilEmpresa"></span></span></span></th>
+              <th><span class="column-heading"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 22V4l10-2v20M15 9h5v13M2 22h20M8 7h3M8 11h3M8 15h3M8 19h3M17 12h1M17 16h1"/></svg><span class="tt" data-tip="Solicitudes de fijo/fibra para segmento empresa.">Fijo<br>empresas<br><span class="col-goal-tag" data-metric="fijoEmpresa"></span></span></span></th>
             </tr>
           </thead>
           <tbody id="summaryBody"></tbody>
@@ -728,7 +755,7 @@ h1,h2,h3,.kpi-value,.store-card-name{font-family:'Inter',sans-serif}
     <details class="reading-guide">
       <summary>Cómo leer este informe</summary>
       <div class="reading-guide-grid">
-        <div><h3>Ventas y cumplimiento</h3><p>La cifra principal muestra la venta del día. El porcentaje de la barra indica cuánto se ha cumplido de la meta: 50% es la mitad y 100% significa que se alcanzó. Usa «Mostrar metas» para ver el objetivo de cada indicador.</p></div>
+        <div><h3>Ventas y cumplimiento</h3><p>La cifra principal muestra la venta del día. La barra representa el avance hacia la meta. Al desplegar los detalles, el porcentaje indica cuánto se ha cumplido: 50% es la mitad y 100% significa que se alcanzó. Usa «Mostrar detalles» para ver el porcentaje de cumplimiento y la meta de cada indicador. Vuelve a pulsarlo para regresar a la vista simple.</p></div>
         <div><h3>Qué significa cada indicador</h3><p><strong>Portabilidad:</strong> líneas de voz que llegan desde otra compañía, divididas por el total de líneas de voz (Voz SS). <strong>Voz sobre móvil:</strong> líneas de voz divididas por Móvil Personas. Voz SS incluye líneas nuevas, portadas y seguimiento de línea; excluye planes MIS.</p></div>
         <div><h3>Montos y metas</h3><p>Los montos están en pesos chilenos, sin IVA. La meta diaria es la meta mensual multiplicada por la proporción asignada al día. Cantidades y pesos se muestran como enteros; el cumplimiento conserva la precisión original. Las metas porcentuales se mantienen durante el mes.</p></div>
       </div>
@@ -892,7 +919,7 @@ function targetCell(value,key,storeName){
   const metaLabel=goal===null?'Meta no disponible':goal===0?'Sin meta para hoy':`Meta ${goalFormat(goal,key)}`;
   const tip=`Venta: ${label}\n${metaLabel}${achievement===null?'':`\nCumplimiento: ${fmtPct(achievement)}`}${breakdown?'\n\n'+breakdown:''}`;
   const progress=achievement===null
-    ? '<span class="matrix-progress unavailable">—</span>'
+    ? '<span class="matrix-progress unavailable"><span class="matrix-track"></span><span class="matrix-percent">—</span></span>'
     : `<span class="matrix-progress" style="--achievement-color:${achievementColor(achievement)}"><span class="matrix-track"><span style="width:${Math.max(0,Math.min(100,achievement))}%"></span></span><span class="matrix-percent">${fmtPct(achievement)}</span></span>`;
   return `<span class="daily-cell ${state}${money?' is-money':''}"><span class="daily-value tt" tabindex="0" data-tip="${escapeTipAttr(tip)}" aria-label="${escapeTipAttr(`${label}. ${metaLabel}${achievement===null?'':'. Cumplimiento '+fmtPct(achievement)}`)}">${label}</span>${progress}<span class="daily-meta">${metaLabel}</span></span>`;
 }
@@ -1895,7 +1922,8 @@ document.getElementById('toggleDailyMetas').addEventListener('click',function(){
   const visible=this.getAttribute('aria-pressed')!=='true';
   document.body.classList.toggle('show-daily-metas',visible);
   this.setAttribute('aria-pressed',String(visible));
-  this.textContent=visible?'Ocultar metas':'Mostrar metas';
+  this.setAttribute('aria-expanded',String(visible));
+  this.textContent=visible?'Ocultar detalles':'Mostrar detalles';
 });
 
 /* ---------- Datos compartidos; ante errores nunca sustituir por ejemplos ---------- */
