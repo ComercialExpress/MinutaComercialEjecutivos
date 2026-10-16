@@ -747,6 +747,54 @@
 
     @page{margin:9mm;size:auto;}
   }
+/* Editor local de escenarios: conserva los tokens de identidad CEX. */
+.scenario-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 16px;}
+.scenario-toolbar .segmented{flex-wrap:wrap;}
+.scenario-toolbar .btn{padding:9px 13px;font-size:12px;}
+.scenario-summary{font-size:12px;color:var(--ink-500);line-height:1.6;margin:0 0 14px;}
+.scenario-summary.is-adjusted{padding:12px 14px;border-radius:12px;background:var(--orange-100);color:var(--navy-800);border:1px solid #f5cba0;}
+.scenario-summary strong{font-weight:700;}
+.scenario-meta-tooltip{position:relative;cursor:help;}
+.scenario-meta-tooltip::after{content:attr(data-origin);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);width:max-content;max-width:220px;white-space:normal;text-align:center;padding:8px 10px;border-radius:8px;background:var(--navy-900);color:white;font:500 11px/1.5 Inter,sans-serif;box-shadow:var(--shadow-card);z-index:20;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .15s;}
+.scenario-meta-tooltip:hover::after,.scenario-meta-tooltip:focus::after{opacity:1;visibility:visible;}
+.scenario-meta-tooltip:focus-visible{outline:2px solid var(--orange-500);outline-offset:3px;border-radius:3px;}
+.scenario-dialog{width:min(850px,calc(100% - 24px));max-height:calc(100dvh - 32px);padding:0;border:1px solid var(--border);border-radius:20px;color:var(--ink-900);box-shadow:0 24px 90px #15193640;overflow:auto;}
+.scenario-dialog::backdrop{background:#15193699;backdrop-filter:blur(4px);}
+.scenario-dialog form{margin:0;}
+.scenario-head{padding:24px 26px 20px;background:linear-gradient(130deg,var(--navy-900),var(--navy-700));color:white;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;}
+.scenario-kicker{font-size:10px;text-transform:uppercase;letter-spacing:.12em;font-weight:700;color:#ffc18b;margin-bottom:8px;}
+.scenario-head h2{font-family:Sora,sans-serif;font-size:22px;letter-spacing:-.04em;margin:0 0 8px;}
+.scenario-head p{font-size:12px;line-height:1.6;color:#ffffffb3;margin:0;}
+.scenario-close{border:1px solid #ffffff40;background:#ffffff10;border-radius:10px;color:white;font-size:24px;width:36px;height:36px;cursor:pointer;flex-shrink:0;}
+.scenario-content{padding:22px 26px;}
+.scenario-section-title{font-family:Sora,sans-serif;font-size:14px;margin:0 0 12px;}
+.scenario-profile{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin-bottom:14px;}
+.scenario-field{display:flex;flex-direction:column;gap:7px;font-size:12px;font-weight:700;}
+.scenario-field select,.scenario-field input,.scenario-goal input{width:100%;min-width:0;background:#fff;color:var(--ink-900);border:1px solid #ccd0e2;border-radius:10px;padding:11px 12px;font:600 14px Inter,sans-serif;transition:border-color .15s,box-shadow .15s;}
+.scenario-field small{font-size:11px;font-weight:400;color:var(--ink-500);}
+.scenario-dialog :is(input,select,button):focus-visible{outline:3px solid #f5821f66;outline-offset:2px;}
+.scenario-dialog input:invalid{border-color:var(--red-600);}
+.scenario-explainer{padding:12px 14px;background:var(--bg);border-radius:10px;color:var(--ink-700);font-size:12px;line-height:1.65;margin:12px 0 22px;}
+.scenario-goals-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;}
+.scenario-goals-head h3{margin:0;}
+.scenario-link{background:none;border:0;color:var(--navy-500);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font:600 12px Inter,sans-serif;padding:5px;}
+.scenario-goals{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.scenario-goal{padding:14px;border:1px solid var(--border);border-radius:12px;background:#fff;}
+.scenario-goal label{font-size:12px;font-weight:700;display:block;margin-bottom:5px;}
+.scenario-goal .scenario-baseline{color:var(--ink-500);font-size:11px;margin-bottom:10px;}
+.scenario-goal .scenario-input-wrap{display:flex;align-items:center;gap:8px;}
+.scenario-unit{color:var(--ink-500);font-size:11px;min-width:20px;}
+.scenario-goal output{display:block;margin-top:8px;font-size:11px;line-height:1.5;color:var(--ink-500);}
+.scenario-goal.is-changed{border-color:#f5cba0;background:#fffaf5;}
+.scenario-footer{position:sticky;bottom:0;z-index:1;background:#fff;border-top:1px solid var(--border);padding:16px 26px;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;}
+.scenario-footer small{color:var(--ink-500);font-size:11px;max-width:300px;line-height:1.6;}
+.scenario-actions{display:flex;gap:8px;}
+.scenario-empty{padding:16px;background:var(--bg);border-radius:12px;color:var(--ink-500);font-size:12px;grid-column:1/-1;}
+.scenario-toolbar button:disabled{opacity:.45;cursor:not-allowed;}
+@media(max-width:600px){.scenario-profile,.scenario-goals{grid-template-columns:1fr;}.scenario-content,.scenario-head{padding:18px;}.scenario-footer{padding:14px 18px;}.scenario-head h2{font-size:19px;}.scenario-footer small{max-width:none;}.scenario-actions{width:100%;}.scenario-actions button{flex:1;}}
+@media(prefers-reduced-motion:reduce){.scenario-dialog *{transition:none!important;}}
+@media print{.scenario-toolbar,.scenario-dialog,.scenario-meta-tooltip::after{display:none!important;}.scenario-summary{font-size:10px;margin-bottom:8px;}}
+
 </style>
 </head>
 <body>
@@ -891,14 +939,17 @@
       <div class="card">
         <div class="metas-mode-row">
           <div class="card-title" style="margin:0;">Indicadores de gestión — <span id="viewLabel">Ventas (Persona)</span></div>
-          <div style="display:flex;align-items:center;gap:12px;">
-            <span class="manual-note hidden" id="manualNote">✏️ Metas ajustadas manualmente <button class="reset-btn" id="resetMetasBtn">restablecer</button></span>
-            <div class="segmented" id="metasMode">
-              <button data-mode="default" class="active"><span class="dotmini"></span>Metas predeterminadas</button>
-              <button data-mode="manual"><span class="dotmini"></span>Ajuste manual</button>
-            </div>
-          </div>
         </div>
+        <div class="scenario-toolbar">
+          <div class="segmented" id="metasMode" role="group" aria-label="Tipo de evaluación">
+            <button type="button" data-mode="default" class="active" aria-pressed="true">Datos de origen</button>
+            <button type="button" data-mode="manual" aria-pressed="false">Evaluación ajustada</button>
+          </div>
+          <button type="button" class="btn btn-primary" id="editScenarioBtn">Ajustar metas y perfil</button>
+          <button type="button" class="scenario-link hidden" id="resetMetasBtn">Restablecer ejecutivo</button>
+          <span id="manualNote" class="hidden"></span>
+        </div>
+        <p id="scenarioSummary" class="scenario-summary" aria-live="polite"></p>
 
         <table class="kpi">
           <thead>
@@ -938,6 +989,30 @@
 
   <div class="footer-note">Comercial Express · Documento interno de gestión · Generado el <span id="genDate"></span></div>
 </div>
+
+
+<dialog class="scenario-dialog" id="scenarioDialog" aria-labelledby="scenarioTitle" aria-describedby="scenarioScope">
+  <form id="scenarioForm">
+    <header class="scenario-head">
+      <div><div class="scenario-kicker">Simulación de gestión</div><h2 id="scenarioTitle">Ajustar metas y perfil</h2><p id="scenarioContext"></p></div>
+      <button class="scenario-close" type="button" id="scenarioClose" aria-label="Cerrar sin aplicar">×</button>
+    </header>
+    <div class="scenario-content">
+      <h3 class="scenario-section-title">1. Perfil de evaluación</h3>
+      <div class="scenario-profile">
+        <label class="scenario-field" for="scenarioRole">Rol para esta evaluación<select id="scenarioRole" required></select><small id="scenarioOriginalRole"></small></label>
+        <label class="scenario-field" for="scenarioHours">Jornada semanal · horas<input id="scenarioHours" type="number" min="0.1" max="168" step="any" required inputmode="decimal"><small id="scenarioOriginalHours"></small></label>
+      </div>
+      <p class="scenario-explainer" id="scenarioRatio" aria-live="polite"></p>
+      <div class="scenario-goals-head"><h3 class="scenario-section-title">2. Metas de la evaluación</h3><button type="button" class="scenario-link" id="scenarioRestore">Volver a los datos de origen</button></div>
+      <div class="scenario-goals" id="scenarioGoals"></div>
+    </div>
+    <footer class="scenario-footer">
+      <small id="scenarioScope">Ajustes del ejecutivo para todos sus períodos, como en la versión original. Solo durante esta sesión; se pierden al recargar.</small>
+      <div class="scenario-actions"><button class="btn" type="button" id="scenarioCancel">Cancelar</button><button class="btn btn-primary" type="submit">Aplicar ajustes</button></div>
+    </footer>
+  </form>
+</dialog>
 
 <script>
 /* =========================================================
@@ -1084,7 +1159,7 @@ let state = {
   execId: null,
   ym: null,                  // selected period (YM)
   metasMode: 'default',      // 'default' | 'manual'
-  manualMetas: {}            // { execId: { indicatorKey: value } } — applies across periods
+  manualProfiles: {}, manualMetas: {}            // { execId: { indicatorKey: value } } — applies across periods
 };
 
 function currentList(){ return EXECS[state.view].length ? EXECS[state.view] : EXECS[state.view === 'persona' ? 'empresa' : 'persona']; }
@@ -1125,11 +1200,9 @@ function currentYmFor(exec){
 }
 
 function effectiveMeta(exec, ind){
-  if(state.metasMode === 'manual'){
-    const overrides = state.manualMetas[exec.id];
-    if(overrides && overrides[ind.key] !== undefined) return overrides[ind.key];
-  }
-  return ind.meta;
+  if(state.metasMode !== 'manual') return ind.meta;
+  const overrides = state.manualMetas[exec.id] || {};
+  return overrides[ind.key] ?? scenarioBaseMeta(exec,ind,scenarioProfile(exec));
 }
 
 function setManualMeta(execId, key, value){
@@ -1318,9 +1391,11 @@ function renderKpiTable(exec){
       faltHtml = `<span class="kpi-badge falt-neg"><span class="falt-arrow">▼</span>${formatByType(ind.key, Math.abs(faltante))}</span>`;
     }
 
-    const metaCellHtml = state.metasMode === 'manual'
-      ? `<input type="number" step="${info.tipo === 'pct' ? '0.1' : (info.tipo==='clp' ? '1000':'1')}" class="meta-input" data-key="${ind.key}" value="${meta}">`
-      : `<span class="meta-cell">${formatByType(ind.key, meta)}</span>`;
+    const changed = Math.abs(meta-ind.meta) > 1e-9;
+    const originLabel = 'Meta de origen: '+formatByType(ind.key,ind.meta);
+    const metaCellHtml = changed
+      ? '<span class="meta-cell scenario-meta-tooltip" tabindex="0" data-origin="'+scenarioEsc(originLabel)+'" aria-label="'+scenarioEsc('Meta ajustada: '+formatByType(ind.key,meta)+'. '+originLabel)+'">'+formatByType(ind.key,meta)+'</span>'
+      : '<span class="meta-cell">'+formatByType(ind.key,meta)+'</span>';
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -1346,21 +1421,6 @@ function renderKpiTable(exec){
     `;
     tbody.appendChild(tr);
   });
-
-  // wire manual meta inputs
-  if(state.metasMode === 'manual'){
-    tbody.querySelectorAll('.meta-input').forEach(input => {
-      input.addEventListener('input', (e) => {
-        const key = e.target.dataset.key;
-        const val = parseFloat(e.target.value);
-        setManualMeta(exec.id, key, isNaN(val) ? 0 : val);
-        renderAll();
-        // restore focus after re-render
-        const again = tbody.querySelector(`.meta-input[data-key="${key}"]`);
-        if(again){ again.focus(); again.select(); }
-      });
-    });
-  }
 
   return { avg: nPct ? sumPct/nPct : 0, good, mid, bad };
 }
@@ -1405,8 +1465,8 @@ function renderDetalles(exec){
 function renderHeaderInfo(exec){
   document.getElementById('chipZona').textContent = exec.zona;
   document.getElementById('chipZonaDot').style.color = zoneColor(exec.zona);
-  document.getElementById('chipRol').textContent = exec.rol;
-  document.getElementById('chipJornada').textContent = exec.jornada;
+  document.getElementById('chipRol').textContent = scenarioProfile(exec).rol || exec.rol;
+  document.getElementById('chipJornada').textContent = scenarioProfile(exec).jornada || exec.jornada;
   document.getElementById('roleExecName').textContent = exec.nombre;
   document.getElementById('roleCluster').textContent = exec.cluster;
   document.getElementById('signExec').textContent = exec.nombre;
@@ -1435,7 +1495,7 @@ function renderPrintHero(exec, summary){
   document.getElementById('printAvatar').textContent = initials(exec.nombre);
   document.getElementById('printExecName').textContent = exec.nombre;
   document.getElementById('printExecMeta').textContent =
-    `${exec.rol} · Cluster ${exec.cluster} · ${ym ? ymLabel(ym) : '—'} · Jornada ${exec.jornada}`;
+    `${scenarioProfile(exec).rol || exec.rol} · Cluster ${exec.cluster} · ${ym ? ymLabel(ym) : '—'} · Jornada ${scenarioProfile(exec).jornada || exec.jornada}${state.metasMode === 'manual' && scenarioHasChanges(exec) ? ' · Evaluación ajustada' : ''}`;
   document.getElementById('printScoreNum').textContent = pct.toFixed(0) + '%';
   document.getElementById('printScoreNum').style.color = STATUS_COLOR[bucket];
   const badge = document.getElementById('printStatusBadge');
@@ -1446,6 +1506,7 @@ function renderPrintHero(exec, summary){
 
 function renderAll(){
   const exec = currentExec();
+  renderScenarioSummary(exec);
   if(!exec){
     renderEmptyState();
     return;
@@ -1577,18 +1638,23 @@ document.getElementById('periodSelect').addEventListener('change', (e) => {
   renderAll();
 });
 
-document.getElementById('metasMode').addEventListener('click', (e) => {
-  const btn = e.target.closest('button');
-  if(!btn) return;
-  state.metasMode = btn.dataset.mode;
-  [...e.currentTarget.children].forEach(b => b.classList.toggle('active', b === btn));
+document.getElementById('metasMode').addEventListener('click',event=>{
+  const button = event.target.closest('button');
+  if(!button || button.disabled) return;
+  if(button.dataset.mode === 'manual'){
+    const exec = currentExec();
+    if(!exec) return;
+    if(!scenarioHasChanges(exec)){openScenario();return;}
+  }
+  state.metasMode = button.dataset.mode;
   renderAll();
 });
-
-document.getElementById('resetMetasBtn').addEventListener('click', () => {
+document.getElementById('resetMetasBtn').addEventListener('click',()=>{
   const exec = currentExec();
   if(!exec) return;
   delete state.manualMetas[exec.id];
+  if(state.manualProfiles) delete state.manualProfiles[exec.id];
+  state.metasMode = 'default';
   renderAll();
 });
 
@@ -1597,7 +1663,7 @@ document.getElementById('resetAllBtn').addEventListener('click', () => {
   // cargado nada); solo limpia ediciones manuales, toggles y notas.
   const firstView = EXECS.persona.length ? 'persona' : 'empresa';
   const firstExec = EXECS[firstView][0] || null;
-  state = { view:firstView, execId: firstExec ? firstExec.id : null, ym: firstExec ? (periodsFor(firstExec)[0] || null) : null, metasMode:'default', manualMetas:{} };
+  state = { view:firstView, execId: firstExec ? firstExec.id : null, ym: firstExec ? (periodsFor(firstExec)[0] || null) : null, metasMode:'default', manualProfiles:{}, manualMetas:{} };
   document.querySelectorAll('#viewToggle button').forEach(b => b.classList.toggle('active', b.dataset.view === firstView));
   document.querySelectorAll('#metasMode button').forEach(b => b.classList.toggle('active', b.dataset.mode === 'default'));
   document.getElementById('objetivosText').value = '';
@@ -1795,7 +1861,7 @@ function applyImportedData(newExecs, opts = {}){
     execId: firstExec.id,
     ym: periodsFor(firstExec)[0] || null,
     metasMode: 'default',
-    manualMetas: {}
+    manualProfiles: {}, manualMetas: {}
   };
   document.querySelectorAll('#viewToggle button').forEach(b => b.classList.toggle('active', b.dataset.view === state.view));
   document.querySelectorAll('#metasMode button').forEach(b => b.classList.toggle('active', b.dataset.mode === 'default'));
@@ -1934,6 +2000,188 @@ document.getElementById('printBtn').addEventListener('click', () => window.print
 /* =========================================================
    INIT
    ========================================================= */
+// Los importes manuales son valores finales. Nunca se modifica el dataset.
+function scenarioHours(value){
+  const n = Number(String(value ?? '').trim().replace(/h$/i,'').replace(',','.'));
+  return Number.isFinite(n) && n > 0 && n <= 168 ? n : null;
+}
+function scenarioProfile(exec){
+  return state.metasMode === 'manual' ? ((state.manualProfiles || {})[exec.id] || {}) : {};
+}
+function scenarioRatio(exec, profile){
+  const original = scenarioHours(exec.jornada);
+  const hours = scenarioHours(profile.jornada);
+  return original && hours ? hours / original : 1;
+}
+function scenarioBaseMeta(exec, ind, profile){
+  return ind.meta * ((INDICATOR_META[ind.key] || {}).tipo === 'pct' ? 1 : scenarioRatio(exec, profile));
+}
+function scenarioEsc(value){
+  return String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function scenarioHasChanges(exec){
+  return Boolean(Object.keys(state.manualMetas[exec.id] || {}).length || Object.keys((state.manualProfiles || {})[exec.id] || {}).length);
+}
+let scenarioDraft = null;
+let scenarioReturnFocus = null;
+
+function openScenario(){
+  const exec = currentExec();
+  if(!exec) return;
+  scenarioReturnFocus = document.activeElement;
+  const profile = (state.manualProfiles || {})[exec.id] || {};
+  const hours = scenarioHours(profile.jornada) || scenarioHours(exec.jornada);
+  const role = profile.rol || exec.rol;
+  const rows = currentPeriodData(exec).indicadores.filter(ind => (VIEW_INDICATOR_KEYS[state.view] || []).includes(ind.key));
+  scenarioDraft = {exec, rows, hours, role, values:{}, changed:new Set(), resetAll:false};
+  const overrides = state.manualMetas[exec.id] || {};
+  rows.forEach(ind => {
+    scenarioDraft.values[ind.key] = overrides[ind.key] ?? scenarioBaseMeta(exec,ind,profile);
+    if(overrides[ind.key] !== undefined) scenarioDraft.changed.add(ind.key);
+  });
+  const roles = [...new Set([...EXECS.persona,...EXECS.empresa].map(e=>e.rol).concat(exec.rol,role))].filter(Boolean).sort((a,b)=>a.localeCompare(b));
+  document.getElementById('scenarioRole').innerHTML = roles.map(r=>`<option value="${scenarioEsc(r)}">${scenarioEsc(r)}</option>`).join('');
+  document.getElementById('scenarioRole').value = role;
+  document.getElementById('scenarioHours').value = hours ?? '';
+  document.getElementById('scenarioOriginalRole').textContent = `Origen: ${exec.rol}`;
+  document.getElementById('scenarioOriginalHours').textContent = `Origen: ${exec.jornada}`;
+  document.getElementById('scenarioContext').textContent = `${exec.nombre} · ${ymLabel(currentYmFor(exec))} · Indicadores ${state.view === 'persona' ? 'Persona' : 'Empresa'}`;
+  renderScenarioGoals();
+  updateScenarioPreview();
+  document.getElementById('scenarioDialog').showModal();
+}
+function renderScenarioGoals(){
+  const {rows,values} = scenarioDraft;
+  document.getElementById('scenarioGoals').innerHTML = rows.map(ind=>{
+    const info = INDICATOR_META[ind.key];
+    const unit = info.tipo === 'pct' ? '%' : info.tipo === 'clp' ? '$' : 'unid.';
+    return `<div class="scenario-goal" data-goal="${ind.key}"><label for="goal-${ind.key}">${info.nombre}</label><div class="scenario-baseline">Meta de origen: ${formatByType(ind.key,ind.meta)}</div><div class="scenario-input-wrap"><input id="goal-${ind.key}" data-goal-input="${ind.key}" aria-describedby="preview-${ind.key}" type="number" min="0" step="any" required inputmode="decimal" value="${values[ind.key]}"><span class="scenario-unit">${unit}</span></div><output id="preview-${ind.key}"></output></div>`;
+  }).join('') || '<div class="scenario-empty">No hay indicadores para este período. Puedes ajustar el perfil.</div>';
+}
+function updateScenarioPreview(){
+  const {exec,rows,values,hours,role} = scenarioDraft;
+  const original = scenarioHours(exec.jornada);
+  const ratio = original && hours ? hours/original : 1;
+  let message = original
+    ? `Jornada ${original} → ${hours ?? '—'} h · Factor ${fmtPct1(ratio*100)}. Las metas de unidades y montos se ajustan proporcionalmente. Las metas porcentuales se mantienen.`
+    : 'La jornada de origen no es válida para calcular una proporción. Las metas se mantienen y puedes editarlas manualmente.';
+  message += role !== exec.rol ? ' Rol modificado: ingresa sus metas manualmente; el rol no asigna metas automáticamente.' : ' Si cambias el rol, ingresa las metas correspondientes manualmente.';
+  message += ' La vista Persona/Empresa se conserva.';
+  document.getElementById('scenarioRatio').textContent = message;
+  rows.forEach(ind=>{
+    const value = values[ind.key];
+    const source = ind.fcst ?? ind.mtd;
+    const pctType = INDICATOR_META[ind.key].tipo === 'pct';
+    const pct = value > 0 ? source/value*100 : (source > 0 || !pctType ? 100 : 0);
+    const valid = Number.isFinite(value) && value >= 0;
+    document.getElementById(`preview-${ind.key}`).textContent = valid
+      ? `Proyección ${formatByType(ind.key,source)} · Cumplimiento ${fmtPct1(pct)}`
+      : 'Ingresa una meta igual o mayor que cero.';
+    document.querySelector(`[data-goal="${ind.key}"]`).classList.toggle('is-changed', valid && Math.abs(value-ind.meta) > 1e-9);
+  });
+}
+function changeScenarioHours(raw){
+  const next = scenarioHours(raw);
+  if(!next) return; // La validación nativa impide aplicar una entrada inválida.
+  const previous = scenarioDraft.hours;
+  const original = scenarioHours(scenarioDraft.exec.jornada);
+  if(original && previous){
+    scenarioDraft.rows.forEach(ind=>{
+      if(INDICATOR_META[ind.key].tipo === 'pct') return;
+      const value = scenarioDraft.values[ind.key];
+      if(!Number.isFinite(value)) return;
+      // Conversión respecto a la jornada anterior: evita aplicar dos veces el factor.
+      scenarioDraft.values[ind.key] = value * next / previous;
+      document.getElementById(`goal-${ind.key}`).value = scenarioDraft.values[ind.key];
+    });
+  }
+  scenarioDraft.hours = next;
+  updateScenarioPreview();
+}
+function closeScenario(){ document.getElementById('scenarioDialog').close(); }
+function restoreScenario(){
+  const {exec,rows} = scenarioDraft;
+  scenarioDraft.role = exec.rol;
+  scenarioDraft.hours = scenarioHours(exec.jornada);
+  scenarioDraft.changed.clear();
+  scenarioDraft.resetAll = true;
+  rows.forEach(ind=>scenarioDraft.values[ind.key] = ind.meta);
+  document.getElementById('scenarioRole').value = exec.rol;
+  document.getElementById('scenarioHours').value = scenarioDraft.hours ?? '';
+  renderScenarioGoals();
+  updateScenarioPreview();
+}
+function applyScenario(event){
+  event.preventDefault();
+  const form = document.getElementById('scenarioForm');
+  if(!form.reportValidity()) return;
+  const {exec,rows,values,role,hours} = scenarioDraft;
+  if(!hours || rows.some(ind=>!Number.isFinite(values[ind.key]) || values[ind.key]<0)) return;
+  // Conservar las metas de la otra vista; solo sustituir los indicadores editados.
+  const overrides = scenarioDraft.resetAll ? {} : {...(state.manualMetas[exec.id] || {})};
+  const profile = {};
+  if(role !== exec.rol) profile.rol = role;
+  if(hours !== scenarioHours(exec.jornada)) profile.jornada = `${hours}H`;
+  const oldRatio = scenarioRatio(exec,(state.manualProfiles || {})[exec.id] || {});
+  const newRatio = scenarioRatio(exec,profile);
+  Object.keys(overrides).forEach(key=>{
+    if(!rows.some(ind=>ind.key === key) && (INDICATOR_META[key] || {}).tipo !== 'pct'){
+      overrides[key] = overrides[key] * newRatio / oldRatio;
+    }
+  });
+  rows.forEach(ind=>{
+    if(Math.abs(values[ind.key]-scenarioBaseMeta(exec,ind,profile)) > 1e-9) overrides[ind.key] = values[ind.key];
+    else delete overrides[ind.key];
+  });
+  state.manualMetas[exec.id] = overrides;
+  if(!state.manualProfiles) state.manualProfiles = {};
+  state.manualProfiles[exec.id] = profile;
+  state.metasMode = scenarioHasChanges(exec) ? 'manual' : 'default';
+  closeScenario();
+  renderAll();
+}
+function renderScenarioSummary(exec){
+  const hasExec = Boolean(exec);
+  document.getElementById('editScenarioBtn').disabled = !hasExec;
+  document.querySelector('#metasMode [data-mode="manual"]').disabled = !hasExec;
+  const active = hasExec && state.metasMode === 'manual' && scenarioHasChanges(exec);
+  document.getElementById('resetMetasBtn').classList.toggle('hidden',!active);
+  document.querySelectorAll('#metasMode button').forEach(b=>{
+    const selected = b.dataset.mode === state.metasMode;
+    b.classList.toggle('active',selected);
+    b.setAttribute('aria-pressed',String(selected));
+  });
+  const summary = document.getElementById('scenarioSummary');
+  summary.classList.toggle('is-adjusted',active);
+  if(!hasExec){summary.textContent = 'Carga los datos para preparar una evaluación ajustada.';return;}
+  if(!active){summary.textContent = 'Evaluación con las metas, el rol y la jornada de origen.';return;}
+  const profile = scenarioProfile(exec);
+  const role = profile.rol || exec.rol;
+  const hours = profile.jornada || exec.jornada;
+  summary.textContent = `Evaluación ajustada · ${role} · ${hours} · Factor jornada ${fmtPct1(scenarioRatio(exec,profile)*100)}. Metas manuales sobre el ejecutivo en todos sus períodos. Solo esta sesión.`;
+}
+document.getElementById('editScenarioBtn').addEventListener('click',openScenario);
+document.getElementById('scenarioForm').addEventListener('submit',applyScenario);
+document.getElementById('scenarioClose').addEventListener('click',closeScenario);
+document.getElementById('scenarioCancel').addEventListener('click',closeScenario);
+document.getElementById('scenarioRestore').addEventListener('click',restoreScenario);
+document.getElementById('scenarioRole').addEventListener('change',event=>{
+  scenarioDraft.role = event.target.value;
+  updateScenarioPreview();
+});
+document.getElementById('scenarioHours').addEventListener('input',event=>changeScenarioHours(event.target.value));
+document.getElementById('scenarioGoals').addEventListener('input',event=>{
+  const key = event.target.dataset.goalInput;
+  if(!key) return;
+  scenarioDraft.values[key] = event.target.value === '' ? NaN : Number(event.target.value);
+  scenarioDraft.changed.add(key);
+  updateScenarioPreview();
+});
+document.getElementById('scenarioDialog').addEventListener('close',()=>{
+  scenarioDraft = null;
+  if(scenarioReturnFocus && scenarioReturnFocus.isConnected) scenarioReturnFocus.focus();
+});
+
 (function init(){
   const today = new Date();
   document.getElementById('genDate').textContent = today.toLocaleDateString('es-CL', {day:'2-digit', month:'2-digit', year:'numeric'});
