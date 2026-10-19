@@ -2191,11 +2191,25 @@
     "origen": "BUENA ATENCIÓN"
   },
   {
+    "fecha": "2026-10-05",
+    "mes": "2026-10",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "COBERTURA"
+  },
+  {
     "fecha": "2026-10-06",
     "mes": "2026-10",
     "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
     "categoria": "neutra",
     "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-10-06",
+    "mes": "2026-10",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "COBERTURA"
   },
   {
     "fecha": "2026-10-13",
