@@ -2165,6 +2165,13 @@
   {
     "fecha": "2026-10-02",
     "mes": "2026-10",
+    "sucursal": "CHILLÁN EL ROBLE",
+    "categoria": "mala",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-10-02",
+    "mes": "2026-10",
     "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
     "categoria": "mala",
     "origen": "COBERTURA"
@@ -2175,6 +2182,13 @@
     "sucursal": "LOS ÁNGELES LAUTARO",
     "categoria": "mala",
     "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-10-04",
+    "mes": "2026-10",
+    "sucursal": "MALL PLAZA LOS ÁNGELES",
+    "categoria": "buena",
+    "origen": "BUENA ATENCIÓN"
   },
   {
     "fecha": "2026-10-05",
@@ -2203,6 +2217,13 @@
     "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
     "categoria": "neutra",
     "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-10-06",
+    "mes": "2026-10",
+    "sucursal": "MALL PLAZA LOS ÁNGELES",
+    "categoria": "buena",
+    "origen": "BUENA ATENCIÓN"
   },
   {
     "fecha": "2026-10-06",
@@ -2219,11 +2240,25 @@
     "origen": "SISTEMA"
   },
   {
+    "fecha": "2026-10-08",
+    "mes": "2026-10",
+    "sucursal": "MALL PLAZA LOS ÁNGELES",
+    "categoria": "buena",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
     "fecha": "2026-10-10",
     "mes": "2026-10",
     "sucursal": "MALL ARAUCO CHILLÁN",
     "categoria": "mala",
     "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-10-10",
+    "mes": "2026-10",
+    "sucursal": "MALL PLAZA LOS ÁNGELES",
+    "categoria": "buena",
+    "origen": "TIEMPO DE ESPERA"
   },
   {
     "fecha": "2026-10-13",
@@ -2238,6 +2273,13 @@
     "sucursal": "MALL CENTER CURICÓ",
     "categoria": "mala",
     "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-10-15",
+    "mes": "2026-10",
+    "sucursal": "CHILLÁN EL ROBLE",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
   },
   {
     "fecha": "2026-10-20",
