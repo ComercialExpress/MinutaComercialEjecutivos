@@ -2219,6 +2219,13 @@
     "origen": "SISTEMA"
   },
   {
+    "fecha": "2026-10-10",
+    "mes": "2026-10",
+    "sucursal": "MALL ARAUCO CHILLÁN",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
     "fecha": "2026-10-13",
     "mes": "2026-10",
     "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
@@ -2229,6 +2236,20 @@
     "fecha": "2026-10-13",
     "mes": "2026-10",
     "sucursal": "MALL CENTER CURICÓ",
+    "categoria": "mala",
+    "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-10-20",
+    "mes": "2026-10",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "neutra",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-10-20",
+    "mes": "2026-10",
+    "sucursal": "LINARES INDEPENDENCIA",
     "categoria": "mala",
     "origen": "SISTEMA"
   }
