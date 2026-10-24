@@ -2343,5 +2343,19 @@
     "sucursal": "LINARES INDEPENDENCIA",
     "categoria": "neutra",
     "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-10-24",
+    "mes": "2026-10",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "mala",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-10-24",
+    "mes": "2026-10",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "neutra",
+    "origen": "BUENA ATENCIÓN"
   }
 ]
