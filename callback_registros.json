@@ -2315,5 +2315,12 @@
     "sucursal": "LINARES INDEPENDENCIA",
     "categoria": "mala",
     "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-10-20",
+    "mes": "2026-10",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
   }
 ]
