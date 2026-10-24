@@ -2263,6 +2263,13 @@
   {
     "fecha": "2026-10-10",
     "mes": "2026-10",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "COBERTURA"
+  },
+  {
+    "fecha": "2026-10-10",
+    "mes": "2026-10",
     "sucursal": "MALL ARAUCO CHILLÁN",
     "categoria": "mala",
     "origen": "ERROR DE EVALUACIÓN"
@@ -2296,6 +2303,13 @@
     "origen": "ERROR DE EVALUACIÓN"
   },
   {
+    "fecha": "2026-10-16",
+    "mes": "2026-10",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
     "fecha": "2026-10-17",
     "mes": "2026-10",
     "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
@@ -2322,5 +2336,12 @@
     "sucursal": "LOS ÁNGELES LAUTARO",
     "categoria": "mala",
     "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-10-24",
+    "mes": "2026-10",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "neutra",
+    "origen": "BUENA ATENCIÓN"
   }
 ]
