@@ -2345,6 +2345,20 @@
     "origen": "ERROR DE EVALUACIÓN"
   },
   {
+    "fecha": "2026-10-23",
+    "mes": "2026-10",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "mala",
+    "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-10-23",
+    "mes": "2026-10",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "neutra",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
     "fecha": "2026-10-24",
     "mes": "2026-10",
     "sucursal": "LINARES INDEPENDENCIA",
