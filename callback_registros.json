@@ -2345,6 +2345,20 @@
     "origen": "ERROR DE EVALUACIÓN"
   },
   {
+    "fecha": "2026-10-20",
+    "mes": "2026-10",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "TIEMPO DE ESPERA"
+  },
+  {
+    "fecha": "2026-10-20",
+    "mes": "2026-10",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
     "fecha": "2026-10-23",
     "mes": "2026-10",
     "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
@@ -2378,5 +2392,12 @@
     "sucursal": "LINARES INDEPENDENCIA",
     "categoria": "neutra",
     "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-10-27",
+    "mes": "2026-10",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "mala",
+    "origen": "SISTEMA"
   }
 ]
