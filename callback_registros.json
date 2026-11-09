@@ -2410,6 +2410,13 @@
   {
     "fecha": "2026-11-02",
     "mes": "2026-11",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "mala",
+    "origen": "OTROS"
+  },
+  {
+    "fecha": "2026-11-02",
+    "mes": "2026-11",
     "sucursal": "MALL CENTER CURICÓ",
     "categoria": "mala",
     "origen": "SISTEMA"
