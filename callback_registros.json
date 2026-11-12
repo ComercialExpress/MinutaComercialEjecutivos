@@ -2417,6 +2417,13 @@
   {
     "fecha": "2026-11-02",
     "mes": "2026-11",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "mala",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-11-02",
+    "mes": "2026-11",
     "sucursal": "MALL CENTER CURICÓ",
     "categoria": "mala",
     "origen": "SISTEMA"
