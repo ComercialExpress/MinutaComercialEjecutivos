@@ -2436,9 +2436,30 @@
     "origen": "ERROR DE EVALUACIÓN"
   },
   {
+    "fecha": "2026-11-07",
+    "mes": "2026-11",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "mala",
+    "origen": "ATENCIÓN DEL EJECUTIVO"
+  },
+  {
+    "fecha": "2026-11-07",
+    "mes": "2026-11",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "COBERTURA"
+  },
+  {
     "fecha": "2026-11-09",
     "mes": "2026-11",
     "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "mala",
+    "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-11-09",
+    "mes": "2026-11",
+    "sucursal": "LINARES INDEPENDENCIA",
     "categoria": "mala",
     "origen": "SISTEMA"
   }
