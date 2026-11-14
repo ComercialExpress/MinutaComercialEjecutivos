@@ -2462,5 +2462,12 @@
     "sucursal": "LINARES INDEPENDENCIA",
     "categoria": "mala",
     "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-11-10",
+    "mes": "2026-11",
+    "sucursal": "LINARES INDEPENDENCIA",
+    "categoria": "mala",
+    "origen": "BUENA ATENCIÓN"
   }
 ]
