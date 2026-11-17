@@ -2429,11 +2429,25 @@
     "origen": "SISTEMA"
   },
   {
+    "fecha": "2026-11-04",
+    "mes": "2026-11",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "COBERTURA"
+  },
+  {
     "fecha": "2026-11-05",
     "mes": "2026-11",
     "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
     "categoria": "mala",
     "origen": "ERROR DE EVALUACIÓN"
+  },
+  {
+    "fecha": "2026-11-05",
+    "mes": "2026-11",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "TIEMPO DE ESPERA"
   },
   {
     "fecha": "2026-11-07",
@@ -2464,10 +2478,24 @@
     "origen": "SISTEMA"
   },
   {
+    "fecha": "2026-11-09",
+    "mes": "2026-11",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "neutra",
+    "origen": null
+  },
+  {
     "fecha": "2026-11-10",
     "mes": "2026-11",
     "sucursal": "LINARES INDEPENDENCIA",
     "categoria": "mala",
     "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-11-10",
+    "mes": "2026-11",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "mala",
+    "origen": "OTROS"
   }
 ]
