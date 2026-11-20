@@ -2497,5 +2497,19 @@
     "sucursal": "LOS ÁNGELES LAUTARO",
     "categoria": "mala",
     "origen": "OTROS"
+  },
+  {
+    "fecha": "2026-11-14",
+    "mes": "2026-11",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-11-14",
+    "mes": "2026-11",
+    "sucursal": "TALCA CENTRO",
+    "categoria": "mala",
+    "origen": null
   }
 ]
