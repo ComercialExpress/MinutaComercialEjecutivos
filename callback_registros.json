@@ -2480,6 +2480,13 @@
   {
     "fecha": "2026-11-09",
     "mes": "2026-11",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "neutra",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-11-09",
+    "mes": "2026-11",
     "sucursal": "TALCA CENTRO",
     "categoria": "neutra",
     "origen": null
@@ -2497,6 +2504,13 @@
     "sucursal": "LOS ÁNGELES LAUTARO",
     "categoria": "mala",
     "origen": "OTROS"
+  },
+  {
+    "fecha": "2026-11-14",
+    "mes": "2026-11",
+    "sucursal": "LOS ÁNGELES LAUTARO",
+    "categoria": "neutra",
+    "origen": "ERROR DE EVALUACIÓN"
   },
   {
     "fecha": "2026-11-14",
