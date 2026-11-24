@@ -2525,5 +2525,12 @@
     "sucursal": "TALCA CENTRO",
     "categoria": "mala",
     "origen": null
+  },
+  {
+    "fecha": "2026-11-20",
+    "mes": "2026-11",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "mala",
+    "origen": "SISTEMA"
   }
 ]
