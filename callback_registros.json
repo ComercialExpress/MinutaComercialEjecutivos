@@ -2452,6 +2452,13 @@
   {
     "fecha": "2026-11-07",
     "mes": "2026-11",
+    "sucursal": "CHILLÁN EL ROBLE",
+    "categoria": "mala",
+    "origen": "BUENA ATENCIÓN"
+  },
+  {
+    "fecha": "2026-11-07",
+    "mes": "2026-11",
     "sucursal": "LINARES INDEPENDENCIA",
     "categoria": "mala",
     "origen": "ATENCIÓN DEL EJECUTIVO"
@@ -2506,6 +2513,13 @@
     "origen": "OTROS"
   },
   {
+    "fecha": "2026-11-13",
+    "mes": "2026-11",
+    "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
+    "categoria": "mala",
+    "origen": "SISTEMA"
+  },
+  {
     "fecha": "2026-11-14",
     "mes": "2026-11",
     "sucursal": "LOS ÁNGELES LAUTARO",
@@ -2541,10 +2555,31 @@
     "origen": "ERROR DE EVALUACIÓN"
   },
   {
+    "fecha": "2026-11-19",
+    "mes": "2026-11",
+    "sucursal": "CHILLÁN EL ROBLE",
+    "categoria": "mala",
+    "origen": "OTROS"
+  },
+  {
     "fecha": "2026-11-20",
     "mes": "2026-11",
     "sucursal": "CURICÓ CAMILO HENRÍQUEZ",
     "categoria": "mala",
     "origen": "SISTEMA"
+  },
+  {
+    "fecha": "2026-11-21",
+    "mes": "2026-11",
+    "sucursal": "MALL ARAUCO CHILLÁN",
+    "categoria": "mala",
+    "origen": "OTROS"
+  },
+  {
+    "fecha": "2026-11-27",
+    "mes": "2026-11",
+    "sucursal": "CHILLÁN EL ROBLE",
+    "categoria": "mala",
+    "origen": "OTROS"
   }
 ]
